@@ -7,7 +7,8 @@ public class Board implements Comparable<Board>
      WALL  = '█',
      HARD  = '░',
      OPEN  = ' ',
-     GOAL  = '⚑';
+     GOAL  = '⚑',
+     STEP  = '*';
 
     private final String[] board;
 
@@ -88,7 +89,8 @@ public class Board implements Comparable<Board>
         for (int[] pos : path)
         {
             builder = new StringBuilder(pathed[pos[0]]);
-            builder.deleteCharAt(pos[1]).insert(pos[1],'*');
+            if (path.length==1 || builder.charAt(pos[1]) != START && builder.charAt(pos[1]) != GOAL)
+                builder.deleteCharAt(pos[1]).insert(pos[1],STEP);
             pathed[pos[0]] = builder.toString();
         }
         return new Board(pathed).toString();

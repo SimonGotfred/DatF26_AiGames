@@ -13,8 +13,13 @@ public class _main
                     "         █⚑",
             });
 
+        long time = System.currentTimeMillis();
+
         Crawler crawler = new Crawler();
         int[][] path = crawler.crawl(board);
+
+        System.out.println(System.currentTimeMillis()-time);
+
         System.out.println(board.toString(path));
     }
 }

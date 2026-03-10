@@ -3,26 +3,19 @@ import java.util.HashSet;
 
 public class Crawler extends Thread
 {
-    private   static int t = 0;
-    private   static HashSet<String> list = new HashSet<>();
-    private   static HashSet<int[]> list2 = new HashSet<>();
-    private   static HashSet<Crawler> crawlers = new HashSet<>();
-    protected static boolean add(int[] pos)
+    private   static Board board;
+    private   static final HashSet<int[]>    list2    = new HashSet<>();
+    private   static final HashSet<Crawler>  crawlers = new HashSet<>();
+    protected static synchronized void print   (int[] pos) {System.out.println(board.toString(pos));}
+    protected static synchronized void printAll(Crawler c){crawlers.add(c); list2.add(c.position); printAll();}
+    public    static synchronized void printAll()
     {
-        return list.add(Arrays.toString(pos));
-    }
-    public static synchronized void printAll(int[] pos, Crawler c)
-    {
-        crawlers.add(c);
-        list2.add(pos); t++;
-        System.out.println("crawlers~ " + t);
+        System.out.println("crawlers~ " + crawlers.size());
         System.out.println(board.toString(list2.toArray(new int[list2.size()][])));
     }
-    public static synchronized void print(int[] pos)
-    {
-        System.out.println(board.toString(pos));
-    }
-    protected static Board board;
+
+    private   static final   HashSet<String> list = new HashSet<>();
+    protected static boolean add(int[] pos) {return list.add(Arrays.toString(pos));}
 
     protected int       id;
     private   int[]     position;
@@ -55,18 +48,16 @@ public class Crawler extends Thread
 
         children = new Crawler[4];
         int i = 0;
-        for (int[] pos : adjacent(from)) // initialize adjacent sub-crawlers, except backwards or on walls
+        for (int[] pos : adjacent(from)) // initialize adjacent sub-crawlers
         {
-            if (board.pos(pos)==Board.WALL || Arrays.equals(pos,last) || !add(pos)) continue;
+            if (board.pos(pos)==Board.WALL || !add(pos)) continue; // except on walls or already processed pos
             children[i] = new Crawler(this, i)
             {
                 @Override public void run()
                 {
-                    new Thread(()->Crawler.printAll(pos,this)).start();
+//                    new Thread(()->Crawler.printAll(pos,this)).start();
                     this.parent.setPath(this.crawl(board, pos, to, from)); // hand path conclusion back to parent
-                    this.parent.children[this.id] = null; // remove sub from kept memory
-                    if (this.parent.done())
-                        this.parent.interrupt();
+                    this.conclude();
                 }
             };
             children[i].start();
@@ -79,16 +70,16 @@ public class Crawler extends Thread
     {
         while (!done())
         {
-            try {this.wait();}
+            try   {this.wait();}
             catch (InterruptedException _) {}
         }
-        killChain();
+        killChain(); // kill children when done
         return path; // at this point, either a child has set a path leading to the goal, or this point doesn't lead towards the goal.
     }
 
     protected synchronized boolean done()
     {
-        if (path != null) return true;
+        if (path != null) return true; // declare self done if it has path or all children are done
         return children[0] == null
              & children[1] == null
              & children[2] == null
@@ -98,20 +89,24 @@ public class Crawler extends Thread
     protected synchronized void setPath(int[][] path)
     {
         if (path == null || this.path != null) return;
-        print(position);
         this.path = Arrays.copyOf(path,path.length+1);
         this.path[path.length] = position;
+//        print(position);
     }
 
     private void killChain()
     {
-//        int i = 0;
         for (Crawler c : children)
         {
-            if (c != null) c.interrupt();
-//            children[i] = null; i++;
+            if (c != null) c.interrupt(); // shut down still-active children
         }
         children=null;
+    }
+
+    protected void conclude()
+    {
+        this.parent.children[this.id] = null; // remove sub from kept memory
+        if (this.parent.done()) this.parent.interrupt(); // notify parent that *all* children are done
     }
 
     private int[][] adjacent(int[] from)
