@@ -80,7 +80,7 @@ public class Board implements Comparable<Board>
         return builder.toString();
     }
 
-    public String toString(int[][] path)
+    public String toString(int[] ... path)
     {
         if (path == null) return toString();
         String[] pathed = Arrays.copyOf(board,board.length);
