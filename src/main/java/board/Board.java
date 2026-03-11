@@ -1,14 +1,20 @@
+package board;
+
 import java.util.Arrays;
 
 public class Board implements Comparable<Board>
 {
     public static final char
-     START = '⧪',
+     START = '◈',
      WALL  = '█',
      HARD  = '░',
      OPEN  = ' ',
-     GOAL  = '⚑',
+     GOAL  = '◇',
      STEP  = '*';
+
+    /*
+    ⭘⎊⚇⌾⍟⊕⊘⊖⊗⊙⊛⊜⊝⍉○◌●◆◈◇    ⧪⚑
+     */
 
     private final String[] board;
 
@@ -16,7 +22,12 @@ public class Board implements Comparable<Board>
     public Board(String[] board) {this.board = board;}
 
     public int length() {return board.length;}
-    public int width () {return board.length;}
+    public int width ()
+    {
+        int w = 0;
+        for (String row : board) {if (row.length()>w) w = row.length();}
+        return w;
+    }
 
     public String row(int row)
     {

@@ -1,3 +1,6 @@
+import board.*;
+import agent.*;
+
 public class _main
 {
     public static void main(String[] args)
@@ -6,11 +9,11 @@ public class _main
             {
                     "     █    █",
                     " █ █ ██ █  ",
-                    "  ⧪██    ██",
+                    "  ◈██    ██",
                     " █ █  ██   ",
                     " █   █  ██ ",
                     " █ ███ █ █ ",
-                    "         █⚑",
+                    "         █◇",
             });
 
         long time = System.currentTimeMillis();

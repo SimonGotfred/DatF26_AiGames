@@ -1,3 +1,5 @@
+package math;
+
 public class Math
 {
     static double power(double base, int exponent)

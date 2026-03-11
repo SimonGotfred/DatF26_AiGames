@@ -1,3 +1,7 @@
+package agent;
+
+import board.Board;
+
 import java.util.Arrays;
 import java.util.HashSet;
 
