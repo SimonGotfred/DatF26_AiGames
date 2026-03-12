@@ -1,8 +1,6 @@
 package chess;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class Board extends HashSet<Piece>
@@ -34,6 +32,13 @@ public class Board extends HashSet<Piece>
         board[to[0]][to[1]] = board[from[0]][from[1]];
         board[from[0]][from[1]] = ' ';
         return board;
+    }
+
+    public HashMap<Set<char[]>,Piece> legalMoves()
+    {
+        HashMap<Set<char[]>,Piece> moves = new HashMap<>();
+        whites().forEach(piece -> moves.put(piece.moves(), piece));
+        return moves;
     }
 
     public String toString()

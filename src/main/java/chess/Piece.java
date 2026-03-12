@@ -51,13 +51,12 @@ public class Piece
                : (char)(type.icon - 6);
     }
 
-    public String posistion() {return ""+file()+rank();}
-    public Map<char[],Integer> moves()
+    public String position() {return ""+file()+rank();}
+    public Set<char[]> moves()
     {
-        Map<char[],Integer> moves = new HashMap<>();
-        Set<char[]> move = this.type.movesFrom(position);
+        Set<char[]> moves = this.type.movesFrom(position);
 
-        move.removeIf(m -> board.stream()
+        moves.removeIf(m -> board.stream() // todo: set potential captured pieces
               .filter(p -> p.color == this.color).anyMatch(p -> Arrays.equals(m, p.position)));
 
         return moves;
