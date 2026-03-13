@@ -1,14 +1,10 @@
 package chess;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.stream.Stream;
 
 public class Piece
 {
-    static       Board board = new Board(new char[8][8]);
-
+    public Board board;
     public final Type    type;
     public final boolean color;
     public final char[]  position = new char[2];
@@ -44,21 +40,14 @@ public class Piece
         this.position[0] = file; // letter notion
     }
 
-    public char icon()
-    {
-        return this.color
-               ? type.icon
-               : (char)(type.icon - 6);
-    }
+    public int  value() {return type.ordinal();}
+    public char icon() {return this.color ? type.icon : (char)(type.icon - 6);}
 
     public String position() {return ""+file()+rank();}
-    public Set<char[]> moves()
+    public Stream<char[]> moves()
     {
-        Set<char[]> moves = this.type.movesFrom(position);
+        Stream<char[]> moves = this.type.movesFor(this);
 
-        moves.removeIf(m -> board.stream() // todo: set potential captured pieces
-              .filter(p -> p.color == this.color).anyMatch(p -> Arrays.equals(m, p.position)));
-
-        return moves;
+        return moves.filter(pos -> !board.whiteAt(pos));
     }
 }
