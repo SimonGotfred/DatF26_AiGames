@@ -1,16 +1,14 @@
 package chess;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public enum Type
 {
-    PAWN  ('♟',(piece) ->
+    PAWN  ('♟', 1,(piece) ->
     {
-        Set<char[]> moves = new java.util.HashSet<>();
+        Set<char[]> moves = new HashSet<>();
 
         if (!piece.board.pieceAt(piece.file(), (char)(piece.rank()+1)))
             moves.add(new char[]{piece.file(), (char)(piece.rank()+1)});
@@ -24,9 +22,9 @@ public enum Type
         return moves.stream();
     }), // todo: promotion & en passant
 
-    BISHOP('♝',(piece) ->
+    BISHOP('♝', 3,(piece) ->
     {
-        List<char[]> moves = new java.util.ArrayList<>();
+        List<char[]> moves = new ArrayList<>();
 
         for (int i = 1; i < 8; i++)
         {
@@ -59,9 +57,9 @@ public enum Type
         return moves.stream();
     }),
 
-    KNIGHT('♞',(piece) ->
+    KNIGHT('♞', 3,(piece) ->
     {
-        Set<char[]> moves = new java.util.HashSet<>();
+        Set<char[]> moves = new HashSet<>();
 
         for (int i : new int[]{-1,1})
         {
@@ -75,9 +73,9 @@ public enum Type
         return moves.stream();
     }),
 
-    ROOK  ('♜',(piece) ->
+    ROOK  ('♜', 4,(piece) ->
     {
-        List<char[]> moves = new java.util.ArrayList<>();
+        List<char[]> moves = new ArrayList<>();
 
         for (int i = piece.position[0]+1; i < 8; i++)
         {
@@ -110,17 +108,17 @@ public enum Type
         return moves.stream();
     }),
 
-    QUEEN ('♛',(piece) ->
+    QUEEN ('♛', 9,(piece) ->
     {
-        Set<char[]> moves = new java.util.HashSet<>();
+        Set<char[]> moves = new HashSet<>();
         moves.addAll(BISHOP.movesFor(piece).toList());
         moves.addAll(ROOK.movesFor(piece).toList());
         return moves.stream();
     }),
 
-    KING  ('♚',(piece) ->
+    KING  ('♚', 100,(piece) ->
     {
-        Set<char[]> moves = new java.util.HashSet<>();
+        Set<char[]> moves = new HashSet<>();
 
         for (int i = -1; i < 2; i++)
         {
@@ -140,12 +138,34 @@ public enum Type
     static boolean isWhite(char c) {return c >= '♚' && c <= '♟';}
     static boolean isBlack(char c) {return c >= '♔' && c <= '♙';}
 
+    static int value(char c)
+    {
+        return switch (c)
+        {
+            case '♟' -> 1;
+            case '♞',
+                 '♝' -> 3;
+            case '♜' -> 4;
+            case '♛' -> 9;
+            case '♚' -> 100;
+            case '♙' -> -1;
+            case '♘',
+                 '♗' -> -3;
+            case '♖' -> -4;
+            case '♕' -> -9;
+            case '♔' -> -100;
+            default -> 0;
+        };
+    }
+
     final char icon;
+    final int value;
     private final Function<Piece,Stream<char[]>> pattern;
 
-    Type(char icon, Function<Piece,Stream<char[]>> pattern)
+    Type(char icon, int value, Function<Piece,Stream<char[]>> pattern)
     {
-        this.icon = icon;
+        this.icon    = icon;
+        this.value   = value;
         this.pattern = pattern;
     }
 

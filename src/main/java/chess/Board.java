@@ -7,10 +7,7 @@ public class Board
 {
     private final char[][] board;
 
-    public Board(char[][] board)
-    {
-        this.board = board;
-    }
+    public Board(char[][] board) {this.board = board;}
 
     public char    at     (char... pos) {return board[pos[0]][pos[1]];}
     public boolean whiteAt(char... pos) {return Type.isWhite(at(pos));}
@@ -26,7 +23,7 @@ public class Board
             int file = 0;
             for (char c : s)
             {
-                if (Type.isWhite(c)) whites.add(new Piece(c, rank, file));
+                if (Type.isWhite(c)) whites.add(new Piece(c, rank, file, this));
                 file++;
             }
             rank++;
@@ -43,12 +40,43 @@ public class Board
             int file = 0;
             for (char c : s)
             {
-                if (Type.isBlack(c)) blacks.add(new Piece(c, rank, file));
+                if (Type.isBlack(c)) blacks.add(new Piece(c, rank, file, this));
                 file++;
             }
             rank++;
         }
         return blacks;
+    }
+
+    public int score()
+    {
+        int buffer = 0;
+        for (char[] row : board)
+        {
+            for (char piece : row)
+            {
+                buffer += Type.value(piece);
+            }
+        }
+        return buffer;
+    }
+
+    public char[][] invert() {return invert(board);}
+    public char[][] invert(char[][] board)
+    {
+        char[][] inverted = new char[8][8];
+        int i = 8, j;
+        for (char[] row : board)
+        {
+            i--; j = 8;
+            for (char piece : row)
+            {
+                j--; if (Type.isWhite(piece)) inverted[i][j] = (char) (piece-6);
+                else if (Type.isBlack(piece)) inverted[i][j] = (char) (piece+6);
+                else                          inverted[i][j] = ' ';
+            }
+        }
+        return inverted;
     }
 
     public char[][] move(char[] from, char[] to)

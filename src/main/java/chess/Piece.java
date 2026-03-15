@@ -14,8 +14,9 @@ public class Piece
     public int y(){return position[1];}
     public int x(){return position[0];}
 
-    public Piece(char type, int rank, int file)
+    public Piece(char type, int rank, int file, Board board)
     {
+        this.board = board;
         color = type < '♚';
         if(color) type += 6;
         this.type   = Type.values()[type-'♚'];
@@ -40,7 +41,7 @@ public class Piece
         this.position[0] = file; // letter notion
     }
 
-    public int  value() {return type.ordinal();}
+    public int  value() {return type.value;}
     public char icon() {return this.color ? type.icon : (char)(type.icon - 6);}
 
     public String position() {return ""+file()+rank();}
