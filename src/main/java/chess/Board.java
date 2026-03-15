@@ -3,7 +3,7 @@ package chess;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class Board
+public class Board implements Comparable<Board>
 {
     private final char[][] board;
 
@@ -100,4 +100,7 @@ public class Board
         for (char[] s : board) joiner.add(String.valueOf(s));
         return joiner.toString();
     }
+
+    @Override
+    public int compareTo(Board other) {return this.score() - other.score();}
 }

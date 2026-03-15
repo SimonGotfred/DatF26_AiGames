@@ -2,7 +2,7 @@ package chess;
 
 import java.util.stream.Stream;
 
-public class Piece
+public class Piece implements Comparable<Piece>
 {
     public Board board;
     public final Type    type;
@@ -51,4 +51,7 @@ public class Piece
 
         return moves.filter(pos -> !board.whiteAt(pos));
     }
+
+    @Override
+    public int compareTo(Piece other) {return this.value() - other.value();}
 }
