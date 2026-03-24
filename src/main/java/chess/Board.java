@@ -8,6 +8,9 @@ public class Board implements Comparable<Board>
     private final char[][] board;
     public  final boolean inverted;
 
+    public Board parent;
+    public Set<Board> children;
+
     public Board(char[][] board, boolean inverted) {this.board = board;this.inverted = inverted;}
     public Board(char[][] board) {inverted = false; this.board = board;}
     public Board(String[] board)
@@ -92,7 +95,7 @@ public class Board implements Comparable<Board>
         return inverted;
     }
 
-    public Board move(String move) // todo: return board
+    public Board move(String move)
     {
         return new Board(move(move.split(",")[0].trim(), move.split(",")[1].trim()),inverted);
     }
@@ -104,6 +107,18 @@ public class Board implements Comparable<Board>
         board[to[1]][to[0]] = board[from[1]][from[0]];
         board[from[1]][from[0]] = ' ';
         return board;
+    }
+
+    public Set<Board> explore() // todo: tactic
+    {
+        children = new HashSet<>();
+        HashMap<Stream<char[]>,Piece> legal = legalMoves();
+        for (Stream<char[]> moveSet : legal.keySet())
+        {
+            moveSet.forEach(move -> children.add(new Board(move(move,legal.get(moveSet).position))));
+        }
+        children.removeIf(b -> b.equals(parent));
+        return children;
     }
 
     public HashMap<Stream<char[]>,Piece> legalMoves()
