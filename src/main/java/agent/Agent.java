@@ -9,7 +9,6 @@ public class Agent<T extends State<T>>
     public T act(T state) {return evaluate(state).apply(state);}
     public State.Action<T> evaluate(T state) // todo: algorithm
     {
-        if (!memory.add(state)) state = memory.r()
         return null;
     }
 }
