@@ -1,38 +1,28 @@
 package agent;
 
+import util.NodeMap;
+
 import java.util.*;
 
-public abstract class State<T extends State<T>> implements Comparable<T>
+public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 {
     // require subclasses define their own applicable 'Actions'
     public abstract static class Action<T extends State<T>> implements Comparable<Action<T>>
     {public final T apply(T state){return state.apply(this);}} // includes shortcut method
 
     private Integer fitness;
-    public  final T parent;
-    public  final TreeSet <T> children = new TreeSet<>(); // TreeSet sorts itself automatically
     public  final Iterator<T> iterator;
     public  final TreeSet <Action<T>> actions = new TreeSet<>();
     public  final Iterator<Action<T>> actionIterator = actions.iterator();
 
-    protected State()        {this.parent = null; iterator = children.iterator();}
-    protected State(T parent){this.parent = parent;
+    protected State()        {iterator = children.iterator();}
+    protected State(T parent){super(parent);
                                  iterator = alternator()                    // children can be iterated reversed as
                                           ? children.iterator()             // estimation for a "countering" action
                                           : children.descendingIterator();} //
 
-    public int depth     ()          {return parent==null ? 0 : 1+parent.depth();}
     boolean    alternator()          {return depth()%2 == 0;} // useful for determining min/max likelihood
     int        alternator(int cycles){return depth()%cycles;}
-
-    public TreeSet<T> siblings() {return parent==null ? new TreeSet<>() : parent.children;}
-    public T  furthestAncestor() {return parent==null ? (T)this : parent.parent == null ? (T)this : parent.furthestAncestor();}
-    public List<T>      legacy()
-    {
-        List<T> legacy = parent==null ? new ArrayList<>() : parent.legacy();
-        legacy.add((T)this); // 'this' will be 'T' or a subclass thereof, due to type bound
-        return legacy;
-    }
 
     protected abstract int evaluateFitness();
     public    final    int fitness(){return fitness == null ? fitness = evaluateFitness() : fitness;}
@@ -43,7 +33,7 @@ public abstract class State<T extends State<T>> implements Comparable<T>
 
     public abstract T apply(Action<T>  action);
     public abstract TreeSet<Action<T>> actions();
-    public   T  evaluateNextAction()
+    public T evaluateNextAction()
     {
         T child = apply(nextFittestAction());
         children.add(child); // note: child is NOT appended - but put sorted by fitness
@@ -60,6 +50,11 @@ public abstract class State<T extends State<T>> implements Comparable<T>
     }
      */ // ? deprecated
 
+    /* todo: find out exactly how iterators interact with 'ConcurrentSkipListSet'
+       ? sorts high to low or opposite
+       ? where iterator ends up when adding to set
+       ? would iterator miss better fit entries if ahead of new additions
+     */
     public boolean   hasMoreActions   (){return actionIterator.hasNext();}
     public Action<T> nextFittestAction(){return actionIterator.next();}
     public boolean   hasMoreChildren  (){return iterator.hasNext();}
@@ -77,15 +72,4 @@ public abstract class State<T extends State<T>> implements Comparable<T>
         return next;
     }
      */ // ? irrelevant
-
-    protected abstract int     hashIdentifier (); // require subclasses define when states are equal
-    public       final int     hashCode       (){return hashIdentifier();}
-    public       final int     compareTo(T that){return this.fitness() - that.fitness();}
-    public       final boolean equals   (Object that) // override to avoid duplicate states in sets
-    {
-        return this==that
-            || that!=null
-            && getClass() != that.getClass()
-            && this.hashCode()==that.hashCode();
-    }
 }

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public interface NodeMap<T extends NodeMap.Node<T>>
+public interface NodeMap<T extends NodeMap.Node<T>> // todo: testing & cleanup
 {
     static final   HashMap <Class<? extends Node<?>>, ConcurrentSkipListMap<Node<?>,? extends Node<?>>> clients = new HashMap<>();
     private static boolean register(Class<? extends Node<?>> c){return clients.putIfAbsent(c, new ConcurrentSkipListMap<>())==null;}
@@ -37,10 +37,7 @@ public interface NodeMap<T extends NodeMap.Node<T>>
 
         protected boolean addChild (T  child) {return children.add( child);}
         protected boolean addParent(T parent) {return parents .add(parent);}
-
-        public int depth     ()          {return parents.isEmpty() ? 0 : 1+parents.first().depth();}
-        boolean    alternator()          {return depth()%2 == 0;} // useful for determining min/max likelihood
-        int        alternator(int cycles){return depth()%cycles;}
+        public    int     depth()  {return parents.isEmpty() ? 0 : 1+parents.first().depth();}
 
         public ConcurrentSkipListSet<T> siblings() {return parents.isEmpty() ? new ConcurrentSkipListSet<>() : parents.first().children;}
         public T  furthestAncestor() {return parents.isEmpty() ? (T)this : parents.first().parents.first() == null ? (T)this : parents.first().furthestAncestor();}
