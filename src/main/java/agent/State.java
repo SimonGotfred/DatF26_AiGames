@@ -17,26 +17,29 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 
     protected State()        {iterator = children.iterator();}
     protected State(T parent){super(parent);
-                                 iterator = alternator()                    // children can be iterated reversed as
+                                 iterator = alternator()                    // children can be iterated in reverse as
                                           ? children.iterator()             // estimation for a "countering" action
                                           : children.descendingIterator();} //
 
-    boolean    alternator()          {return depth()%2 == 0;} // useful for determining min/max likelihood
+    boolean    alternator()          {return depth()%2 == 0;} // useful for determining whether min-/max-ing
     int        alternator(int cycles){return depth()%cycles;}
 
-    protected abstract int evaluateFitness();
+    // evaluating fitness must be done by subclass and may be cumbersome, but should be static
+    // therefore ensure it is done only once
     public    final    int fitness(){return fitness == null ? fitness = evaluateFitness() : fitness;}
+    protected abstract int evaluateFitness();
 
-    public final int[] minMax(){return new int[]{min(),max()};}
+    // own fitness is ignored in preference of best/worst fitness the state *could* lead to
     public final int   min   (){return children.isEmpty() ? fitness() : children.getFirst().min();}
-    public final int   max   (){return children.isEmpty() ? fitness() : children.getLast().max();}
+    public final int   max   (){return children.isEmpty() ? fitness() : children.getLast ().max();}
+    public final int[] minMax(){return new int[]{min(),max()};}
 
     public abstract T apply(Action<T>  action);
     public abstract TreeSet<Action<T>> actions();
     public T evaluateNextAction()
     {
-        T child = apply(nextFittestAction());
-        children.add(child); // note: child is NOT appended - but put sorted by fitness
+        T child = add(apply(nextFittestAction())); // note: child is NOT appended - but put sorted by fitness
+        child.addParent((T)this);
         return child;
     }
     public TreeSet<Action<T>> evaluateNextChild() {return nextFittestChild().actions();}
