@@ -2,27 +2,43 @@ package agent;
 
 import util.NodeMap;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 
 public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 {
-    // require subclasses define their own applicable 'Actions'
-    public abstract static class Action<T extends State<T>> implements Comparable<Action<T>>
-    {public final T apply(T state){return state.apply(this);}} // includes shortcut method
+    public static char memSafety = 2; // safety limit (GB) to stop if usable memory subceeds
 
-    private Integer fitness;
+    // require subclasses define their own applicable 'Actions'
+    public abstract static class Action<T extends State<T>> implements Function<T, T>, Comparable<Action<T>>
+    {
+        private final T state;
+        public Action(T state){this.state=state;}
+        public  final T apply(){return this.apply(state);}
+    } // includes shortcut method
+
+    public abstract static class Actionable<T extends State<T>>// todo: implements Comparable<Actionable<T>>
+    {
+        public abstract Set<Action<T>> actions();
+    }
+
+    public  final boolean minMax;
+    protected     Integer fitness;
     public  final Iterator<T> iterator;
     public  final TreeSet <Action<T>> actions = new TreeSet<>();
     public  final Iterator<Action<T>> actionIterator = actions.iterator();
 
-    protected State()        {iterator = children.iterator();}
-    protected State(T parent){super(parent);
-                                 iterator = alternator()                    // children can be iterated in reverse as
-                                          ? children.iterator()             // estimation for a "countering" action
-                                          : children.descendingIterator();} //
+    protected State()              {this.minMax   = false; iterator = children.iterator();}
+    protected State(boolean minMax){this.minMax   = minMax;
+                                    this.iterator = this.minMax                     // children can be iterated in reverse as
+                                                  ? children.iterator()             // estimation for a "countering" action
+                                                  : children.descendingIterator();} //
 
-    boolean    alternator()          {return depth()%2 == 0;} // useful for determining whether min-/max-ing
-    int        alternator(int cycles){return depth()%cycles;}
+    protected boolean alternator()          {return depth()%2 == 0;} // useful for determining whether min-/max-ing
+    protected int     alternator(int cycles){return depth()%cycles;}
 
     // evaluating fitness must be done by subclass and may be cumbersome, but should be static
     // therefore ensure it is done only once
@@ -34,24 +50,23 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     public final int   max   (){return children.isEmpty() ? fitness() : children.getLast ().max();}
     public final int[] minMax(){return new int[]{min(),max()};}
 
-    public abstract T apply(Action<T>  action);
-    public abstract TreeSet<Action<T>> actions();
-    public T evaluateNextAction()
-    {
-        T child = add(apply(nextFittestAction())); // note: child is NOT appended - but put sorted by fitness
-        child.addParent((T)this);
-        return child;
-    }
-    public TreeSet<Action<T>> evaluateNextChild() {return nextFittestChild().actions();}
+    public T apply(Action<T>  action){return action.apply((T)this);}
 
-    /*
-    public TreeSet<T> evaluate()
+    // note: child is NOT appended - but put sorted by fitness
+    public T evaluateNextAction() {return addChild(nextFittestAction().apply());}
+    public TreeSet<Action<T>> evaluateNextChild() {return nextFittestChild().actions();}
+    public NavigableSet<T>    evaluate() {return evaluate(0);}
+    public NavigableSet<T>    evaluate(int depth) // todo: minMax
     {
-        actions().forEach(action -> children.add(apply(action)));
-        children.remove(parent);
-        return children;
+        try {if (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30<1+memSafety) throw new OutOfMemoryError();} // stop when usable memory has decreased below safety limit
+        catch (IOException e) {return children;}
+        NavigableSet<T> set = depth>1 ? new TreeSet<>() : children;
+        for (Action<T> action : actions()) {addChild(action.apply());}
+        if (depth>1) children.forEach(child->set.addAll(child.evaluate(depth-1)));
+        return set;
     }
-     */ // ? deprecated
+
+    public int compareTo(T other) {return this.fitness()-other.fitness();}
 
     /* todo: find out exactly how iterators interact with 'ConcurrentSkipListSet'
        ? sorts high to low or opposite
@@ -62,6 +77,22 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     public Action<T> nextFittestAction(){return actionIterator.next();}
     public boolean   hasMoreChildren  (){return iterator.hasNext();}
     public        T  nextFittestChild (){return iterator.next();}
+    public abstract  Set<Actionable<T>> getActionables();
+    public TreeSet<Action<T>> actions()
+    {
+        for (Actionable<T> able : getActionables())
+            actions.addAll(able.actions());
+        return actions;
+    }
+
+    /*
+    public TreeSet<T> evaluate()
+    {
+        actions().forEach(action -> children.add(apply(action)));
+        children.remove(parent);
+        return children;
+    }
+     */ // ? deprecated
 
     /*
     public T       nextFittestChild(boolean alternator)

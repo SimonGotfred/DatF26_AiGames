@@ -6,7 +6,7 @@ public class Agent<T extends State<T>>
 {
     private T currentState;
     private final NodeMap<T> memory;
-    public  Agent(Class<T> c){memory = new NodeMap<>(c);}
+    public  Agent(Class<T> c){memory = NodeMap.of(c);}
 
     public T act(T state) {return evaluate(state).apply(state);}
     public State.Action<T> evaluate(T state) // todo: algorithm

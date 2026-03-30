@@ -1,55 +1,61 @@
 package util;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class NodeMap<T extends NodeMap.Node<T>> // todo: testing & cleanup
+public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<T,T> // todo: testing & cleanup
 {
-    static final   HashMap <Class<? extends Node<?>>, ConcurrentSkipListMap<Node<?>,? extends Node<?>>> clients = new HashMap<>();
-    private static boolean register(Class<? extends Node<?>> c){return clients.putIfAbsent(c, new ConcurrentSkipListMap<>())==null;}
+    private static final    HashMap<Class<? extends Node<?>>, NodeMap<?>> clients = new HashMap<>();
+    private static boolean register(Class<? extends Node<?>> c){return clients.putIfAbsent(c, new NodeMap<>())==null;}
+    public static int   size(Class<?> c){return clients.containsKey(c) && clients.get(c) != null ? clients.get(c).size() : -1;}
+    public static void clear(Class<?> c){   if (clients.containsKey(c) && clients.get(c) != null)  clients.get(c).clear();}
+    public static <T extends Node<?>> void output(Class<T> c) {for (Node<?> node : clients.get(c).values()) node.output();}
+    static final String outputPath = "C:/Users/Simon/Documents/Obsidian/testing/"; // Markdown files parsable by Obsidian
 
     // ! Map instead of Set - to facilitate retrieving an *already present* node
     // ! to substitute *equal* nodes that are *not* the same Object in memory
     //   note: reference to "static" Map for class 'T' in static Map 'clients'
     //         should emulate "static" field per type 'T'
-    private final ConcurrentSkipListMap<T,T> map;
-    public    NodeMap(Class<T> c) {register(c); map = map(c);}
-    protected NodeMap()           {map =  map((Class<T>)this.getClass());} // only to be used by subclasses
+//    public  NodeMap(Class<T> c) {register(c); map = map(c);}
+    private NodeMap(){}          // {register((Class<T>)this.getClass()); map = map((Class<T>)this.getClass());} // only to be used by subclasses
 
-    private ConcurrentSkipListMap<T,T> map(Class<T> c) {return (ConcurrentSkipListMap<T,T>) NodeMap.clients.get(c);}
-    public T add   (T node) {T n = map.putIfAbsent(node,node); return n==null ? node : n;}
-    public T remove(T node) {return map.remove(node);}
-    public T get   (T node) {return add(node);}
+    public static  <T extends Node<T>> NodeMap<T> of(Class<T> c) {return (NodeMap<T>)clients.get(c);}
 
-    public abstract static class Node<T extends Node<T>> extends NodeMap<T> implements Comparable<T>
+    public  static <T extends Node<T>> T add   (T node) { T n = (T) of(node.getClass()).putIfAbsent(node, node); return n==null ? node : n;}
+    public  static <T extends Node<T>> T delete(T node) {return (T) of(node.getClass()).remove(node);}
+    public  static <T extends Node<T>> T get   (T node) {return add(node);} //
+
+    public abstract static class Node<T extends Node<T>> implements Comparable<T>
     {
-        protected ConcurrentSkipListSet<T> parents  = new ConcurrentSkipListSet<>();
-        protected ConcurrentSkipListSet<T> children = new ConcurrentSkipListSet<>();
-
-        protected Node() {}
-        protected Node(T parent)
-        {
-            T n = add((T) this);
-            parent.addChild(n);
-            n.addParent(parent);
-        }
+        protected final ConcurrentSkipListSet<T> parents  = new ConcurrentSkipListSet<>();
+        protected final ConcurrentSkipListSet<T> children = new ConcurrentSkipListSet<>();
 
         public int     depth (){return parents.isEmpty() ? 0 : 1+parents.first().depth();}
-        public boolean delete()
+        public T remove()
         {
-            T t = remove((T)this);
+            T t = NodeMap.delete((T)this);
             for (Node<?> parent : parents) {parent.children.remove(this);}
             for (Node<?> child : children) {child.parents.remove(this);}
-            return t != null;
+            return t;
+        }
+        public void clear()
+        {
+            parents.clear();
+            children.clear();
         }
 
-        protected boolean addParent(T parent) {return parents.add(parent);}
-        protected T addChild (T  child)
+        protected boolean removeChild (T child) {return children.remove( child);}
+        protected boolean removeParent(T parent){return parents .remove(parent);}
+        protected boolean addParent   (T parent){return parents.add(parent);}
+        protected       T addChild    (T child)
         {
-            child = add(child);  // substitute for potentially *equal* node that is already in map
+            child = add(child);  // substitute for potentially *equal* node already in map
             child.addParent((T)this);
             children.add(child); // ? check if somehow child is already in children - should be impossible
             return child;        // return child that is *verifiably* in map
@@ -61,7 +67,7 @@ public class NodeMap<T extends NodeMap.Node<T>> // todo: testing & cleanup
             if (this==newRoot) return;
             if (parents.isEmpty())
             {
-                remove((T)this);
+                NodeMap.delete((T)this);
                 for (Node<?> child : children) {child.parents.remove(this);}
                 for (Node<?> child : children) {child.cull(newRoot);}
             }
@@ -70,7 +76,7 @@ public class NodeMap<T extends NodeMap.Node<T>> // todo: testing & cleanup
         {
             if (parents.isEmpty())
             {
-                remove((T)this);
+                NodeMap.delete((T)this);
                 for (Node<?> child : children) {child.parents.remove(this);}
                 for (Node<?> child : children) {child.cull();}
             }
@@ -85,9 +91,32 @@ public class NodeMap<T extends NodeMap.Node<T>> // todo: testing & cleanup
             return legacy;
         }
 
+        public void output()
+        {
+            StringBuilder s = new StringBuilder(this.toString());
+
+//            s.append("\n\nParents: ");
+//            for (Node<?> n : this.parents)
+//            {
+//                s.append(" [[" + n.hashCode() + "]]");
+//            }
+
+            s.append("\n\nChildren: ");
+            for (Node<?> n : this.children)
+            {
+                s.append(" [[" + n.hashCode() + "]]");
+            }
+
+            try
+            {
+                Files.write(Path.of(outputPath + this.hashCode() + ".md"), s.toString().getBytes());
+            }
+            catch (IOException _) {System.out.println("\033[31;1;4moof\033[0m");}
+        }
+
         protected abstract int     hashIdentifier (); // require subclasses define when nodes are equal
         public       final int     hashCode       (){return hashIdentifier();}
-        public       final int     compareTo(T that){return this.hashCode() - that.hashCode();}
+        public             int     compareTo(T that){return this.hashCode() - that.hashCode();}
         public       final boolean equals   (Object that) // override to avoid duplicate nodes in set
         {
             return this==that
