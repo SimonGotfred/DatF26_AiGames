@@ -10,17 +10,19 @@ public enum Type
     {
         Set<char[]> moves = new HashSet<>();
 
-        if (!piece.board.pieceAt(piece.x(), (char)(piece.y()-1)))
+        int d = piece.isWhite() ? -1:1;
+
+        if (!piece.board.pieceAt(piece.x(), (char)(piece.y()+d)))
         {
-            moves.add(new char[]{piece.x(), (char)(piece.y()-1)});
-            if (piece.y() == 6 && !piece.board.pieceAt(piece.x(), (char)(piece.y()-2)))
-                moves.add(new char[]{piece.x(), (char)(piece.y()-2)});
+            moves.add(new char[]{piece.x(), (char)(piece.y()+d)});
+            if (piece.y() == 6 || piece.y() == 1 && !piece.board.pieceAt(piece.x(), (char)(piece.y()+d+d)))
+                moves.add(new char[]{piece.x(), (char)(piece.y()+d+d)});
         }
 
         for (int i : new int[]{-1,1})
         {
-            if (piece.board.blackAt ((char)(piece.x()+i), (char)(piece.y()-1)))
-                moves.add(new char[]{(char)(piece.x()+i), (char)(piece.y()-1)});
+            if (piece.board.at((char)(piece.x()+i), (char)(piece.y()+d))!=' ')
+                moves.add(new char[]{(char)(piece.x()+i), (char)(piece.y()+d)});
         }
 
         return moves.stream();
@@ -77,7 +79,7 @@ public enum Type
         return moves.stream();
     }),
 
-    ROOK  ('♜', 4,(piece) ->
+    ROOK  ('♜', 5,(piece) ->
     {
         List<char[]> moves = new ArrayList<>();
 
@@ -137,7 +139,7 @@ public enum Type
         return moves.stream().filter(pos -> !Arrays.equals(pos, piece.position));
     }), // todo: castling
 
-    VACANT(' ', 100,(piece) -> Stream.empty());
+    VACANT(' ', 0,(piece) -> Stream.empty());
 
     public static final   String white = "♚♛♜♝♞♟";
     public static final   String black = "♔♕♖♗♘♙";
@@ -145,6 +147,26 @@ public enum Type
     public static boolean isPiece(char c) {return c >= '♔' && c <= '♟';}
     public static boolean isWhite(char c) {return c >= '♚' && c <= '♟';}
     public static boolean isBlack(char c) {return c >= '♔' && c <= '♙';}
+
+    public static int value(char c)
+    {
+        return switch (c)
+        {
+            case '♟' ->    1;
+            case '♞',
+                 '♝' ->    3;
+            case '♜' ->    5;
+            case '♛' ->    9;
+            case '♚' ->  100;
+            case '♙' ->   -1;
+            case '♘',
+                 '♗' ->   -3;
+            case '♖' ->   -5;
+            case '♕' ->   -9;
+            case '♔' -> -100;
+            default ->     0;
+        };
+    }
 
     public static Type fromChar(char c)
     {
@@ -160,31 +182,16 @@ public enum Type
         };
     }
 
-    public static char inverted(char piece)
+    public static char invert(char piece)
     {
-        if      (Type.isWhite(piece)) return (char) (piece-6);
-        else if (Type.isBlack(piece)) return (char) (piece+6);
+        if      (Type.isWhite(piece)) return (char)(piece-6);
+        else if (Type.isBlack(piece)) return (char)(piece+6);
         else                          return  ' ';
     }
 
-    public static int value(char c)
+    public static Piece invert(Piece piece)
     {
-        return switch (c)
-        {
-            case '♟' -> 1;
-            case '♞',
-                 '♝' -> 3;
-            case '♜' -> 4;
-            case '♛' -> 9;
-            case '♚' -> 100;
-            case '♙' -> -1;
-            case '♘',
-                 '♗' -> -3;
-            case '♖' -> -4;
-            case '♕' -> -9;
-            case '♔' -> -100;
-            default -> 0;
-        };
+        return new Piece(invert(piece.icon()),piece.board,piece.position);
     }
 
     public  final char icon;

@@ -1,23 +1,37 @@
 package chess;
 
+import agent.State;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Stream;
 
-public class Board implements Comparable<Board>
+public class Board extends State<Board> implements Comparable<Board>
 {
     private final char[][] board;
-    public  final boolean inverted;
 
-    public Board parent;
-    public Set<Board> children;
-
-    public Board(char[][] board, boolean inverted) {this.board = board;this.inverted = inverted;}
-    public Board(char[][] board) {inverted = false; this.board = board;}
+    public Board(char[][] board) {this.board = board;}
     public Board(String[] board)
     {
-        inverted = false;
         this.board = new char[board.length][];
         for (int i = 0; i < board.length; i++) this.board[i] = board[i].toCharArray();
+    }
+    public Board()
+    {
+        this(new String[]
+        {
+            "♖♘♗♕♔♗♘♖",
+            "♙♙♙♙♙♙♙♙",
+            "        ",
+            "        ",
+            "        ",
+            "        ",
+            "♟♟♟♟♟♟♟♟",
+            "♜♞♝♛♚♝♞♜",
+        });
     }
 
     public Piece   getPiece(char... pos) {return new Piece(at(pos), this, (int)pos[1], (int)pos[0]);}
@@ -77,7 +91,7 @@ public class Board implements Comparable<Board>
         return buffer;
     }
 
-    public Board invert() {return new Board(invert(board),!inverted);}
+    public Board invert() {return new Board(invert(board));}
     public static char[][] invert(char[][] board)
     {
         char[][] inverted = new char[8][8];
@@ -97,7 +111,8 @@ public class Board implements Comparable<Board>
 
     public Board move(String move)
     {
-        return new Board(move(move.split(",")[0].trim(), move.split(",")[1].trim()),inverted);
+        Board _new = new Board(move(move.split(",")[0].trim(), move.split(",")[1].trim()));
+        return addChild(_new);
     }
     public char[][] move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
     public char[][] move(char[] from, char[] to)
@@ -109,22 +124,46 @@ public class Board implements Comparable<Board>
         return board;
     }
 
-    public Set<Board> explore() // todo: tactic
+    public Set<Board> explore(){return explore(0);}
+    public Set<Board> explore(int depth) // todo: tactic
     {
-        children = new HashSet<>();
-        HashMap<Stream<char[]>,Piece> legal = legalMoves();
+        try {if (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30<3) return children;}
+        catch (IOException e) {return children;}
+        HashMap<Stream<char[]>,Piece> legal = depth%2!=0 ? whiteMoves() : blackMoves();
+//        HashMap<Board,Piece> boards = new HashMap<>(); // for debugging
         for (Stream<char[]> moveSet : legal.keySet())
         {
-            moveSet.forEach(move -> children.add(new Board(move(move,legal.get(moveSet).position))));
+            moveSet.forEach(move ->  addChild(new Board(move(legal.get(moveSet).position,move))));
+//            {
+//                Board b = new Board(move(legal.get(moveSet).position,move)); // for debugging
+//                addChild(b);
+//                boards.put(b,legal.get(moveSet));
+//            });
         }
-        children.removeIf(b -> b.equals(parent));
-        return children;
+//        for (Board b : boards.keySet()) // for debugging
+//        {
+//            System.out.println(boards.get(b));
+//            System.out.println(b);
+//            System.out.println();
+//        }
+        if (depth < 1) return children;
+        ConcurrentSkipListSet<Board> granChildren = new ConcurrentSkipListSet<>();
+        for (Board child : children) {granChildren.addAll(child.explore(depth-1));}
+        return granChildren;
     }
 
-    public HashMap<Stream<char[]>,Piece> legalMoves()
+    public HashMap<Stream<char[]>,Piece> moves() {return alternator() ? whiteMoves() : blackMoves();}
+    public HashMap<Stream<char[]>,Piece> whiteMoves()
     {
         HashMap<Stream<char[]>,Piece> moves = new HashMap<>();
         whites().forEach(piece -> moves.put(piece.moves(), piece));
+        return moves;
+    }
+
+    public HashMap<Stream<char[]>,Piece> blackMoves()
+    {
+        HashMap<Stream<char[]>,Piece> moves = new HashMap<>();
+        blacks().forEach(piece -> moves.put(piece.moves(), piece));
         return moves;
     }
 
@@ -132,11 +171,12 @@ public class Board implements Comparable<Board>
     public boolean isLegalMove(String from, String to) {return isLegalMove(normalize(from.toCharArray()),normalize(to.toCharArray()));}
     public boolean isLegalMove(char[] from, char[] to)
     {
-        List<char[]> moves = getPiece(from).moves().toList();
+        Piece piece = getPiece(from);
+        List<char[]> moves = piece.moves().toList();
 
-        if (moves.stream().filter(p -> !whiteAt(p)).anyMatch(m -> Arrays.equals(m,to))) return true;
+        if (moves.stream().filter(p -> !getPiece(p).onTeam(piece)).anyMatch(m -> Arrays.equals(m,to))) return true;
         System.out.print("\033[31;1;4mIllegal move: " + letterize(from,to) + " - ");
-        if (moves.stream().anyMatch(m -> Arrays.equals(m,to))) System.out.print("cannot capture own piece.");
+        if (piece.onTeam(getPiece(to))) System.out.print("cannot capture own piece.");
         else System.out.print("no path.");
         System.out.println("\033[0m");
 
@@ -161,16 +201,44 @@ public class Board implements Comparable<Board>
 
     public String letterize(char[] from, char[] to)
     {
-
-        return new Piece(at(from), this, (int)from[1], (int)from[0]).type.name() + ' ' + letterize(from)+" to "+letterize(to);
+        return Type.fromChar(at(from)).name()+' '+letterize(from)+" to "+letterize(to);
     }
 
     public void announceCapture(Piece taker, Piece taken)
     {
-        System.out.println("\033[33;3m" + taker.color() + " " + taker.name() + " captures " + taken.color() + " " + taken.name() + "\033[0m");
+        System.out.println("\033[33;3m" + taker.color() + " " + taker.name() + " captures \t" + taken.color() + " " + taken.name() + "\033[0m");
     }
 
-    public String toString()
+    public String toString() // aligns nicely in Obsidian
+    {
+        StringJoiner joiner = new StringJoiner("");
+        String square = "░";
+        String space  = "     ";
+
+        joiner.add("```\n");
+        joiner.add("       0  1  2  3  4  5  6  7\n");
+
+        for (int i = 0; i < board.length; i++)
+        {
+            joiner.add((board.length-i)+" ");
+            for (int j = 0; j < board[i].length; j++)
+            {
+                if ((i+j) % 2 != 0) square = "░░";
+                else                square = "    ";
+
+                if (Type.isPiece(board[i][j])) joiner.add(space + board[i][j] + space);
+                else joiner.add(square);
+            }
+            joiner.add(" "+i+"\n");
+        }
+
+        joiner.add("       a  b  c  d  e  f  g  h");
+        joiner.add("\n```");
+
+        return joiner.toString();
+    }
+
+    public String toPrint() // aligns nicely in console
     {
         StringJoiner joiner = new StringJoiner("");
         String square = "░";
@@ -185,11 +253,7 @@ public class Board implements Comparable<Board>
                 if ((i+j) % 2 != 0) square = "░░";
                 else                square = "      ";
 
-                if (Type.isPiece(board[i][j]))
-                {
-                    if (!inverted) joiner.add(" " + board[i][j]);
-                    else           joiner.add(" " + Type.inverted(board[i][j]));
-                }
+                if (Type.isPiece(board[i][j])) joiner.add(" " + board[i][j]);
                 else joiner.add(square);
             }
             joiner.add(" "+i+"\n");
@@ -200,13 +264,25 @@ public class Board implements Comparable<Board>
         return joiner.toString();
     }
 
-//    public String toString()
-//    {
-//        StringJoiner joiner = new StringJoiner("\n");
-//        for (char[] s : board) joiner.add(String.valueOf(s));
-//        return joiner.toString();
-//    }
+    public String toSimpleString() // simplified String to use for hashCode
+    {
+        StringJoiner joiner = new StringJoiner("\n");
+        for (char[] s : board) joiner.add(String.valueOf(s));
+        return joiner.toString();
+    }
+
+    @Override protected int hashIdentifier() {return toSimpleString().hashCode();}
+    @Override protected int evaluateFitness() {return score();}
 
     @Override
-    public int compareTo(Board other) {return this.score() - other.score();}
+    public Board apply(Action<Board> action)
+    {
+        return null;
+    }
+
+    @Override
+    public Set<Actionable<Board>> getActionables()
+    {
+        return new HashSet<>(alternator() ? whites() : blacks());
+    }
 }
