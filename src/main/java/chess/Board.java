@@ -2,15 +2,28 @@ package chess;
 
 import agent.State;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Stream;
+
+import static chess.Type.*;
 
 public class Board extends State<Board> implements Comparable<Board>
 {
+    public record Position(Board board, char... position)
+    {
+        public char x() {return dim(0);}
+        public char y() {return dim(1);}
+        public char z() {return dim(2);}
+        public char         at (char[]  pos) {return board.at(pos);}
+        public boolean whiteAt (char... pos) {return board.whiteAt(pos);}
+        public boolean blackAt (char... pos) {return board.blackAt(pos);}
+        public boolean pieceAt (char... pos) {return board.pieceAt(pos);}
+        public int      riskAt (char... pos) {return board. riskAt(pos);}
+        public int      risk   ()            {return board. riskAt(position);}
+
+        public char dim(int i) {try {return position[i];}catch(IndexOutOfBoundsException _){return 0;}}
+    }
+
     private final char[][] board;
 
     public Board(char[][] board) {this.board = board;}
@@ -34,11 +47,12 @@ public class Board extends State<Board> implements Comparable<Board>
         });
     }
 
-    public Piece   getPiece(char... pos) {return new Piece(at(pos), this, (int)pos[1], (int)pos[0]);}
-    public boolean whiteAt (char... pos) {return Type.isWhite(at(pos));}
-    public boolean blackAt (char... pos) {return Type.isBlack(at(pos));}
-    public boolean pieceAt (char... pos) {return Type.isPiece(at(pos));}
-    public char    at      (char... pos)
+    public Position getPosition(char... pos) {return new Position(this,pos);}
+    public Piece    getPiece   (char... pos) {return new Piece(at(pos), this, pos[1], pos[0]);}
+    public boolean  whiteAt    (char... pos) {return Type.isWhite(at(pos));}
+    public boolean  blackAt    (char... pos) {return Type.isBlack(at(pos));}
+    public boolean  pieceAt    (char... pos) {return Type.isPiece(at(pos));}
+    public char     at         (char... pos)
     {
         try   {return board[pos[1]][pos[0]];}
         catch (ArrayIndexOutOfBoundsException _) {return ' ';}
@@ -47,10 +61,10 @@ public class Board extends State<Board> implements Comparable<Board>
     public Set<Piece> whites()
     {
         Set<Piece> whites = new HashSet<>();
-        int rank = 0;
+        char rank = 0;
         for (char[] s : board)
         {
-            int file = 0;
+            char file = 0;
             for (char c : s)
             {
                 if (Type.isWhite(c)) whites.add(new Piece(c, this, rank, file));
@@ -64,10 +78,10 @@ public class Board extends State<Board> implements Comparable<Board>
     public Set<Piece> blacks()
     {
         Set<Piece> blacks = new HashSet<>();
-        int rank = 0;
+        char rank = 0;
         for (char[] s : board)
         {
-            int file = 0;
+            char file = 0;
             for (char c : s)
             {
                 if (Type.isBlack(c)) blacks.add(new Piece(c, this, rank, file));
@@ -115,6 +129,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return addChild(_new);
     }
     public char[][] move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
+    public char[][] move(Position from, char[] to) {return move(from.position(),to);}
     public char[][] move(char[] from, char[] to)
     {
         if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
@@ -124,6 +139,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return board;
     }
 
+    /*
     public Set<Board> explore(){return explore(0);}
     public Set<Board> explore(int depth) // todo: tactic
     {
@@ -151,6 +167,7 @@ public class Board extends State<Board> implements Comparable<Board>
         for (Board child : children) {granChildren.addAll(child.explore(depth-1));}
         return granChildren;
     }
+     */
 
     public HashMap<Stream<char[]>,Piece> moves() {return alternator() ? whiteMoves() : blackMoves();}
     public HashMap<Stream<char[]>,Piece> whiteMoves()
@@ -167,6 +184,30 @@ public class Board extends State<Board> implements Comparable<Board>
         return moves;
     }
 
+    private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
+    public int riskAt(Position position) {return position.risk();}
+    public int riskAt(char...  position)
+    {
+        if (!(position[0] < 8 && position[1] < 8)) return 0; // skip non-pathable positions
+
+        int sum = 0;
+        Position pos = new Position(this,position);
+        for (Type type : simple) // pattern for black/white pieces are mostly identical, so only
+        {                        //  run each pattern once, collecting both corresponding black/white
+            for (char[] p : type.movesFrom(pos).filter(p -> Type.fromChar(at(p)) == type).toList())
+            {
+                sum += Type.value(at(p)); // not just 'type', as *opposing* pieces of same type are also relevant
+            }
+        }
+
+        for (int i : new int[]{-1,1}) // own logic for pawns as they move differently when capturing
+        {
+            if (at((char)(position[0]+i),(char)(position[1]+1)) ==  PAWN.icon  ) sum += 1;
+            if (at((char)(position[0]+i),(char)(position[1]+1)) ==  PAWN.icon-6) sum -= 1;
+        }
+        return sum;
+    }
+
     public boolean isLegalMove(String move) {return move.split(",").length == 2 && isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim());}
     public boolean isLegalMove(String from, String to) {return isLegalMove(normalize(from.toCharArray()),normalize(to.toCharArray()));}
     public boolean isLegalMove(char[] from, char[] to)
@@ -174,9 +215,9 @@ public class Board extends State<Board> implements Comparable<Board>
         Piece piece = getPiece(from);
         List<char[]> moves = piece.moves().toList();
 
-        if (moves.stream().filter(p -> !getPiece(p).onTeam(piece)).anyMatch(m -> Arrays.equals(m,to))) return true;
+        if (moves.stream().filter(p -> !getPiece(p).allyOf(piece)).anyMatch(m -> Arrays.equals(m, to))) return true;
         System.out.print("\033[31;1;4mIllegal move: " + letterize(from,to) + " - ");
-        if (piece.onTeam(getPiece(to))) System.out.print("cannot capture own piece.");
+        if (piece.allyOf(getPiece(to))) System.out.print("cannot capture own piece.");
         else System.out.print("no path.");
         System.out.println("\033[0m");
 

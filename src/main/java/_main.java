@@ -56,7 +56,7 @@ public class _main
     {
         int size = 0;
         LocalDateTime now, then = LocalDateTime.now();
-        try {board.explore(0);}
+        try {board.evaluate(0);}
         catch (OutOfMemoryError e)
         {
             System.out.println("*snap*");
