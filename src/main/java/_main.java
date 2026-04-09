@@ -23,14 +23,14 @@ public class _main
         // todo: Agent<Board> agent = new Agent<>();
 
         Board board = new Board();
-        board.output();
-//        play(board);
+//        board.output();
+        play(board);
 
 //        explore(board,0);
 //        truncate(10);
 //        NodeMap.output(Board.class);
 
-        System.out.println("Space: " + (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30));
+//        System.out.println("Space: " + (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30));
         System.out.println("Goodbye");
     }
 
@@ -40,7 +40,7 @@ public class _main
         String move = "";
         while (!move.equals("x"))
         {
-            System.out.println(board);
+            System.out.println(board.toPrint());
 
             System.out.println("Please enter next move:");
             move = r.readLine();

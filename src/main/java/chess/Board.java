@@ -15,6 +15,9 @@ public class Board extends State<Board> implements Comparable<Board>
         public char y() {return dim(1);}
         public char z() {return dim(2);}
         public char         at (char[]  pos) {return board.at(pos);}
+        public boolean whiteAt () {return board.whiteAt(position);}
+        public boolean blackAt () {return board.blackAt(position);}
+        public boolean pieceAt () {return board.pieceAt(position);}
         public boolean whiteAt (char... pos) {return board.whiteAt(pos);}
         public boolean blackAt (char... pos) {return board.blackAt(pos);}
         public boolean pieceAt (char... pos) {return board.pieceAt(pos);}
@@ -48,7 +51,7 @@ public class Board extends State<Board> implements Comparable<Board>
     }
 
     public Position getPosition(char... pos) {return new Position(this,pos);}
-    public Piece    getPiece   (char... pos) {return new Piece(at(pos), this, pos[1], pos[0]);}
+    public Piece    getPiece   (char... pos) {return new Piece(at(pos), this, pos);}
     public boolean  whiteAt    (char... pos) {return Type.isWhite(at(pos));}
     public boolean  blackAt    (char... pos) {return Type.isBlack(at(pos));}
     public boolean  pieceAt    (char... pos) {return Type.isPiece(at(pos));}

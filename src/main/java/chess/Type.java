@@ -12,7 +12,7 @@ public enum Type
     {
         Set<char[]> moves = new HashSet<>();
 
-        int d = position.board().whiteAt() ? -1:1; // check *alleged* pawn color for move direction
+        int d = position.whiteAt() ? -1:1; // check *alleged* pawn color for move direction
 
         if (!position.board().pieceAt(position.x(), (char)(position.y()+d)))
         {
