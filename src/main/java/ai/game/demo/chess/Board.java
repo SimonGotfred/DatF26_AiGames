@@ -1,15 +1,17 @@
 package ai.game.demo.chess;
 
-import agent.State;
+import ai.game.demo.agent.State;
 
 import java.util.*;
 import java.util.stream.Stream;
-import ai.game.demo.chess.Piece;
 
 import static ai.game.demo.chess.Type.*;
 
 public class Board extends State<Board> implements Comparable<Board>
 {
+    public record Dto(char[][] board){};
+    public Dto toDto() {return new Dto(board);}
+
     public record Position(Board board, char... position)
     {
         public char x() {return dim(0);}

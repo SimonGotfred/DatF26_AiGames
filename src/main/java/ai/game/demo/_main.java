@@ -1,7 +1,8 @@
 package ai.game.demo;
 
 import ai.game.demo.chess.*;
-import util.NodeMap;
+import ai.game.demo.util.*;
+import ai.game.demo.agent.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package util;
+package ai.game.demo.util;
 
 import java.io.IOException;
 import java.nio.file.Files;

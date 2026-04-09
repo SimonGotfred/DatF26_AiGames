@@ -1,6 +1,6 @@
 package ai.game.demo.chess;
 
-import agent.State;
+import ai.game.demo.agent.State;
 
 import java.util.HashSet;
 import java.util.Set;
