@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<T,T> // todo: testing & cleanup
+public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<Integer,T> // todo: testing & cleanup
 {
     private static final HashMap<Class<? extends Node<?>>, NodeMap<?>> clients = new HashMap<>();
 
@@ -17,7 +17,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<T,
     public  static <T extends Node<T>> int         size(Class<T> c){return clients.containsKey(c) && clients.get(c) != null ? clients.get(c).size() : -1;}
     public  static <T extends Node<T>> void       clear(Class<T> c){   if (clients.containsKey(c) && clients.get(c) != null)  clients.get(c).clear();}
 
-    public  static <T extends Node<T>> T add   (T node) { T n = (T) of(node.getClass()).putIfAbsent(node, node); return n==null ? node : n;}
+    public  static <T extends Node<T>> T add   (T node) { T n = (T) of(node.getClass()).putIfAbsent(node.hashCode(), node);return n==null ? node : n;}
     public  static <T extends Node<T>> T delete(T node) {return (T) of(node.getClass()).remove(node);}
     public  static <T extends Node<T>> T get   (T node) {return add(node);}
 
