@@ -24,10 +24,10 @@ public class _main
         // todo: Agent<Board> agent = new Agent<>();
 
         Board board = new Board();
-//        board.output();
+//        table.output();
         play(board);
 
-//        explore(board,0);
+//        explore(table,0);
 //        truncate(10);
 //        NodeMap.output(Board.class);
 
@@ -50,7 +50,7 @@ public class _main
             if (board.isLegalMove(move))
                 board = board.move(move);
 
-            // todo: board = Agent.act(board);
+            // todo: table = Agent.act(table);
         }
     }
 
