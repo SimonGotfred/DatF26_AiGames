@@ -58,6 +58,9 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             children.clear();
         }
 
+        public boolean noChildren(){return children.isEmpty();}
+        public boolean noParents (){return parents .isEmpty();}
+
         protected boolean removeChild (T child) {return children.remove( child);}
         protected boolean removeParent(T parent){return parents .remove(parent);}
         public boolean addParent   (T parent){return parents.add(parent);}
@@ -70,7 +73,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
         }
 
         public void makeRoot() {for (Node<T> node : parents) {node.cull(this);}}
-        public void cull(Node<?> newRoot)
+        private void cull(Node<?> newRoot)
         {
             if (this==newRoot) return;
             if (parents.isEmpty())
@@ -78,15 +81,6 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
                 NodeMap.delete((T)this);
                 for (Node<?> child : children) {child.parents.remove(this);}
                 for (Node<?> child : children) {child.cull(newRoot);}
-            }
-        }
-        public void cull()
-        {
-            if (parents.isEmpty())
-            {
-                NodeMap.delete((T)this);
-                for (Node<?> child : children) {child.parents.remove(this);}
-                for (Node<?> child : children) {child.cull();}
             }
         }
 
