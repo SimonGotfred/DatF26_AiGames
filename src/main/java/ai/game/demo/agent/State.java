@@ -1,6 +1,6 @@
-package agent;
+package ai.game.demo.agent;
 
-import util.NodeMap;
+import ai.game.demo.util.NodeMap;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,7 +28,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     public  final boolean minMax;
     protected     Integer fitness;
     public  final Iterator<T> iterator;
-    public  final TreeSet <Action<T>> actions = new TreeSet<>();
+    public  final Set <Action<T>> actions = new HashSet<>();
     public  final Iterator<Action<T>> actionIterator = actions.iterator();
 
     protected State()              {this.minMax   = false; iterator = children.iterator();}
@@ -54,7 +54,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 
     // note: child is NOT appended - but put sorted by fitness
     public T evaluateNextAction() {return addChild(nextFittestAction().apply());}
-    public TreeSet<Action<T>> evaluateNextChild() {return nextFittestChild().actions();}
+    public Set<Action<T>> evaluateNextChild() {return nextFittestChild().actions();}
     public NavigableSet<T>    evaluate() {return evaluate(0);}
     public NavigableSet<T>    evaluate(int depth) // todo: minMax
     {
@@ -78,7 +78,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     public boolean   hasMoreChildren  (){return iterator.hasNext();}
     public        T  nextFittestChild (){return iterator.next();}
     public abstract  Set<Actionable<T>> getActionables();
-    public TreeSet<Action<T>> actions()
+    public Set<Action<T>> actions()
     {
         for (Actionable<T> able : getActionables())
             actions.addAll(able.actions());

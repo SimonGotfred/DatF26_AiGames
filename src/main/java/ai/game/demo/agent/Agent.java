@@ -1,6 +1,6 @@
-package agent;
+package ai.game.demo.agent;
 
-import util.NodeMap;
+import ai.game.demo.util.NodeMap;
 
 public class Agent<T extends State<T>>
 {

@@ -1,6 +1,6 @@
 package ai.game.demo.chess;
 
-import agent.State;
+import ai.game.demo.agent.State;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -33,7 +33,7 @@ public class Piece extends State.Actionable<Board>
     }
 
     public String name()  {return type.name();}
-    public char   icon()  {return this.color ? type.icon : (char)(type.icon - 6);}
+    public char   icon()  {return this.color ? (char)(type.icon - 6) : type.icon;}
     public String color() {return type.icon == ' ' ? "blank" : this.color ? "black" : "white";}
     public int    value() {return color ? type.value : -type.value;}
 
