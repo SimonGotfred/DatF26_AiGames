@@ -3,20 +3,30 @@ body{
 
 }
 .White{
-    background-color: white;
+    background-color: bisque;
 }
 .Black{
     background-color: darkolivegreen;
 }
-.Space{
+.Cell{
     width: 100px;
     height: 100px;
-    font-size: 40px;
+    font-size: 70px;
+    color: white;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
-.White-.HighLight{
+.Cell-BlackPiece{
+    color: black;
+    text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white;
+}
+.BlackPiece{
+    color: black;
+    text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white;
+}
+.White-HighLight{
     background-color: aqua;
 }
-.Black-.Highlight{
+.Black-Highlight{
     background-color: aqua;
 }
 .Table{

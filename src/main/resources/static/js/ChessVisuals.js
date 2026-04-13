@@ -15,8 +15,11 @@ const startState = [
     ["♟","♟","♟","♟","♟","♟","♟","♟",],
     ["♜","♞","♝","♚","♛","♝","♞","♜"],]
 
+//let dd = String.fromCharCode("♕".charCodeAt(0) + 6)
 let startWhite = false;
 let isWhite = false;
+
+let blackChars = ["♖","♘","♗","♕","♔","♙"]
 
 function MakeBoard(startState){
     startState.map((_row) => {
@@ -28,12 +31,13 @@ function MakeBoard(startState){
             const cell = document.createElement("th")
             row.appendChild(cell)
 
-            const space = document.createElement("div")
-            cell.appendChild(space)
-            cell.className = "Space"
-            space.innerText += _cell ? _cell : ""
+            //const space = document.createElement("div")
+            //cell.appendChild(space)
+            cell.className = "Cell"
+            cell.innerText += _cell ? _cell : ""
+            SetBlackOrWhite(cell)
 
-            space.addEventListener("click", () => clickSpace(space))
+            //space.addEventListener("click", () => clickSpace(space))
 
             if(startWhite && isWhite || !startWhite && !isWhite)
                 cell.className += " White"
@@ -53,8 +57,18 @@ function ChangeBoard(state){
     for(let i = 0; i < state.length; i++){
         for(let k = 0; k < state[i].length; k++){
             board[i][k].innerText = state[i][k]
+            SetBlackOrWhite(board[i][k])
         }
     }
+}
+function SetBlackOrWhite(cell){
+    cell.className.replace("BlackPiece", "")
+    blackChars.map((char) => {
+        if(cell.innerText === char){
+            cell.innerText = String.fromCharCode(char.charCodeAt(0) + 6)
+            cell.className += " BlackPiece"
+        }
+    })
 }
 
 function HighlightSquare(row, cell){
