@@ -4,7 +4,6 @@ import ai.game.demo.agent.State;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static ai.game.demo.chess.Type.*;
 
@@ -56,7 +55,8 @@ public class Board extends State<Board> implements Comparable<Board>
         });
     }
 
-    public Position getPosition(char... pos) {return new Position(this,pos);}
+    public char[][] raw() {return Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);}
+    public Position getPosition(char... pos) {return new Position(this, pos);}
     public Piece    getPiece   (char... pos) {return new Piece(at(pos), this, pos);}
     public boolean  whiteAt    (char... pos) {return Type.isWhite(at(pos));}
     public boolean  blackAt    (char... pos) {return Type.isBlack(at(pos));}
@@ -74,9 +74,9 @@ public class Board extends State<Board> implements Comparable<Board>
     }
     protected char  set        (Piece piece, char...pos) {return set(piece.icon(),pos);}
 
-    public Set<Piece> whites(){return pieces(Type::isWhite);}
-    public Set<Piece> blacks(){return pieces(Type::isBlack);}
-    public Set<Piece> pieces(){return pieces(Type::isPiece);}
+    public  Set<Piece> whites(){return pieces(Type::isWhite);}
+    public  Set<Piece> blacks(){return pieces(Type::isBlack);}
+    public  Set<Piece> pieces(){return pieces(Type::isPiece);}
     private Set<Piece> pieces(Predicate<Character> condition)
     {
         Set<Piece> pieces = new HashSet<>();
@@ -181,6 +181,7 @@ public class Board extends State<Board> implements Comparable<Board>
     }
      */ // deprecated
 
+    /*
     public HashMap<Stream<char[]>,Piece> moves() {return alternator() ? whiteMoves() : blackMoves();}
     public HashMap<Stream<char[]>,Piece> whiteMoves()
     {
@@ -195,6 +196,8 @@ public class Board extends State<Board> implements Comparable<Board>
         blacks().forEach(piece -> moves.put(piece.moves(), piece));
         return moves;
     }
+
+     */ // deprecated
 
     private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
     public int riskAt(Position position) {return position.risk();}
