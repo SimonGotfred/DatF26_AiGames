@@ -26,7 +26,7 @@ public class Piece extends State.Actionable<Board>
         this.color = type < '♚';
         this.type  = Type.fromChar(type);
     }
-//    public Piece(char type, Board board, int... pos) {this(type, new Position(board, pos));}
+//    public Piece(char type, Board table, int... pos) {this(type, new Position(table, pos));}
     public Piece(char type, Board board, char... pos)
     {
         this(type, new Position(board, pos));
