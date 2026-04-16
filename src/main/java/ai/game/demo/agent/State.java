@@ -25,17 +25,12 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         public abstract Set<Action<T>> actions();
     }
 
-    public  final boolean minMax;
     protected     Integer fitness;
     public  final Iterator<T> iterator;
     public  final Set <Action<T>> actions = new HashSet<>();
     public  final Iterator<Action<T>> actionIterator = actions.iterator();
 
-    protected State()              {this.minMax   = false; iterator = children.iterator();}
-    protected State(boolean minMax){this.minMax   = minMax;
-                                    this.iterator = this.minMax                     // children can be iterated in reverse as
-                                                  ? children.iterator()             // estimation for a "countering" action
-                                                  : children.descendingIterator();} //
+    protected State(){this.iterator = children.iterator();} // children.descendingIterator()
 
     protected boolean alternator()          {return depth()%2 == 0;} // useful for determining whether min-/max-ing
     protected int     alternator(int cycles){return depth()%cycles;}
@@ -55,12 +50,12 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     // note: child is NOT appended - but put sorted by fitness
     public T evaluateNextAction() {return addChild(nextFittestAction().apply());}
     public Set<Action<T>> evaluateNextChild() {return nextFittestChild().actions();}
-    public NavigableSet<T>    evaluate() {return evaluate(0);}
-    public NavigableSet<T>    evaluate(int depth) // todo: minMax
+    public Set<T>    evaluate() {return evaluate(0);}
+    public Set<T>    evaluate(int depth) // todo: minMax
     {
         try {if (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30<1+memSafety) throw new OutOfMemoryError();} // stop when usable memory has decreased below safety limit
         catch (IOException e) {return children;}
-        NavigableSet<T> set = depth>1 ? new TreeSet<>() : children;
+        Set<T> set = depth>1 ? new HashSet<>() : children;
         for (Action<T> action : actions()) {addChild(action.apply());}
         if (depth>1) children.forEach(child->set.addAll(child.evaluate(depth-1)));
         return set;

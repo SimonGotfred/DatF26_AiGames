@@ -3,11 +3,9 @@ package ai.game.demo.util;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<Integer,T> // todo: testing & cleanup
 {
@@ -30,7 +28,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
     }
 
     public  static <T extends Node<T>> void output(Class<T> c){for (Node<?> node : clients.get(c).values()) node.output();}
-    static  final String outputPath = "C:/Users/Simon/Documents/Obsidian/testing/"; // Markdown files parsable by Obsidian
+    static  final String outputPath = "C:/Users/Simon/Documents/Obsidian/Games/"; // Markdown files parsable by Obsidian
 
     // ! Map instead of Set - to facilitate retrieving an *already present* node
     // ! to substitute *equal* nodes that are *not* the same Object in memory
@@ -41,10 +39,10 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
 
     public abstract static class Node<T extends Node<T>> implements Comparable<T>
     {
-        protected final ConcurrentSkipListSet<T> parents  = new ConcurrentSkipListSet<>();
-        protected final ConcurrentSkipListSet<T> children = new ConcurrentSkipListSet<>();
+        protected final LinkedHashSet<T> parents  = new LinkedHashSet<>();
+        protected final LinkedHashSet<T> children = new LinkedHashSet<>();
 
-        public int     depth (){return parents.isEmpty() ? 0 : 1+parents.first().depth();}
+        public int     depth (){return parents.isEmpty() ? 0 : 1+parents.getFirst().depth();}
         public T remove()
         {
             T t = NodeMap.delete((T)this);
@@ -84,11 +82,11 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             }
         }
 
-        public ConcurrentSkipListSet<T> siblings() {return parents.isEmpty() ? new ConcurrentSkipListSet<>() : parents.first().children;}
-        public T furthestAncestor() {return parents.isEmpty() ? (T)this : parents.first().parents.first() == null ? (T)this : parents.first().furthestAncestor();}
+        public Set<T> siblings() {return parents.isEmpty() ? new HashSet<>() : parents.getFirst().children;}
+        public T furthestAncestor() {return parents.isEmpty() ? (T)this : parents.getFirst().parents.getFirst() == null ? (T)this : parents.getFirst().furthestAncestor();}
         public List<T> legacy()
         {
-            List<T> legacy = parents.isEmpty() ? new ArrayList<>() : parents.first().legacy();
+            List<T> legacy = parents.isEmpty() ? new ArrayList<>() : parents.getFirst().legacy();
             legacy.add((T)this); // 'this' will be 'T' or a subclass thereof, due to type bound
             return legacy;
         }

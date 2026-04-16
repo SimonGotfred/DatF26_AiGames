@@ -7,8 +7,6 @@ import ai.game.demo.agent.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -25,10 +23,10 @@ public class _main
         // todo: Agent<Board> agent = new Agent<>();
 
         Board board = new Board();
-//        table.output();
-        play(board);
+        board.output();
+//        play(board);
 
-//        explore(table,0);
+        explore(board,0);
 //        truncate(10);
 //        NodeMap.output(Board.class);
 
@@ -51,7 +49,7 @@ public class _main
             if (board.isLegalMove(move))
                 board = board.move(move);
 
-            // todo: table = Agent.act(table);
+            // todo: board = Agent.act(board);
         }
     }
 
