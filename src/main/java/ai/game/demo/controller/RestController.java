@@ -26,9 +26,9 @@ public class RestController
     }
 
     @GetMapping
-    public ResponseEntity<List<char[]>> moves(@RequestParam String position, HttpServletRequest request)
+    public ResponseEntity<List<char[]>> moves(@RequestParam char[] position, HttpServletRequest request)
     {
-        List<char[]> moves = getAgent(request).getCurrentState().getPiece().moves().toList();
+        List<char[]> moves = getAgent(request).getCurrentState().getPiece(position).moves().toList();
         return ResponseEntity.ok(moves);
     }
 
