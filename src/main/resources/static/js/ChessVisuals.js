@@ -31,18 +31,26 @@ function MakeBoard(startState){
             const cell = document.createElement("th")
             row.appendChild(cell)
 
-            //const space = document.createElement("div")
-            //cell.appendChild(space)
-            cell.className = "Cell"
-            cell.innerText += _cell ? _cell : ""
-            SetBlackOrWhite(cell)
+            const piece = document.createElement("div")
+            cell.appendChild(piece)
+            piece.innerText = ""
+            cell.piece = piece;
+
+            piece.className = "Piece"
+            piece.innerText += _cell ? _cell : ""
+            SetBlackOrWhite(piece)
+
+            cell.addEventListener("click",() => pressCell(cell))
+
+            console.log(board.length -1 + cell.piece.innerText)
+
 
             //space.addEventListener("click", () => clickSpace(space))
 
             if(startWhite && isWhite || !startWhite && !isWhite)
-                cell.className += " White"
+                cell.className += " WhiteSpace"
             else{
-                cell.className += " Black"
+                cell.className += " BlackSpace"
             }
 
             isWhite = !isWhite
@@ -56,17 +64,17 @@ function MakeBoard(startState){
 function ChangeBoard(state){
     for(let i = 0; i < state.length; i++){
         for(let k = 0; k < state[i].length; k++){
-            board[i][k].innerText = state[i][k]
-            SetBlackOrWhite(board[i][k])
+            board[i][k].piece.innerText = state[i][k]
+            SetBlackOrWhite(board[i][k].piece)
         }
     }
 }
-function SetBlackOrWhite(cell){
-    cell.className.replace("BlackPiece", "")
+function SetBlackOrWhite(piece){
+    piece.className.replace("BlackPiece", "")
     blackChars.map((char) => {
-        if(cell.innerText === char){
-            cell.innerText = String.fromCharCode(char.charCodeAt(0) + 6)
-            cell.className += " BlackPiece"
+        if(piece.innerText === char){
+            piece.innerText = String.fromCharCode(char.charCodeAt(0) + 6)
+            piece.className += " BlackPiece"
         }
     })
 }
@@ -76,6 +84,10 @@ function HighlightSquare(row, cell){
 }
 function RemoveHiglight(row, cell){
     board[row][cell].className.replace("Highlight", "")
+}
+
+function pressCell(cell){
+    console.log("pressed cell")
 }
 
 MakeBoard(startState)
@@ -91,5 +103,5 @@ const testState = [
 ChangeBoard(testState)
 console.log(board)
 
-HighlightSquare(2,3)
-HighlightSquare(4,7)
+HighlightSquare(3,4)
+HighlightSquare(4,6)
