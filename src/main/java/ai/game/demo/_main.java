@@ -14,19 +14,20 @@ import java.time.format.DateTimeFormatter;
 
 public class _main
 {
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args) throws IOException, InterruptedException
     {
         // just printing values of chars for debug reference
 //        for (char c:Type.black.toCharArray()) {System.out.println(c + ": " + ((int)c));}
 //        for (char c:Type.white.toCharArray()) {System.out.println(c + ": " + ((int)c));}
 
-        // todo: Agent<Board> agent = new Agent<>();
-
         Board board = new Board();
-        board.output();
+//        board.output();
 //        play(board);
+        board = board.minMax(2);
+        System.out.println(board.toPrint());
+        System.out.println(NodeMap.size(Board.class));
 
-        explore(board,0);
+//        explore(board,0);
 //        truncate(10);
 //        NodeMap.output(Board.class);
 

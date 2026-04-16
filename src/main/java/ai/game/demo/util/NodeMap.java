@@ -83,7 +83,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
         }
 
         public Set<T> siblings() {return parents.isEmpty() ? new HashSet<>() : parents.getFirst().children;}
-        public T furthestAncestor() {return parents.isEmpty() ? (T)this : parents.getFirst().parents.getFirst() == null ? (T)this : parents.getFirst().furthestAncestor();}
+        public T furthestAncestor() {return parents.isEmpty() ? (T)this : parents.getFirst().parents.isEmpty() ? (T)this : parents.getFirst().furthestAncestor();}
         public List<T> legacy()
         {
             List<T> legacy = parents.isEmpty() ? new ArrayList<>() : parents.getFirst().legacy();

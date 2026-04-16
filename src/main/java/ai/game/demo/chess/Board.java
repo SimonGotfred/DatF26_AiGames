@@ -331,8 +331,8 @@ public class Board extends State<Board> implements Comparable<Board>
     @Override protected int evaluateFitness() {return score();}
 
     @Override
-    public Set<Actionable<Board>> getActionables()
+    public Set<Actionable<Board>> getActionables(boolean whiteTurn)
     {
-        return new HashSet<>(alternator() ? whites() : blacks());
+        return new HashSet<>(whiteTurn ? whites() : blacks());
     }
 }

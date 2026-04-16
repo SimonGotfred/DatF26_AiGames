@@ -46,7 +46,7 @@ public class Piece extends State.Actionable<Board>
     public Stream<char[]> moves() {return this.type.movesFrom(position).filter(pos-> !allyOf(position.board().getPiece(pos)));}
 
     public int compareTo(Piece other) {return this.value() - other.value();}
-    public String toString() {return icon() + position();}
+    public String toString() {return color() + icon() + position();}
 
     @Override
     public Set<State.Action<Board>> actions()
