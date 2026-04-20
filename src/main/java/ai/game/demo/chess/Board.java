@@ -136,13 +136,6 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         Board _new = new Board(move(move.split(",")[0].trim(), move.split(",")[1].trim()));
 
-//        System.out.println("test");
-//        System.out.println(this.hashCode() + " / " + this.hashIdentifier());
-//        System.out.println(this.toPrint());
-//        System.out.println(_new.hashCode() + " / " + _new.hashIdentifier());
-//        System.out.println(_new.toPrint());
-//        System.out.println("test");
-
         return addChild(_new);
     }
     public char[][] move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
@@ -155,54 +148,6 @@ public class Board extends State<Board> implements Comparable<Board>
         board[from[1]][from[0]] = ' ';
         return board;
     }
-
-    /*
-    public Set<Board> explore(){return explore(0);}
-    public Set<Board> explore(int depth) // todo: tactic
-    {
-        try {if (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30<3) return children;}
-        catch (IOException e) {return children;}
-        HashMap<Stream<char[]>,Piece> legal = depth%2!=0 ? whiteMoves() : blackMoves();
-//        HashMap<Board,Piece> boards = new HashMap<>(); // for debugging
-        for (Stream<char[]> moveSet : legal.keySet())
-        {
-            moveSet.forEach(move ->  addChild(new Board(move(legal.get(moveSet).position,move))));
-//            {
-//                Board b = new Board(move(legal.get(moveSet).position,move)); // for debugging
-//                addChild(b);
-//                boards.put(b,legal.get(moveSet));
-//            });
-        }
-//        for (Board b : boards.keySet()) // for debugging
-//        {
-//            System.out.println(boards.get(b));
-//            System.out.println(b);
-//            System.out.println();
-//        }
-        if (depth < 1) return children;
-        ConcurrentSkipListSet<Board> granChildren = new ConcurrentSkipListSet<>();
-        for (Board child : children) {granChildren.addAll(child.explore(depth-1));}
-        return granChildren;
-    }
-     */ // deprecated
-
-    /*
-    public HashMap<Stream<char[]>,Piece> moves() {return alternator() ? whiteMoves() : blackMoves();}
-    public HashMap<Stream<char[]>,Piece> whiteMoves()
-    {
-        HashMap<Stream<char[]>,Piece> moves = new HashMap<>();
-        whites().forEach(piece -> moves.put(piece.moves(), piece));
-        return moves;
-    }
-
-    public HashMap<Stream<char[]>,Piece> blackMoves()
-    {
-        HashMap<Stream<char[]>,Piece> moves = new HashMap<>();
-        blacks().forEach(piece -> moves.put(piece.moves(), piece));
-        return moves;
-    }
-
-     */ // deprecated
 
     private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
     public int riskAt(Position position) {return position.risk();}

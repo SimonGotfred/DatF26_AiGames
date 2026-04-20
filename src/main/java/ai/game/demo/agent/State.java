@@ -153,28 +153,6 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         return actions;
     }
 
-    /*
-    public TreeSet<T> evaluate()
-    {
-        actions().forEach(action -> children.add(apply(action)));
-        children.remove(parent);
-        return children;
-    }
-     */ // ? deprecated
-
-    /*
-    public T       nextFittestChild(boolean alternator)
-    {
-        return alternator ? children.removeFirst() : children.removeLast();
-    }
-    public T       nextFittestChild(Comparator<T> comparator)
-    {
-        T next = children.stream().max(comparator).orElseThrow();
-        children.remove(next);
-        return next;
-    }
-     */ // ? irrelevant
-
     public T max(T t) {return fitness()>t.fitness() ? (T)this : t;}
     public T min(T t) {return fitness()<t.fitness() ? (T)this : t;}
 }
