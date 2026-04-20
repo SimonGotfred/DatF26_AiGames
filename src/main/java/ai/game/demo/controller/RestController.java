@@ -36,7 +36,7 @@ public class RestController
     public ResponseEntity<char[][]> move(@RequestParam String move, HttpServletRequest request)
     {
         Agent<Board> agent = getAgent(request);
-        agent.updateState(agent.getCurrentState().move(move));
+        agent.updateState(agent.getCurrentState().move(move).doBlack());
         return ResponseEntity.accepted().build();
     }
 }

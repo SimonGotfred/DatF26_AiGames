@@ -21,17 +21,19 @@ public class _main
 //        for (char c:Type.white.toCharArray()) {System.out.println(c + ": " + ((int)c));}
 
         Board board = new Board();
+        NodeMap.add(board);
 //        board.output();
-//        play(board);
-        board = board.minMax(2);
-        System.out.println(board.toPrint());
-        System.out.println(NodeMap.size(Board.class));
+//        board = board.minMax(2);
+//        System.out.println(board.toPrint());
+
+        play(board);
 
 //        explore(board,0);
+//        System.out.println(NodeMap.size(Board.class));
 //        truncate(10);
 //        NodeMap.output(Board.class);
-
 //        System.out.println("Space: " + (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30));
+
         System.out.println("Goodbye");
     }
 
@@ -49,6 +51,15 @@ public class _main
             System.out.println();
             if (board.isLegalMove(move))
                 board = board.move(move);
+
+            board.makeRoot();
+
+            System.out.println(board.toPrint());
+            System.out.println("\nruminating...\n");
+//            board = board.doWhite();
+            board = board.doBlack();
+
+            board.makeRoot();
 
             // todo: board = Agent.act(board);
         }

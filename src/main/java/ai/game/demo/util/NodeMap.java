@@ -16,7 +16,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
     public  static <T extends Node<T>> void       clear(Class<T> c){   if (clients.containsKey(c) && clients.get(c) != null)  clients.get(c).clear();}
 
     public  static <T extends Node<T>> T add   (T node) { T n = (T) of(node.getClass()).putIfAbsent(node.hashCode(), node);return n==null ? node : n;}
-    public  static <T extends Node<T>> T delete(T node) {return (T) of(node.getClass()).remove(node);}
+    public  static <T extends Node<T>> T delete(T node) {return (T) of(node.getClass()).remove(node.hashCode());}
     public  static <T extends Node<T>> T get   (T node) {return add(node);}
 
     // ! somewhat breaks for subclasses of *T* - as they will map to their own NodeMap
@@ -70,7 +70,13 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             return child;        // return child that is *verifiably* in map
         }
 
-        public void makeRoot() {for (Node<T> node : parents) {node.cull(this);}}
+        public void makeRoot()
+        {
+            for (Node<T> node : parents)
+            {
+                node.cull(this);
+            }
+        }
         private void cull(Node<?> newRoot)
         {
             if (this==newRoot) return;
@@ -83,7 +89,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
         }
 
         public Set<T> siblings() {return parents.isEmpty() ? new HashSet<>() : parents.getFirst().children;}
-        public T furthestAncestor() {return parents.isEmpty() ? (T)this : parents.getFirst().parents.isEmpty() ? (T)this : parents.getFirst().furthestAncestor();}
+        public T furthestAncestor() {return parents.isEmpty() || parents.getFirst().parents.isEmpty() ? (T)this : parents.getFirst().furthestAncestor();}
         public List<T> legacy()
         {
             List<T> legacy = parents.isEmpty() ? new ArrayList<>() : parents.getFirst().legacy();

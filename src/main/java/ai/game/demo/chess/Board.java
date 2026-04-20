@@ -74,6 +74,11 @@ public class Board extends State<Board> implements Comparable<Board>
     }
     protected char  set        (Piece piece, char...pos) {return set(piece.icon(),pos);}
 
+    public Board doWhite(int depth){return this.minMax(true ,depth).furthestAncestor();}
+    public Board doBlack(int depth){return this.minMax(false,depth).furthestAncestor();}
+    public Board doWhite(){return this.minMax(true ).furthestAncestor();}
+    public Board doBlack(){return this.minMax(false).furthestAncestor();}
+
     public  Set<Piece> whites(){return pieces(Type::isWhite);}
     public  Set<Piece> blacks(){return pieces(Type::isBlack);}
     public  Set<Piece> pieces(){return pieces(Type::isPiece);}
@@ -262,7 +267,8 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public void announceCapture(Piece taker, Piece taken)
     {
-        System.out.println("\033[33;3m" + taker.color() + " " + taker.name() + " \tcaptures " + taken.color() + " " + taken.name() + "\033[0m");
+        //System.out.println("\033[33;3m" + taker.color() + " " + taker.name() + " \tcaptures " + taken.color() + " "
+        // + taken.name() + "\033[0m");
     }
 
     public String toString() // aligns nicely in Obsidian

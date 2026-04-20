@@ -19,7 +19,7 @@ public class Agent<T extends State<T>> extends PausableThread
 
     @Getter private T currentState;
     private final NodeMap<T> memory;
-    private final ConcurrentSkipListSet<T> backlog = new ConcurrentSkipListSet<>(Comparator.comparingInt(ai.game.demo.agent.State::minMax));
+    private final ConcurrentSkipListSet<T> backlog = new ConcurrentSkipListSet<>(Comparator.comparingInt(ai.game.demo.agent.State::fitness));
 
     public Agent(Class<T> c) throws IOException {memory = NodeMap.of(c);}
     public Agent(T initialState) throws IOException

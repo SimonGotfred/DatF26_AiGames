@@ -5,15 +5,20 @@ import ai.game.demo.util.NodeMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 
 public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 {
+    private static LocalDateTime timeStart = LocalDateTime.MAX;
+    private static int timeLimit=10000;
     public  static final char  memSafety = 2; // safety limit (GB) to stop if usable memory subceeds
     private static final State MIN_STATE = sus(Integer.MIN_VALUE);
     private static final State MAX_STATE = sus(Integer.MAX_VALUE);
 
+    private static void setTimeLimit(int sec) {if (sec<0) return; timeLimit=sec*1000;}
     private static State sus(int fitness)
     {
         return new State(fitness)
@@ -23,6 +28,13 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
             @Override protected int hashIdentifier() {return 0;}
             @Override public int compareTo(Object o) {return 0;}
         };
+    }
+
+    private static boolean atLimit()
+    {
+        try {return Files.getFileStore(Path.of("C:")).getUsableSpace()>>30<1+memSafety // stop when usable memory has decreased below safety limit
+                 || timeStart.until(LocalDateTime.now(), ChronoUnit.MILLIS)>timeLimit;}
+        catch (IOException e) {return true;}
     }
 
     // require subclasses define their own applicable 'Actions'
@@ -55,32 +67,35 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     public    final    int fitness(){return fitness == null ? fitness = evaluateFitness() : fitness;}
     public    final    T   fittestChild()
     {
-        return children.stream().max(Comparator.comparingInt(State::minMax)).orElse((T)this);
+        return children.stream().max(Comparator.comparingInt(State::fitness)).orElse((T)this);
     }
 
     // own fitness is ignored in preference of best/worst fitness the state *could* lead to
     public final int min   (){return children.isEmpty() ? fitness() : children.getFirst().min();}
     public final int max   (){return children.isEmpty() ? fitness() : children.getLast ().max();}
-    public final int minMax(){return children.isEmpty() ? fitness() : alternator()
-                                   ? children.getFirst().minMax()
-                                   : children.getLast() .minMax()   ;}
+//    public final int minMax(){return children.isEmpty() ? fitness() : alternator()
+//                                   ? children.getFirst().minMax()
+//                                   : children.getLast() .minMax()   ;}
 
-    public final T minMax(int depth){return minMax((T[])new State[]{MIN_STATE, MAX_STATE}, false, depth).furthestAncestor();}
-    public final T minMax(T[] ab, boolean minMax, int depth)
+    public    final T minMax(boolean minMax){timeStart=LocalDateTime.now(); return minMax(minMax, 3);}
+    public    final T minMax(int depth){return minMax(false, depth);}
+    protected final T minMax(boolean minMax, int depth){return minMax((T[])new State[]{MIN_STATE, MAX_STATE}, minMax, depth);}
+    protected final T minMax(T[] ab, boolean minMax, int depth)
     {
         depth--;
         if (!children.isEmpty()) return (minMax ? children.getFirst() : children.getLast()).minMax(ab,minMax,depth); // skip calculations if already done // todo: ensure children sorted & account for minMax state
-        return depth < 0 ? (T)this : minMax ? min(ab, depth) : max(ab, depth);
+        return depth < 0 || atLimit() ? (T)this : minMax ? min(ab, depth) : max(ab, depth);
     }
 
     private T min(T[]ab,int depth)
     {
         T eval = (T)MAX_STATE;
-        for (Actionable<T> actionable : getActionables(false))
+        for (Actionable<T> actionable : getActionables(true))
         {
             for (Action<T> action : actionable.actions())
             {
-                eval = eval.min(action.apply().minMax(ab,false,depth)); // 'apply' returns *already existing* State, if present
+                eval = eval.min(action.apply().minMax(ab,false,depth)); // 'apply' returns *already existing* State, if
+                // present
                 ab[0] = ab[0].min(eval);
                 if (ab[0].fitness()>=ab[1].fitness()) return eval;
             }
@@ -91,7 +106,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     private T max(T[]ab,int depth)
     {
         T eval = (T)MIN_STATE;
-        for (Actionable<T> actionable : getActionables(true))
+        for (Actionable<T> actionable : getActionables(false))
         {
             for (Action<T> action : actionable.actions())
             {
