@@ -1,0 +1,33 @@
+body{
+    background-color: #302E2B;
+
+}
+.WhiteSpace{
+    background-color: beige;
+}
+.BlackSpace{
+    background-color: #739552;
+}
+.Piece{
+    width: 100px;
+    height: 100px;
+    font-size: 70px;
+
+    color: white;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+.Piece.BlackPiece{
+    color: black;
+    text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white;
+}
+.WhiteSpace.Highlight{
+    background-color: yellowgreen;
+}
+.BlackSpace.Highlight{
+    background-color: yellowgreen;
+}
+.Table{
+    border-spacing: 0px;
+    margin-left: auto;
+    margin-right: auto;
+}

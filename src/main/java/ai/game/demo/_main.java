@@ -7,8 +7,6 @@ import ai.game.demo.agent.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -16,23 +14,26 @@ import java.time.format.DateTimeFormatter;
 
 public class _main
 {
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args) throws IOException, InterruptedException
     {
         // just printing values of chars for debug reference
 //        for (char c:Type.black.toCharArray()) {System.out.println(c + ": " + ((int)c));}
 //        for (char c:Type.white.toCharArray()) {System.out.println(c + ": " + ((int)c));}
 
-        // todo: Agent<Board> agent = new Agent<>();
-
         Board board = new Board();
-//        table.output();
+        NodeMap.add(board);
+//        board.output();
+//        board = board.minMax(2);
+//        System.out.println(board.toPrint());
+
         play(board);
 
-//        explore(table,0);
+//        explore(board,0);
+//        System.out.println(NodeMap.size(Board.class));
 //        truncate(10);
 //        NodeMap.output(Board.class);
-
 //        System.out.println("Space: " + (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30));
+
         System.out.println("Goodbye");
     }
 
@@ -51,7 +52,16 @@ public class _main
             if (board.isLegalMove(move))
                 board = board.move(move);
 
-            // todo: table = Agent.act(table);
+            board.makeRoot();
+
+            System.out.println(board.toPrint());
+            System.out.println("\nruminating...\n");
+//            board = board.doWhite();
+            board = board.doBlack();
+
+            board.makeRoot();
+
+            // todo: board = Agent.act(board);
         }
     }
 

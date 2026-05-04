@@ -4,7 +4,6 @@ import ai.game.demo.agent.State;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static ai.game.demo.chess.Type.*;
 
@@ -56,7 +55,8 @@ public class Board extends State<Board> implements Comparable<Board>
         });
     }
 
-    public Position getPosition(char... pos) {return new Position(this,pos);}
+    public char[][] raw() {return Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);}
+    public Position getPosition(char... pos) {return new Position(this, pos);}
     public Piece    getPiece   (char... pos) {return new Piece(at(pos), this, pos);}
     public boolean  whiteAt    (char... pos) {return Type.isWhite(at(pos));}
     public boolean  blackAt    (char... pos) {return Type.isBlack(at(pos));}
@@ -74,9 +74,14 @@ public class Board extends State<Board> implements Comparable<Board>
     }
     protected char  set        (Piece piece, char...pos) {return set(piece.icon(),pos);}
 
-    public Set<Piece> whites(){return pieces(Type::isWhite);}
-    public Set<Piece> blacks(){return pieces(Type::isBlack);}
-    public Set<Piece> pieces(){return pieces(Type::isPiece);}
+    public Board doWhite(int depth){return this.minMax(true ,depth).furthestAncestor();}
+    public Board doBlack(int depth){return this.minMax(false,depth).furthestAncestor();}
+    public Board doWhite(){return this.minMax(true ).furthestAncestor();}
+    public Board doBlack(){return this.minMax(false).furthestAncestor();}
+
+    public  Set<Piece> whites(){return pieces(Type::isWhite);}
+    public  Set<Piece> blacks(){return pieces(Type::isBlack);}
+    public  Set<Piece> pieces(){return pieces(Type::isPiece);}
     private Set<Piece> pieces(Predicate<Character> condition)
     {
         Set<Piece> pieces = new HashSet<>();
@@ -131,13 +136,6 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         Board _new = new Board(move(move.split(",")[0].trim(), move.split(",")[1].trim()));
 
-//        System.out.println("test");
-//        System.out.println(this.hashCode() + " / " + this.hashIdentifier());
-//        System.out.println(this.toPrint());
-//        System.out.println(_new.hashCode() + " / " + _new.hashIdentifier());
-//        System.out.println(_new.toPrint());
-//        System.out.println("test");
-
         return addChild(_new);
     }
     public char[][] move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
@@ -149,51 +147,6 @@ public class Board extends State<Board> implements Comparable<Board>
         board[to[1]][to[0]] = board[from[1]][from[0]];
         board[from[1]][from[0]] = ' ';
         return board;
-    }
-
-    /*
-    public Set<Board> explore(){return explore(0);}
-    public Set<Board> explore(int depth) // todo: tactic
-    {
-        try {if (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30<3) return children;}
-        catch (IOException e) {return children;}
-        HashMap<Stream<char[]>,Piece> legal = depth%2!=0 ? whiteMoves() : blackMoves();
-//        HashMap<Board,Piece> boards = new HashMap<>(); // for debugging
-        for (Stream<char[]> moveSet : legal.keySet())
-        {
-            moveSet.forEach(move ->  addChild(new Board(move(legal.get(moveSet).position,move))));
-//            {
-//                Board b = new Board(move(legal.get(moveSet).position,move)); // for debugging
-//                addChild(b);
-//                boards.put(b,legal.get(moveSet));
-//            });
-        }
-//        for (Board b : boards.keySet()) // for debugging
-//        {
-//            System.out.println(boards.get(b));
-//            System.out.println(b);
-//            System.out.println();
-//        }
-        if (depth < 1) return children;
-        ConcurrentSkipListSet<Board> granChildren = new ConcurrentSkipListSet<>();
-        for (Board child : children) {granChildren.addAll(child.explore(depth-1));}
-        return granChildren;
-    }
-     */ // deprecated
-
-    public HashMap<Stream<char[]>,Piece> moves() {return alternator() ? whiteMoves() : blackMoves();}
-    public HashMap<Stream<char[]>,Piece> whiteMoves()
-    {
-        HashMap<Stream<char[]>,Piece> moves = new HashMap<>();
-        whites().forEach(piece -> moves.put(piece.moves(), piece));
-        return moves;
-    }
-
-    public HashMap<Stream<char[]>,Piece> blackMoves()
-    {
-        HashMap<Stream<char[]>,Piece> moves = new HashMap<>();
-        blacks().forEach(piece -> moves.put(piece.moves(), piece));
-        return moves;
     }
 
     private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
@@ -259,7 +212,8 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public void announceCapture(Piece taker, Piece taken)
     {
-        System.out.println("\033[33;3m" + taker.color() + " " + taker.name() + " \tcaptures " + taken.color() + " " + taken.name() + "\033[0m");
+        //System.out.println("\033[33;3m" + taker.color() + " " + taker.name() + " \tcaptures " + taken.color() + " "
+        // + taken.name() + "\033[0m");
     }
 
     public String toString() // aligns nicely in Obsidian
@@ -328,8 +282,8 @@ public class Board extends State<Board> implements Comparable<Board>
     @Override protected int evaluateFitness() {return score();}
 
     @Override
-    public Set<Actionable<Board>> getActionables()
+    public Set<Actionable<Board>> getActionables(boolean whiteTurn)
     {
-        return new HashSet<>(alternator() ? whites() : blacks());
+        return new HashSet<>(whiteTurn ? whites() : blacks());
     }
 }
