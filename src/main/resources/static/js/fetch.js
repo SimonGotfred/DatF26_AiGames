@@ -29,4 +29,4 @@ const wireBackend = async function(method, endpoint, authorization, payload)
     return await fetch(url, fetchOptions);
 }
 
-// export {getBackend,putBackend,postBackend,patchBackend,deleteBackend,wireBackend};
+ export {getBackend,putBackend,postBackend,patchBackend,deleteBackend,wireBackend};
