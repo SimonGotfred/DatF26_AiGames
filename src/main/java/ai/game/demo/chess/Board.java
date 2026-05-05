@@ -32,13 +32,15 @@ public class Board extends State<Board> implements Comparable<Board>
         public String toString(){return board.getPiece(position).toString();}
     }
 
+    private final int hashcode;
     private final char[][] board;
 
-    public Board(char[][] board) {this.board = board;}
+    public Board(char[][] board) {this.board = board;this.hashcode = toString().hashCode();}
     public Board(String[] board)
     {
         this.board = new char[board.length][];
         for (int i = 0; i < board.length; i++) this.board[i] = board[i].toCharArray();
+        this.hashcode = toString().hashCode();
     }
     public Board()
     {
@@ -271,7 +273,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return joiner.toString();
     }
 
-    @Override protected int hashIdentifier() {return toString().hashCode();}
+    @Override protected int hashIdentifier() {return hashcode;}
     @Override protected int evaluateFitness() {return score();}
 
     @Override
