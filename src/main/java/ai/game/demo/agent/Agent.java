@@ -31,6 +31,7 @@ public class Agent<T extends State<T>> extends PausableThread
 
     public T determine()
     {
+        pause();
         return updateState(currentState.fittestChild());
     }
 
@@ -39,13 +40,15 @@ public class Agent<T extends State<T>> extends PausableThread
         currentState = memory.get(state); // get potentially equal state from memory since
                                          //  it could probably already have been evaluated
                                         //   then cull unreachable states from memory
-        new Thread(()->currentState.makeRoot()); // set a Thread to cull now unreachable States
+        pause();
+        new Thread(()->{currentState.makeRoot();unpause();}); // set a Thread to cull now unreachable States
         return currentState;
     }
 
     public T evaluate()
     {
-        T t = determine();
+        pause();
+        T t = currentState.fittestChild();
         unpause();
         return t;
     }

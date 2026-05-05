@@ -25,7 +25,7 @@ public abstract class PausableThread extends Thread
     public final boolean stopped (){return stopped;}
     public final boolean stopping(){return !run;}
 
-    public final void Stop   (){pause=run=false;} // ! why 'stop' final if deprecated !
+    public final void Stop   (){pause=run=false;} // ! "why capital S?" - because superclass 'stop()' is both 'deprecated' *and* 'final' blocking the use of that signature
     public final void pause  (){pause=run;}
     public final void unpause(){pause=false;}
 }

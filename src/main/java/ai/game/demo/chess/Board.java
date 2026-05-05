@@ -57,6 +57,7 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public char[][] raw() {return Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);}
     public Position getPosition(char... pos) {return new Position(this, pos);}
+    public Piece    getPiece   (String  pos) {return getPiece(normalize(pos.toCharArray()));}
     public Piece    getPiece   (char... pos) {return new Piece(at(pos), this, pos);}
     public boolean  whiteAt    (char... pos) {return Type.isWhite(at(pos));}
     public boolean  blackAt    (char... pos) {return Type.isBlack(at(pos));}
