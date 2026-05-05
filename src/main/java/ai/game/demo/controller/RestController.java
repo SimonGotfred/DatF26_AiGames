@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 
 @CrossOrigin @RequestMapping("play")
 @org.springframework.web.bind.annotation.RestController
@@ -29,12 +28,13 @@ public class RestController
     }
 
     @GetMapping
-    public ResponseEntity<List<char[]>> possibleMoves(@RequestParam int[] position, HttpServletRequest request)
+    public ResponseEntity<Object> possibleMoves(@RequestParam int[] position, HttpServletRequest request)
     throws IOException
     {
         if (request.getSession(false)==null) newGame(request);
-        List<char[]> moves = new java.util.ArrayList<>(getAgent(request).getCurrentState().getPiece((char)position[0],(char)position[1]).moves().toList());
+        List<Object> moves = new java.util.ArrayList<>(getAgent(request).getCurrentState().getPiece((char)position[0],(char)position[1]).moves().toList());
 //        moves.replaceAll(move -> Board.letterize(move).toCharArray());
+        moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
         return ResponseEntity.ok(moves);
     }
 
