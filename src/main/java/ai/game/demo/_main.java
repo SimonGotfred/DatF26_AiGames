@@ -2,7 +2,6 @@ package ai.game.demo;
 
 import ai.game.demo.chess.*;
 import ai.game.demo.util.*;
-import ai.game.demo.agent.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,7 +42,7 @@ public class _main
         String move = "";
         while (!move.equals("x"))
         {
-            System.out.println(board.toPrint());
+            System.out.println(board.toConsole());
 
             System.out.println("Please enter next move:");
             move = r.readLine();
@@ -54,7 +53,7 @@ public class _main
 
             board.makeRoot();
 
-            System.out.println(board.toPrint());
+            System.out.println(board.toConsole());
             System.out.println("\nruminating...\n");
 //            board = board.doWhite();
             board = board.doBlack();
