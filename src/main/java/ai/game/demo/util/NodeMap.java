@@ -97,9 +97,10 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             return legacy;
         }
 
+        public String toObsidian(){return toString();}
         public void output()
         {
-            StringBuilder s = new StringBuilder(this.toString());
+            StringBuilder s = new StringBuilder(this.toObsidian());
 
 //            s.append("\n\nParents: ");
 //            for (Node<?> n : this.parents)
