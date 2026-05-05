@@ -53,29 +53,29 @@ public enum Type
         for (int i = 1; i < 8; i++)
         {
             moves.add(new char[]{(char)(position.x()+i) , (char)(position.y()+i)});
-            if (position.board().pieceAt(moves.getLast()))
-            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
+            if (position.board().pieceAt(moves.getLast())) break;
+//            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
         }
 
         for (int i = 1; i < 8; i++)
         {
             moves.add(new char[]{(char)(position.x()-i) , (char)(position.y()-i)});
-            if (position.board().pieceAt(moves.getLast()))
-            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
+            if (position.board().pieceAt(moves.getLast())) break;
+//            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
         }
 
         for (int i = 1; i < 8; i++)
         {
             moves.add(new char[]{(char)(position.x()+i) , (char)(position.y()-i)});
-            if (position.board().pieceAt(moves.getLast()))
-            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
+            if (position.board().pieceAt(moves.getLast())) break;
+//            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
         }
 
         for (int i = 1; i < 8; i++)
         {
             moves.add(new char[]{(char)(position.x()-i) , (char)(position.y()+i)});
-            if (position.board().pieceAt(moves.getLast()))
-            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
+            if (position.board().pieceAt(moves.getLast())) break;
+//            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
         }
 
         return moves.stream();
@@ -88,29 +88,29 @@ public enum Type
         for (int i = position.x()+1; i < 8; i++)
         {
             moves.add(new char[]{(char)i , position.y()});
-            if (position.board().pieceAt(moves.getLast()))
-            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
+            if (position.board().pieceAt(moves.getLast())) break;
+//            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
         }
 
         for (int i = position.x()-1; i > -1; i--)
         {
             moves.add(new char[]{(char)i, position.y()});
-            if (position.board().pieceAt(moves.getLast()))
-            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
+            if (position.board().pieceAt(moves.getLast())) break;
+//            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
         }
 
         for (int i = position.y()+1; i < 8; i++)
         {
             moves.add(new char[]{position.x(), (char)i});
-            if (position.board().pieceAt(moves.getLast()))
-            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
+            if (position.board().pieceAt(moves.getLast())) break;
+//            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
         }
 
         for (int i = position.y()-1; i > -1; i--)
         {
             moves.add(new char[]{position.x(), (char)i});
-            if (position.board().pieceAt(moves.getLast()))
-            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
+            if (position.board().pieceAt(moves.getLast())) break;
+//            {if (position.board().whiteAt(moves.getLast())) moves.removeLast();break;}
         }
 
         return moves.stream();
