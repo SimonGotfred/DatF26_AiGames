@@ -59,7 +59,7 @@ public class Piece extends State.Actionable<Board>
                 @Override
                 public Board apply(Board board)
                 {
-                    return new Board(board.move(position.position(),move));
+                    return board.move(position.position(),move);
                 }
                 @Override
                 public int compareTo(State.Action<Board> o)

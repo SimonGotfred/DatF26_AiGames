@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 @CrossOrigin @RequestMapping("play")
 @org.springframework.web.bind.annotation.RestController
@@ -28,20 +29,20 @@ public class RestController
     }
 
     @GetMapping
-    public ResponseEntity<List<char[]>> possibleMoves(@RequestParam String position, HttpServletRequest request)
+    public ResponseEntity<List<char[]>> possibleMoves(@RequestParam int[] position, HttpServletRequest request)
     throws IOException
     {
         if (request.getSession(false)==null) newGame(request);
-        List<char[]> moves = new java.util.ArrayList<>(getAgent(request).getCurrentState().getPiece(position).moves().toList());
-        moves.replaceAll(move -> Board.letterize(move).toCharArray());
+        List<char[]> moves = new java.util.ArrayList<>(getAgent(request).getCurrentState().getPiece((char)position[0],(char)position[1]).moves().toList());
+//        moves.replaceAll(move -> Board.letterize(move).toCharArray());
         return ResponseEntity.ok(moves);
     }
 
     @PostMapping
-    public ResponseEntity<char[][]> playerMove(@RequestParam String move, HttpServletRequest request)
+    public ResponseEntity<char[][]> playerMove(@RequestParam char[] from, @RequestParam char[] to, HttpServletRequest request)
     {
         Agent<Board> agent = getAgent(request);
-        agent.updateState(agent.getCurrentState().move(move));
+        agent.updateState(agent.getCurrentState().move(from,to));
         return ResponseEntity.accepted().build();
     }
 

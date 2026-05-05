@@ -113,8 +113,6 @@ public class Board extends State<Board> implements Comparable<Board>
         return buffer;
     }
 
-    /*
-    public Board invert() {return new Board(invert(board));}
     public static char[][] invert(char[][] board)
     {
         char[][] inverted = new char[8][8];
@@ -131,23 +129,16 @@ public class Board extends State<Board> implements Comparable<Board>
         }
         return inverted;
     }
-     */ // deprecated
 
-    public Board move(String move)
-    {
-        Board _new = new Board(move(move.split(",")[0].trim(), move.split(",")[1].trim()));
-
-        return addChild(_new);
-    }
-    public char[][] move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
-    public char[][] move(Position from, char[] to) {return move(from.position(),to);}
-    public char[][] move(char[] from, char[] to)
+    public Board move(String move) {return move(move.split(",")[0].trim(), move.split(",")[1].trim());}
+    public Board move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
+    public Board move(char[] from, char[] to)
     {
         if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
         board[to[1]][to[0]] = board[from[1]][from[0]];
         board[from[1]][from[0]] = ' ';
-        return board;
+        return addChild(new Board(board));
     }
 
     private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
