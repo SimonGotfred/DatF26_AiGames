@@ -54,6 +54,7 @@ public class Board extends State<Board> implements Comparable<Board>
             "        ",
             "♟♟♟♟♟♟♟♟",
             "♜♞♝♛♚♝♞♜",
+            "a1a1pwwwbbb"
         });
     }
 
@@ -141,6 +142,11 @@ public class Board extends State<Board> implements Comparable<Board>
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
         board[to[1]][to[0]] = board[from[1]][from[0]];
         board[from[1]][from[0]] = ' ';
+        board[8][0] = to[0]; board[8][1] = to[1];
+        board[8][2] = from[0]; board[8][3] = from[1];
+
+        // todo: update metadata
+
         return addChild(new Board(board));
     }
 
@@ -220,9 +226,9 @@ public class Board extends State<Board> implements Comparable<Board>
         joiner.add("```\n");
         joiner.add("       0  1  2  3  4  5  6  7\n");
 
-        for (int i = 0; i < board.length; i++)
+        for (int i = 0; i < 8; i++)
         {
-            joiner.add((board.length-i)+" ");
+            joiner.add((8-i)+" ");
             for (int j = 0; j < board[i].length; j++)
             {
                 if ((i+j) % 2 != 0) square = "░░";
@@ -247,9 +253,9 @@ public class Board extends State<Board> implements Comparable<Board>
 
         joiner.add("    0   1   2   3   4   5   6   7\n");
 
-        for (int i = 0; i < board.length; i++)
+        for (int i = 0; i < 8; i++)
         {
-            joiner.add((board.length-i)+" ");
+            joiner.add((8-i)+" ");
             for (int j = 0; j < board[i].length; j++)
             {
                 if ((i+j) % 2 != 0) square = "░░";
@@ -262,6 +268,7 @@ public class Board extends State<Board> implements Comparable<Board>
         }
 
         joiner.add("    a   b   c   d   e   f   g   h");
+        joiner.add("\n").add(String.valueOf(board[8]));
 
         return joiner.toString();
     }
@@ -269,7 +276,8 @@ public class Board extends State<Board> implements Comparable<Board>
     public String toString() // simplified String to use for hashCode
     {
         StringJoiner joiner = new StringJoiner("\n");
-        for (char[] s : board) joiner.add(String.valueOf(s));
+        Arrays.stream(board).limit(8).forEach(row -> joiner.add(String.valueOf(row)));
+//        for (char[] s : board) joiner.add(String.valueOf(s));
         return joiner.toString();
     }
 
