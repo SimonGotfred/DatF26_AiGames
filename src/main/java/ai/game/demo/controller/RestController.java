@@ -20,6 +20,7 @@ public class RestController
     public ResponseEntity<char[][]> newGame(HttpServletRequest request) throws IOException
     {
         HttpSession session = request.getSession();
+        if (session.getAttribute("Agent")!=null) return ResponseEntity.unprocessableContent().build();
         Board board = new Board();
         Agent<Board> agent = new Agent<>(board);
         session.setAttribute("Agent",agent);
