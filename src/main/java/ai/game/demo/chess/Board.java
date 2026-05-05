@@ -132,6 +132,7 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public Board move(String move) {return move(move.split(",")[0].trim(), move.split(",")[1].trim());}
     public Board move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
+    public Board move(int [] from, int [] to) {return move(new char[]{(char)from[0],(char)from[1]},new char[]{(char)to[0],(char)to[1]});}
     public Board move(char[] from, char[] to)
     {
         if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
@@ -208,7 +209,7 @@ public class Board extends State<Board> implements Comparable<Board>
         // + taken.name() + "\033[0m");
     }
 
-    public String toString() // aligns nicely in Obsidian
+    public String toObsidian() // aligns nicely in Obsidian
     {
         StringJoiner joiner = new StringJoiner("");
         String square = "░";
@@ -237,7 +238,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return joiner.toString();
     }
 
-    public String toPrint() // aligns nicely in console
+    public String toConsole() // aligns nicely in console
     {
         StringJoiner joiner = new StringJoiner("");
         String square = "░";
@@ -263,14 +264,14 @@ public class Board extends State<Board> implements Comparable<Board>
         return joiner.toString();
     }
 
-    public String toSimpleString() // simplified String to use for hashCode
+    public String toString() // simplified String to use for hashCode
     {
         StringJoiner joiner = new StringJoiner("\n");
         for (char[] s : board) joiner.add(String.valueOf(s));
         return joiner.toString();
     }
 
-    @Override protected int hashIdentifier() {return toSimpleString().hashCode();}
+    @Override protected int hashIdentifier() {return toString().hashCode();}
     @Override protected int evaluateFitness() {return score();}
 
     @Override

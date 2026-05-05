@@ -24,7 +24,7 @@ public class RestController
         Board board = new Board();
         Agent<Board> agent = new Agent<>(board);
         session.setAttribute("Agent",agent);
-        agent.start();
+//        agent.start();
         return ResponseEntity.ok(board.raw());
     }
 
@@ -40,7 +40,7 @@ public class RestController
     }
 
     @PostMapping
-    public ResponseEntity<char[][]> playerMove(@RequestParam char[] from, @RequestParam char[] to, HttpServletRequest request)
+    public ResponseEntity<char[][]> playerMove(@RequestParam int[] from, @RequestParam int[] to, HttpServletRequest request)
     {
         Agent<Board> agent = getAgent(request);
         agent.updateState(agent.getCurrentState().move(from,to));
