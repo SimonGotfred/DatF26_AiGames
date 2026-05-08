@@ -73,6 +73,8 @@ public class _main
             }
             if (board.isLegalMove(move))
             {
+                Piece taken = board.getPiece(move.split(",")[1]);
+                if(taken.type != Type.VACANT) Board.announceCapture(board.getPiece(move.split(",")[0]),taken);
                 board = board.move(move);
                 board = agent.updateState(board);
             }

@@ -185,13 +185,12 @@ public class Board extends State<Board> implements Comparable<Board>
     public Board move(int [] from, int [] to) {return move(new char[]{(char)from[0],(char)from[1]},new char[]{(char)to[0],(char)to[1]});}
     public Board move(char[] from, char[] to)
     {
-//        if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
-        board[to[1]][to[0]] = board[from[1]][from[0]]; //
-        board[from[1]][from[0]] = 'ㅤ';
-        board[8][0] = to[0]; board[8][1] = to[1];
-        board[8][2] = from[0]; board[8][3] = from[1];
-        board[8][4] = board[8][4] == 'w' ? 'b' : 'w'; // update active turn
+        board[to[1]][to[0]] = board[from[1]][from[0]]; // put moved piece to target location
+        board[from[1]][from[0]] = 'ㅤ';                // erase moved piece from previous location
+        board[8][0] = to[0]; board[8][1] = to[1];      // update metadata 'moved to'
+        board[8][2] = from[0]; board[8][3] = from[1];  // update metadata 'moved from'
+        board[8][4] = board[8][4] == 'w' ? 'b' : 'w';  // update identity of active turn
 
         // todo: update metadata
 
