@@ -144,7 +144,7 @@ public enum Type
         return moves.stream().filter(pos -> !Arrays.equals(pos, position.position()));
     }), // todo: castling
 
-    VACANT(' ', 0,(position) -> Stream.empty());
+    VACANT('ㅤ', 0,(position) -> Stream.empty());
 
     public static final   String white = "♚♛♜♝♞♟";
     public static final   String black = "♔♕♖♗♘♙";
