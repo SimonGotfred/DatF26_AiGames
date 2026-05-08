@@ -119,7 +119,7 @@ public class _main
     {
         int size = 0;
         LocalDateTime now, then = LocalDateTime.now();
-        try {board.evaluate(depth);}
+        try {board.minMax(depth);}
         catch (OutOfMemoryError e)
         {
             System.out.println("*snap*");
