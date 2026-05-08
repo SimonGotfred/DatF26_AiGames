@@ -28,7 +28,7 @@ public class RestController
         Board board = new Board();
         Agent<Board> agent = new Agent<>(board);
         session.setAttribute("Agent",agent);
-//        agent.start();
+        agent.start();
         return ResponseEntity.ok(board.raw());
     }
 

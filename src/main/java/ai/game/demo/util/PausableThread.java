@@ -2,11 +2,12 @@ package ai.game.demo.util;
 
 public abstract class PausableThread extends Thread
 {
-    private volatile boolean stopped,paused,pause,run=true;
+    private volatile boolean stopped,paused,pause,run;
     protected abstract void loop();
 
     @Override public final void run()
     {
+        run=true;
         while(mayRun())loop();
         paused=stopped=true;
     }
