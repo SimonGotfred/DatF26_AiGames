@@ -16,7 +16,6 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         public char x() {return dim(0);}
         public char y() {return dim(1);}
-        public char z() {return dim(2);}
         public char         at (char[]  pos) {return board.at(pos);}
         public boolean whiteAt () {return board.whiteAt(position);}
         public boolean blackAt () {return board.blackAt(position);}
@@ -56,6 +55,15 @@ public class Board extends State<Board> implements Comparable<Board>
             "♜♞♝♛♚♝♞♜",
             "a1a1wpwwwbbb"
         });
+        //8,0-3 prev pos
+        //8,4 current turn
+        //8,5 en passant legality
+        //8,6 white king castling legality
+        //8,7 white left tower castling legality
+        //8,8 white right tower castling legality
+        //8,9 black white king move castling legality
+        //8,10 black left tower castling legality
+        //8,11 black right tower castling legality
     }
 
     public char[][] raw() {return Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);}
