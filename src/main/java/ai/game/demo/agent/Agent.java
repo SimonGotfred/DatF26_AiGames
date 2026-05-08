@@ -9,24 +9,33 @@ import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.*;
 
 public class Agent<T extends State<T>> extends PausableThread
 {
+    private static final int maxDepth = 7;
     public static char memSafety  = 2; // safety limit (GB) to pause if usable memory subceeds
-    private final FileStore store = Files.getFileStore(Path.of("C:"));
+    private static final FileStore store;
+
+    static
+    {
+        try {store = Files.getFileStore(Path.of("C:"));}
+        catch (IOException e) {throw new RuntimeException(e);}
+    }
 
     @Getter private T currentState;
-    private final NodeMap<T> memory;
-    private final ConcurrentSkipListSet<T> backlog = new ConcurrentSkipListSet<>(Comparator.comparingInt(ai.game.demo.agent.State::fitness));
+    private final NodeMap<T> map;
+    private final ArrayList<Iterator<T>> backlog = new ArrayList<>();
+    private final ArrayList<T> memory = new ArrayList<>();
+    private T[] alphaBeta;
 
-    public Agent(Class<T> c) throws IOException {memory = NodeMap.of(c);}
-    public Agent(T initialState) throws IOException
+    private Agent(Class<T> c) {map = NodeMap.of(c);}
+    public Agent(T state)
     {
-        this((Class<T>)initialState.getClass());
-        currentState=initialState;
-        backlog.add(currentState);
+        this((Class<T>)state.getClass());
+        currentState = NodeMap.get(state);
+        backlog.add(Set.of(currentState).iterator());
+        alphaBeta = ai.game.demo.agent.State.getAlphaBeta(currentState);
     }
 
     public T determine()
@@ -37,33 +46,59 @@ public class Agent<T extends State<T>> extends PausableThread
 
     public T updateState(T state) // ? weave states, that have not been "thought" of, together with states in memory
     {                            //  ? currently, if such occurs, entire memory is purged, apart from the new state
-        currentState = memory.get(state); // get potentially equal state from memory since
+        currentState = NodeMap.get(state); // get potentially equal state from memory since
                                          //  it could probably already have been evaluated
                                         //   then cull unreachable states from memory
-        pause();
-        new Thread(()->{currentState.makeRoot();unpause();}); // set a Thread to cull now unreachable States
+        pause(); while (!paused()){}
+        backlog.clear(); backlog.add(Set.of(currentState).iterator());
+        alphaBeta = ai.game.demo.agent.State.getAlphaBeta(currentState);
+        new Thread(()->{currentState.makeRoot();
+            unpause();})
+                .start(); // set a Thread to cull now unreachable States
+//        currentState.makeRoot();
+//        unpause();
         return currentState;
     }
 
-    public T evaluate()
+    public T act()
     {
-        pause();
-        T t = currentState.fittestChild();
-        unpause();
-        return t;
+        while (paused()){} pause(); while (!paused()){}
+        ai.game.demo.agent.State.debugFlag = true;
+        updateState(currentState.minMax().furthestAncestor());
+        ai.game.demo.agent.State.debugFlag = false;
+        return currentState;
     }
 
-    @SneakyThrows public boolean noMemory(){return store.getUsableSpace()>>30<1+memSafety;}
+    private boolean memFlag = false;
+    @SneakyThrows public boolean noMemory(){return store.getUsableSpace()>>30<memSafety;}
     protected void loop()
     {
-        while(noMemory())onSpinWait();
+        if (noMemory()) {System.out.println("\033[33;3m No Memory - spinning \033[0m");memFlag=true;}
+        while(noMemory()) if (pausing()) return; onSpinWait();
+        if (memFlag) {System.out.println("\033[33;3m Memory Released - running \033[0m");memFlag=false;}
         if (stopping()) return;
-        T state = backlog.removeFirst();
-        backlog.addAll(state.evaluate().stream().filter(NodeMap.Node::noChildren).toList());
-        if (backlog.isEmpty())
+        if (backlog.isEmpty()) {System.out.println("\033[31;1;4m Backlog Exhausted \033[0m");Stop();return;}
+
+//        printBacklog();
+
+        if (backlog.size() < maxDepth && backlog.getLast().hasNext())
         {
-            backlog.add(state);
-            pause();
+            T t = backlog.getLast().next().minMax();
+            t.minMax(alphaBeta);
+            backlog.add(t.children.iterator());
+
+            if (alphaBeta[0].fitness()>=alphaBeta[1].fitness()) backlog.removeLast();
         }
+        else backlog.removeLast();
+    }
+
+    private void printBacklog()
+    {
+        System.out.println(Arrays.toString(backlog.toArray())
+                                 .replace(" java.util.LinkedHashMap$LinkedKeyIterator","")
+                                 .replace("java.util.ImmutableCollections$Set12$1","")
+                                 .replace(",","-")
+                                 .replace("[","")
+                                 .replace("]",""));
     }
 }

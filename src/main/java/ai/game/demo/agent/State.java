@@ -12,11 +12,15 @@ import java.util.function.Function;
 
 public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 {
+    public static boolean debugFlag = false;
+
     private static LocalDateTime timeStart = LocalDateTime.MAX;
     private static int timeLimit=10000;
     public  static final char  memSafety = 2; // safety limit (GB) to stop if usable memory subceeds
-    private static final State MIN_STATE = sus(Integer.MIN_VALUE);
-    private static final State MAX_STATE = sus(Integer.MAX_VALUE);
+    public  static final State MIN_STATE = sus(Integer.MIN_VALUE);
+    public  static final State MAX_STATE = sus(Integer.MAX_VALUE);
+
+    public static <T extends State<T>> T[] getAlphaBeta(T t){return (T[])new State[]{MIN_STATE,MAX_STATE};}
 
     private static void setTimeLimit(int sec) {if (sec<0) return; timeLimit=sec*1000;}
     private static State sus(int fitness)
@@ -24,17 +28,19 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         return new State(fitness)
         {
             @Override protected int evaluateFitness() {return 0;}
-            @Override public Set<Actionable> getActionables(boolean minMax) {return Set.of();}
+            @Override public LinkedHashSet<Actionable> getActionables(boolean minMax) {return null;}
             @Override protected int hashIdentifier() {return 0;}
             @Override public int compareTo(Object o) {return 0;}
         };
     }
 
+    public static int compareFitness(State a,State b) {return a.compareTo(b);}
     private static boolean atLimit()
     {
-        try {return Files.getFileStore(Path.of("C:")).getUsableSpace()>>30<1+memSafety // stop when usable memory has decreased below safety limit
-                 || timeStart.until(LocalDateTime.now(), ChronoUnit.MILLIS)>timeLimit;}
-        catch (IOException e) {return true;}
+        return false;
+//        try {return Files.getFileStore(Path.of("C:")).getUsableSpace()>>30<1+memSafety // stop when usable memory has decreased below safety limit
+//                 || timeStart.until(LocalDateTime.now(), ChronoUnit.MILLIS)>timeLimit;}
+//        catch (IOException e) {return true;}
     }
 
     // require subclasses define their own applicable 'Actions'
@@ -52,7 +58,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 
     protected     Integer fitness;
     public  final Iterator<T> iterator;
-    public  final Set <Action<T>> actions = new HashSet<>();
+    public  final LinkedHashSet <Action<T>> actions = new LinkedHashSet<>();
     public  final Iterator<Action<T>> actionIterator = actions.iterator();
 
     private   State(int fitness)   {this(); this.fitness = fitness;}
@@ -77,25 +83,33 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 //                                   ? children.getFirst().minMax()
 //                                   : children.getLast() .minMax()   ;}
 
-    public    final T minMax(boolean minMax){timeStart=LocalDateTime.now(); return minMax(minMax, 3);}
-    public    final T minMax(int depth){return minMax(false, depth);}
-    protected final T minMax(boolean minMax, int depth){return minMax((T[])new State[]{MIN_STATE, MAX_STATE}, minMax, depth);}
-    protected final T minMax(T[] ab, boolean minMax, int depth)
+    public boolean maximize(){return true;}
+    public boolean minimize(){return !maximize();}
+    public final T minMax(boolean minMax){timeStart=LocalDateTime.now(); return minMax(minMax, 3);}
+    public final T minMax(int depth){return minMax(false, depth);}
+    public final T minMax(boolean minMax, int depth){return minMax(getAlphaBeta((T)this), minMax, depth);}
+    public final T minMax(){return minMax(null,0);}
+    public final T minMax(T[] ab){return minMax(ab,1);}
+    public final T minMax(T[] ab, int depth){return minMax(ab,minimize(),depth);}
+    public final T minMax(T[] ab, boolean minMax, int depth)
     {
-        depth--;
-        if (!children.isEmpty()) return (minMax ? children.getFirst() : children.getLast()).minMax(ab,minMax,depth); // skip calculations if already done // todo: ensure children sorted & account for minMax state
-        return depth < 0 || atLimit() ? (T)this : minMax ? min(ab, depth) : max(ab, depth);
+        try
+        {
+            depth--;
+            if (!children.isEmpty()) return (minMax ? children.getFirst() : children.getLast()).minMax(ab, minMax, depth); // skip calculations if already done // todo: ensure children sorted & account for minMax state
+            return depth < 0 || atLimit() ? (T) this : minMax ? min(ab, depth) : max(ab, depth);
+        }
+        catch (StackOverflowError e) {System.out.println("\033[31;1;4m StackOverflow in Diving \033[0m");/**/ return (T)this;}
     }
 
     private T min(T[]ab,int depth)
     {
         T eval = (T)MAX_STATE;
-        for (Actionable<T> actionable : getActionables(true))
+        for (Actionable<T> actionable : getActionables())
         {
             for (Action<T> action : actionable.actions())
             {
-                eval = eval.min(action.apply().minMax(ab,false,depth)); // 'apply' returns *already existing* State, if
-                // present
+                eval = eval.min(action.apply().minMax(ab,false,depth)); // 'apply' returns *already existing* State, if present
                 ab[0] = ab[0].min(eval);
                 if (ab[0].fitness()>=ab[1].fitness()) return eval;
             }
@@ -106,7 +120,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     private T max(T[]ab,int depth)
     {
         T eval = (T)MIN_STATE;
-        for (Actionable<T> actionable : getActionables(false))
+        for (Actionable<T> actionable : getActionables())
         {
             for (Action<T> action : actionable.actions())
             {
@@ -122,13 +136,13 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 
     // note: child is NOT appended - but put sorted by fitness
     public T evaluateNextAction() {return addChild(nextFittestAction().apply());}
-    public Set<Action<T>> evaluateNextChild() {return nextFittestChild().actions();}
-    public Set<T>    evaluate() {return evaluate(0);}
-    public Set<T>    evaluate(int depth) // todo: minMax
+    public LinkedHashSet<Action<T>> evaluateNextChild() {return nextFittestChild().actions();}
+    public LinkedHashSet<T>    evaluate() {return evaluate(0);}
+    public LinkedHashSet<T>    evaluate(int depth) // todo: minMax
     {
         try {if (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30<1+memSafety) throw new OutOfMemoryError();} // stop when usable memory has decreased below safety limit
         catch (IOException e) {return children;}
-        Set<T> set = depth>1 ? new HashSet<>() : children;
+        LinkedHashSet<T> set = depth>1 ? new LinkedHashSet<>() : children;
         for (Action<T> action : actions()) {addChild(action.apply());}
         if (depth>1) children.forEach(child->set.addAll(child.evaluate(depth-1)));
         return set;
@@ -145,8 +159,9 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     public Action<T> nextFittestAction(){return actionIterator.next();}
     public boolean   hasMoreChildren  (){return iterator.hasNext();}
     public        T  nextFittestChild (){return iterator.next();}
-    public abstract  Set<Actionable<T>> getActionables(boolean minMax); // todo: int
-    public Set<Action<T>> actions()
+    public abstract  LinkedHashSet<Actionable<T>> getActionables(boolean minMax);
+    public final     LinkedHashSet<Actionable<T>> getActionables(){return getActionables(minimize());}
+    public LinkedHashSet<Action<T>> actions()
     {
         for (Actionable<T> able : getActionables(true))
             actions.addAll(able.actions());

@@ -18,6 +18,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
     public  static <T extends Node<T>> T add   (T node) { T n = (T) of(node.getClass()).putIfAbsent(node.hashCode(), node);return n==null ? node : n;}
     public  static <T extends Node<T>> T delete(T node) {return (T) of(node.getClass()).remove(node.hashCode());}
     public  static <T extends Node<T>> T get   (T node) {return add(node);}
+    public  static <T extends Node<T>> boolean contains(T node) {return of(node.getClass()).containsKey(node.hashCode());}
 
     // ! somewhat breaks for subclasses of *T* - as they will map to their own NodeMap
     public  static <T extends Node<T>> NodeMap<T> of(Class<T> c)
@@ -39,10 +40,10 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
 
     public abstract static class Node<T extends Node<T>> implements Comparable<T>
     {
-        protected final LinkedHashSet<T> parents  = new LinkedHashSet<>();
-        protected final LinkedHashSet<T> children = new LinkedHashSet<>();
+        public final LinkedHashSet<T> parents  = new LinkedHashSet<>();
+        public final LinkedHashSet<T> children = new LinkedHashSet<>();
 
-        public int     depth (){return parents.isEmpty() ? 0 : 1+parents.getFirst().depth();}
+        public int depth (){return parents.isEmpty() ? 0 : 1+parents.getFirst().depth();}
         public T remove()
         {
             T t = NodeMap.delete((T)this);
@@ -56,40 +57,52 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             children.clear();
         }
 
-        public boolean noChildren(){return children.isEmpty();}
-        public boolean noParents (){return parents .isEmpty();}
+        public int countChildren(){return children.size();}
+        public int countParents (){return parents .size();}
 
         protected boolean removeChild (T child) {return children.remove( child);}
         protected boolean removeParent(T parent){return parents .remove(parent);}
-        public boolean addParent   (T parent){return parents.add(parent);}
+        public boolean addParent   (T parent){return parents.isEmpty() && parents.add(parent);}
         public       T addChild    (T child)
         {
-            child = add(child);  // substitute for potentially *equal* node already in map
+            T child2 = add(child);  // substitute for potentially *equal* node already in map
+//            if (child!=child2) return child2; // todo: fix infinite looping
+            if (parents.contains(child2)) ;
+            if (parents.contains(child2)) return child2;
             child.addParent((T)this);
             children.add(child); // ? check if somehow child is already in children - should be impossible
             return child;        // return child that is *verifiably* in map
         }
 
-        public void makeRoot()
-        {
-            for (Node<T> node : parents)
-            {
-                node.cull(this);
-            }
-        }
+        public void makeRoot() {for(Node<T> node : parents) node.cull(this);}
         private void cull(Node<?> newRoot)
         {
             if (this==newRoot) return;
             if (parents.isEmpty())
             {
-                NodeMap.delete((T)this);
-                for (Node<?> child : children) {child.parents.remove(this);}
-                for (Node<?> child : children) {child.cull(newRoot);}
+                try
+                {
+                    NodeMap.delete((T) this);
+                    for (Node<?> child : children) {child.parents.remove(this);}
+                    for (Node<?> child : children) {if(NodeMap.contains((T)child))child.cull(newRoot);}
+                }
+                catch (StackOverflowError ignored){}
             }
         }
 
         public Set<T> siblings() {return parents.isEmpty() ? new HashSet<>() : parents.getFirst().children;}
-        public T furthestAncestor() {return parents.isEmpty() || parents.getFirst().parents.isEmpty() ? (T)this : parents.getFirst().furthestAncestor();}
+        public T furthestAncestor()
+        {
+            try
+            {
+                return parents.isEmpty() || parents.getFirst().parents.isEmpty() ? (T)this : parents.getFirst().furthestAncestor();
+            }
+            catch (StackOverflowError e)
+            {
+                System.out.println("\033[31;1;4m StackOverflow in Ascending \033[0m");
+                return (T)this;
+            }
+        }
         public List<T> legacy()
         {
             List<T> legacy = parents.isEmpty() ? new ArrayList<>() : parents.getFirst().legacy();

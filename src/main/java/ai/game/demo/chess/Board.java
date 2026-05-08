@@ -44,17 +44,17 @@ public class Board extends State<Board> implements Comparable<Board>
     }
     public Board()
     {
-        this(new String[]
+        this(new String[] // ! ALL HAIL THE GLORIOUS 'ㅤ' IT STRUCK UPON US FROM BETWEEN THE HANGUL !
         {
             "♖♘♗♕♔♗♘♖",
             "♙♙♙♙♙♙♙♙",
-            "        ",
-            "        ",
-            "        ",
-            "        ",
+            "ㅤㅤㅤㅤㅤㅤㅤㅤ",
+            "ㅤㅤㅤㅤㅤㅤㅤㅤ",
+            "ㅤㅤㅤㅤㅤㅤㅤㅤ",
+            "ㅤㅤㅤㅤㅤㅤㅤㅤ",
             "♟♟♟♟♟♟♟♟",
             "♜♞♝♛♚♝♞♜",
-            "a1a1pwwwbbb"
+            "a1a1wpwwwbbb"
         });
     }
 
@@ -78,6 +78,7 @@ public class Board extends State<Board> implements Comparable<Board>
     }
     protected char  set        (Piece piece, char...pos) {return set(piece.icon(),pos);}
 
+    public boolean maximize(){return board[8][4]=='w';}
     public Board doWhite(int depth){return this.minMax(true ,depth).furthestAncestor();}
     public Board doBlack(int depth){return this.minMax(false,depth).furthestAncestor();}
     public Board doWhite(){return this.minMax(true ).furthestAncestor();}
@@ -133,23 +134,6 @@ public class Board extends State<Board> implements Comparable<Board>
         return inverted;
     }
 
-    public Board move(String move) {return move(move.split(",")[0].trim(), move.split(",")[1].trim());}
-    public Board move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
-    public Board move(int [] from, int [] to) {return move(new char[]{(char)from[0],(char)from[1]},new char[]{(char)to[0],(char)to[1]});}
-    public Board move(char[] from, char[] to)
-    {
-        if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
-        char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
-        board[to[1]][to[0]] = board[from[1]][from[0]];
-        board[from[1]][from[0]] = ' ';
-        board[8][0] = to[0]; board[8][1] = to[1];
-        board[8][2] = from[0]; board[8][3] = from[1];
-
-        // todo: update metadata
-
-        return addChild(new Board(board));
-    }
-
     private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
     public int riskAt(Position position) {return position.risk();}
     public int riskAt(char...  position) // sum of pieces threatening the location, by using their patterns reversed
@@ -190,6 +174,24 @@ public class Board extends State<Board> implements Comparable<Board>
         return false; // "\nPlease enter \"from , to\" as eg. \"a1 , b2\""
     }
 
+    public Board move(String move) {return move(move.split(",")[0].trim(), move.split(",")[1].trim());}
+    public Board move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
+    public Board move(int [] from, int [] to) {return move(new char[]{(char)from[0],(char)from[1]},new char[]{(char)to[0],(char)to[1]});}
+    public Board move(char[] from, char[] to)
+    {
+        if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
+        char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
+        board[to[1]][to[0]] = board[from[1]][from[0]];
+        board[from[1]][from[0]] = 'ㅤ';
+        board[8][0] = to[0]; board[8][1] = to[1];
+        board[8][2] = from[0]; board[8][3] = from[1];
+        board[8][4] = board[8][4] == 'w' ? 'b' : 'w';
+
+        // todo: update metadata
+
+        return addChild(new Board(board));
+    }
+
     public static char[] normalize(char[] pos)
     {
         if(pos[0]>7) pos[0] -= 'a';
@@ -197,18 +199,19 @@ public class Board extends State<Board> implements Comparable<Board>
         pos[1] = (char)(7-pos[1]);
         return pos;
     }
-
+    public static char numberize(char c){return (char)('8'-c);}
+    public static char letterize(char c){return c+='A';}
     public static String letterize(char[] pos)
     {
-        if(pos[0]<8) pos[0] += 'a';
-        pos[1] = (char)(7-pos[1]);
+        if(pos[0]<8) pos[0] += 'A';
+        pos[1] = (char)('8'-pos[1]);
         if(pos[1]<8) pos[1] += '1';
         return ""+pos[0]+pos[1];
     }
 
     public String letterize(char[] from, char[] to)
     {
-        return Type.fromChar(at(from)).name()+' '+letterize(from)+" to "+letterize(to);
+        return ("-> "+at(to)+" "+letterize(from)+" to "+letterize(to));
     }
 
     public void announceCapture(Piece taker, Piece taken)
@@ -251,7 +254,7 @@ public class Board extends State<Board> implements Comparable<Board>
         StringJoiner joiner = new StringJoiner("");
         String square = "░";
 
-        joiner.add("    0   1   2   3   4   5   6   7\n");
+//        joiner.add("    0   1   2   3   4   5   6   7\n");
 
         for (int i = 0; i < 8; i++)
         {
@@ -259,16 +262,17 @@ public class Board extends State<Board> implements Comparable<Board>
             for (int j = 0; j < board[i].length; j++)
             {
                 if ((i+j) % 2 != 0) square = "░░";
-                else                square = "      ";
+                else                square = " ㅤ";
 
                 if (Type.isPiece(board[i][j])) joiner.add(" " + board[i][j]);
                 else joiner.add(square);
             }
-            joiner.add(" "+i+"\n");
+//            joiner.add(" "+i);
+            joiner.add("\n");
         }
 
         joiner.add("    a   b   c   d   e   f   g   h");
-        joiner.add("\n").add(String.valueOf(board[8]));
+        joiner.add("\n").add(board[8][4]+" "+letterize(new char[]{board[8][2], board[8][3]},new char[]{board[8][0], board[8][1]}));
 
         return joiner.toString();
     }
@@ -276,17 +280,17 @@ public class Board extends State<Board> implements Comparable<Board>
     public String toString() // simplified String to use for hashCode
     {
         StringJoiner joiner = new StringJoiner("\n");
+        joiner.add(""+board[8][4]);
         Arrays.stream(board).limit(8).forEach(row -> joiner.add(String.valueOf(row)));
 //        for (char[] s : board) joiner.add(String.valueOf(s));
-        return joiner.toString();
+        return joiner.toString();//.replace("ㅤ","\uF020");
     }
 
     @Override protected int hashIdentifier() {return hashcode;}
     @Override protected int evaluateFitness() {return score();}
-
     @Override
-    public Set<Actionable<Board>> getActionables(boolean whiteTurn)
+    public LinkedHashSet<Actionable<Board>> getActionables(boolean isBlackTurn)
     {
-        return new HashSet<>(whiteTurn ? whites() : blacks());
+        return new LinkedHashSet<>(isBlackTurn ? blacks() : whites());
     }
 }

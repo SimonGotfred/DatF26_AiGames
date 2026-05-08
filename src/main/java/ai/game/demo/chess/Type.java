@@ -23,7 +23,7 @@ public enum Type
 
         for (int i : new int[]{-1,1})
         {
-            if (position.board().at((char)(position.x()+i), (char)(position.y()+d))!=' ')
+            if (position.board().at((char)(position.x()+i), (char)(position.y()+d))!='ㅤ')
                 moves.add(new char[]{(char)(position.x()+i), (char)(position.y()+d)});
         }
 
