@@ -13,7 +13,7 @@ public enum Type
         Set<char[]> moves = new HashSet<>();
 
         int d = position.whiteAt() ? -1:1; // check *alleged* pawn color for move direction
-
+        //double move
         if (!position.board().pieceAt(position.x(), (char)(position.y()+d)))
         {
             moves.add(new char[]{position.x(), (char)(position.y()+d)});
@@ -26,6 +26,9 @@ public enum Type
             if (position.board().at((char)(position.x()+i), (char)(position.y()+d))!='ㅤ')
                 moves.add(new char[]{(char)(position.x()+i), (char)(position.y()+d)});
         }
+
+        //en passant
+
 
         return moves.stream();
     }), // todo: promotion & en passant
