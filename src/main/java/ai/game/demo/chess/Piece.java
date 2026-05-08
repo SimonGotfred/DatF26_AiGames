@@ -56,18 +56,13 @@ public class Piece extends State.Actionable<Board>
         {
             actions.add(new State.Action<>(position.board())
             {
-                @Override
-                public Board apply(Board board)
-                {
-                    return board.move(position.position(),move);
-                }
-                @Override
-                public int compareTo(State.Action<Board> o)
-                {
-                    return 0; // todo: weigh moves for given piece
-                }
+                @Override public Board apply(Board board) {return board.move(position.position(),move);}
+                @Override public int compareTo(State.Action<Board> other) {return 0;} // todo: weigh moves by heuristics}
             });
         }
         return actions;
     }
+
+    @Override
+    public int compareTo(State.Actionable<Board> other) {return 0;} // todo: weigh pieces by heuristics
 }

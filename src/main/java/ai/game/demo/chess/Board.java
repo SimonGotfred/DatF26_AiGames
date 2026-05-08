@@ -83,10 +83,10 @@ public class Board extends State<Board> implements Comparable<Board>
     protected char  set(Piece piece, char...pos) {return set(piece.icon(),pos);}
 
     public boolean maximize(){return board[8][4]=='w';}
-    public Board doWhite(int depth){return this.minMax(true ,depth).furthestAncestor();}
-    public Board doBlack(int depth){return this.minMax(false,depth).furthestAncestor();}
-    public Board doWhite(){return this.minMax(true ).furthestAncestor();}
-    public Board doBlack(){return this.minMax(false).furthestAncestor();}
+    public Board doWhite(int depth){return this.minMax(depth).furthestAncestor();}
+    public Board doBlack(int depth){return this.minMax(depth).furthestAncestor();}
+    public Board doWhite(){return this.minMax().furthestAncestor();}
+    public Board doBlack(){return this.minMax().furthestAncestor();}
 
     public  Set<Piece> whites(){return pieces(Type::isWhite);}
     public  Set<Piece> blacks(){return pieces(Type::isBlack);}
