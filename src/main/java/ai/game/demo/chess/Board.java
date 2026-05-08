@@ -66,7 +66,7 @@ public class Board extends State<Board> implements Comparable<Board>
         //8,11 black right tower castling legality
     }
 
-    public char[][] raw() {return Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);}
+    public char[][] raw() {return Arrays.stream(this.board).limit(8).map(char[]::clone).toArray(char[][]::new);}
     public Position getPosition(char... pos) {return new Position(this, pos);}
     public Piece    getPiece   (String  pos) {return getPiece(normalize(pos.toCharArray()));}
     public Piece    getPiece   (char... pos) {return new Piece(at(pos), this, pos);}
@@ -84,7 +84,7 @@ public class Board extends State<Board> implements Comparable<Board>
         board[pos[1]][pos[0]] = piece;
         return past;
     }
-    protected char  set        (Piece piece, char...pos) {return set(piece.icon(),pos);}
+    protected char  set(Piece piece, char...pos) {return set(piece.icon(),pos);}
 
     public boolean maximize(){return board[8][4]=='w';}
     public Board doWhite(int depth){return this.minMax(true ,depth).furthestAncestor();}
@@ -187,17 +187,24 @@ public class Board extends State<Board> implements Comparable<Board>
     public Board move(int [] from, int [] to) {return move(new char[]{(char)from[0],(char)from[1]},new char[]{(char)to[0],(char)to[1]});}
     public Board move(char[] from, char[] to)
     {
-        if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
+//        if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
-        board[to[1]][to[0]] = board[from[1]][from[0]];
+        board[to[1]][to[0]] = board[from[1]][from[0]]; //
         board[from[1]][from[0]] = 'ㅤ';
         board[8][0] = to[0]; board[8][1] = to[1];
         board[8][2] = from[0]; board[8][3] = from[1];
-        board[8][4] = board[8][4] == 'w' ? 'b' : 'w';
+        board[8][4] = board[8][4] == 'w' ? 'b' : 'w'; // update active turn
 
         // todo: update metadata
 
         return addChild(new Board(board));
+    }
+
+    public static void announceCapture(Piece taker, Piece taken)
+    {
+        System.out.println("\033[33;3m" + taker.color() + " " + taker.name()
+                                   + " \tcaptures " + taken.color() + " "
+                                   + taken.name() + "\033[0m");
     }
 
     public static char[] normalize(char[] pos)
@@ -220,12 +227,6 @@ public class Board extends State<Board> implements Comparable<Board>
     public String letterize(char[] from, char[] to)
     {
         return ("-> "+at(to)+" "+letterize(from)+" to "+letterize(to));
-    }
-
-    public void announceCapture(Piece taker, Piece taken)
-    {
-        //System.out.println("\033[33;3m" + taker.color() + " " + taker.name() + " \tcaptures " + taken.color() + " "
-        // + taken.name() + "\033[0m");
     }
 
     public String toObsidian() // aligns nicely in Obsidian
