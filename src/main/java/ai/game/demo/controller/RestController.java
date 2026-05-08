@@ -55,9 +55,7 @@ public class RestController
     public ResponseEntity<char[][]> agentMove(HttpServletRequest request)
     {
         Agent<Board> agent = getAgent(request);
-        Board board = agent.act();
-        agent.pause();
-        return ResponseEntity.ok(board.raw());
+        return ResponseEntity.ok(agent.act(true).raw());
     }
 
     @DeleteMapping

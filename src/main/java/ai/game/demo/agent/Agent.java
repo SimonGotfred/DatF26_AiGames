@@ -44,27 +44,26 @@ public class Agent<T extends State<T>> extends PausableThread
         return updateState(currentState.fittestChild());
     }
 
-    public T updateState(T state) // ? weave states, that have not been "thought" of, together with states in memory
-    {                            //  ? currently, if such occurs, entire memory is purged, apart from the new state
+    public T updateState(T state){return updateState(state,false);}
+    public T updateState(T state, boolean pause)
+    {
         currentState = NodeMap.get(state); // get potentially equal state from memory since
-                                         //  it could probably already have been evaluated
-                                        //   then cull unreachable states from memory
-        pause(); while (!paused()){}
+                                          //  it could probably already have been evaluated
+                                         //   then cull unreachable states from memory
+        pause(); while(!paused()){}
         backlog.clear(); backlog.add(Set.of(currentState).iterator());
         alphaBeta = ai.game.demo.agent.State.getAlphaBeta(currentState);
-        new Thread(()->{currentState.makeRoot();
-            unpause();})
-                .start(); // set a Thread to cull now unreachable States
-//        currentState.makeRoot();
-//        unpause();
+        new Thread(()->{currentState.makeRoot();if(!pause)unpause();}) // set a Thread to cull unreachable States
+                  .start();
         return currentState;
     }
 
-    public T act()
+    public T act(){return act(false);}
+    public T act(boolean pause)
     {
-        while (paused()){} pause(); while (!paused()){}
+        while(paused()){} pause(); while(!paused()){}
         ai.game.demo.agent.State.debugFlag = true;
-        updateState(currentState.minMax().furthestAncestor());
+        updateState(currentState.minMax().furthestAncestor(),pause);
         ai.game.demo.agent.State.debugFlag = false;
         return currentState;
     }
