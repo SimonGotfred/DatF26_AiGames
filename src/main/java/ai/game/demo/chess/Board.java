@@ -73,11 +73,7 @@ public class Board extends State<Board> implements Comparable<Board>
     public boolean  whiteAt    (char... pos) {return Type.isWhite(at(pos));}
     public boolean  blackAt    (char... pos) {return Type.isBlack(at(pos));}
     public boolean  pieceAt    (char... pos) {return Type.isPiece(at(pos));}
-    public char     at         (char... pos)
-    {
-        try   {return board[pos[1]][pos[0]];}
-        catch (ArrayIndexOutOfBoundsException e) {return ' ';}
-    }
+    public char     at         (char... pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return ' ';}}
     protected char  set        (char  piece, char...pos)
     {
         char past = board[pos[1]][pos[0]];
@@ -166,6 +162,8 @@ public class Board extends State<Board> implements Comparable<Board>
         return sum;
     }
 
+    public List<char[]> movesFor(int ... position){return movesFor((char)position[0],(char)position[1]);}
+    public List<char[]> movesFor(char... position){return getPiece(position[0], position[1]).moves().toList();}
     public boolean isLegalMove(String move) {return move.split(",").length == 2 && isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim());}
     public boolean isLegalMove(String from, String to) {return isLegalMove(normalize(from.toCharArray()),normalize(to.toCharArray()));}
     public boolean isLegalMove(char[] from, char[] to)

@@ -17,7 +17,7 @@ public class RestController
     private Agent<Board> getAgent(HttpServletRequest request) {return (Agent<Board>) request.getSession().getAttribute("Agent");}
 
     @PutMapping
-    public ResponseEntity<char[][]> newGame(HttpServletRequest request) throws IOException
+    public ResponseEntity<char[][]> newGame(HttpServletRequest request)
     {
         HttpSession session = request.getSession();
         if (session.getAttribute("Agent")!=null)
@@ -33,18 +33,20 @@ public class RestController
     }
 
     @GetMapping
-    public ResponseEntity<Object> possibleMoves(@RequestParam int[] position, HttpServletRequest request)
-    throws IOException
+    public ResponseEntity<Object> possibleMoves(HttpServletRequest request, @RequestParam int[] position)
     {
         if (request.getSession(false)==null) newGame(request);
-        List<Object> moves = new java.util.ArrayList<>(getAgent(request).getCurrentState().getPiece((char)position[0],(char)position[1]).moves().toList());
+        List<Object> moves = new java.util.ArrayList<>(getAgent(request).getCurrentState().movesFor(position));
 //        moves.replaceAll(move -> Board.letterize(move).toCharArray());
         moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
         return ResponseEntity.ok(moves);
     }
 
     @PostMapping
-    public ResponseEntity<char[][]> playerMove(@RequestParam int[] from, @RequestParam int[] to, HttpServletRequest request)
+    public ResponseEntity<char[][]> playerMove(HttpServletRequest request,
+                                               @RequestParam(required=false) char promote,
+                                               @RequestParam int[] from,
+                                               @RequestParam int[] to)
     {
         Agent<Board> agent = getAgent(request);
         agent.updateState(agent.getCurrentState().move(from,to));
