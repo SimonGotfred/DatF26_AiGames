@@ -44,7 +44,7 @@ public class RestController
 
     @PostMapping
     public ResponseEntity<char[][]> playerMove(HttpServletRequest request,
-                                               @RequestParam(required=false) char promote,
+                                               @RequestParam(required=false) Character promote,
                                                @RequestParam int[] from,
                                                @RequestParam int[] to)
     {
