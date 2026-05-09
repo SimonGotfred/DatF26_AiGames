@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<Integer,T> // todo: testing & cleanup
 {
@@ -40,15 +39,15 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
 
     public abstract static class Node<T extends Node<T>> implements Comparable<T>
     {
-        public final LinkedHashSet<T> parents  = new LinkedHashSet<>();
-        public final LinkedHashSet<T> children = new LinkedHashSet<>();
+        protected final TreeSet<T> parents  = new TreeSet<>();
+        protected final TreeSet<T> children = new TreeSet<>();
 
         public int depth(){return parents.isEmpty() ? 0 : 1+parents.getFirst().depth();}
         public T  remove()
         {
             T t = NodeMap.delete((T)this);
             for (Node<?> parent : parents) {parent.children.remove(this);}
-            for (Node<?> child : children) {child.parents.remove(this);}
+            for (Node<?> child : children) { child.parents .remove(this);}
             return t;
         }
         public void clear()
@@ -95,7 +94,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             }
         }
 
-        public Set<T> siblings() {return parents.isEmpty() ? new HashSet<>() : parents.getFirst().children;}
+        public TreeSet<T> siblings() {return parents.isEmpty() ? new TreeSet<>() : parents.getFirst().children;}
         public T furthestAncestor()
         {
             try

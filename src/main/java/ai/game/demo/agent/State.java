@@ -22,7 +22,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         };
     }
 
-    public static int compare(State a,State b) {return a.compareTo(b);}
+    public static int         compare(State a,State b) {return a.compareTo(b);}
     public static < T extends State<T>> T max(T a,T b) {return a.fitness()>b.fitness()?a:b;}
     public static < T extends State<T>> T min(T a,T b) {return a.fitness()<b.fitness()?a:b;}
 
@@ -51,6 +51,8 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 //    protected boolean alternator()          {return depth()%2 == 0;} // useful for determining whether min-/max-ing
 //    protected int     alternator(int cycles){return depth()%cycles;}
 
+    public Iterator<T> iterator() {return maximize() ? children.iterator() : children.descendingIterator();}
+
     // evaluating fitness must be done by subclass and may be cumbersome, but should be a consistent value
     // therefore ensure it is done only once
     protected abstract int evaluateFitness();
@@ -63,12 +65,12 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 //                                   ? children.getFirst().minMax()
 //                                   : children.getLast() .minMax()   ;}
 
-    public boolean maximize(){return true;}
-    public boolean minimize(){return !maximize();}
-    public final T minMax(int depth)                        {return minMax(newAlphaBeta((T)this), depth);}
-    public final T minMax()                                 {return minMax(null,0);} // 'ab=null' works out here as 'ab' is not used if depth < 1
-    public final T minMax(T[] ab)                           {return minMax(ab,1);}
-    public final T minMax(T[] ab, int depth)                {return minMax(ab,depth,minimize());}
+    public boolean maximize()               {return true;}
+    public boolean minimize()               {return !maximize();}
+    public final T minMax(int depth)        {return minMax(newAlphaBeta((T)this), depth);}
+    public final T minMax()                 {return minMax(null,0);} // 'ab=null' works out here as 'ab' is not used if depth < 1
+    public final T minMax(T[] ab)           {return minMax(ab,1);}
+    public final T minMax(T[] ab, int depth){return minMax(ab,depth,minimize());}
     public final T minMax(T[] ab, int depth, boolean minMax)
     {
         try
@@ -118,5 +120,6 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 
     public final T         max(T other) {return fitness()>other.fitness() ? (T)this : other;}
     public final T         min(T other) {return fitness()<other.fitness() ? (T)this : other;}
-    public final int compareTo(T other) {return this.fitness()-other.fitness();}
+    public final int compareTo(T other) {return this.fitness()==other.fitness()?super.compareTo(other):other.fitness()-this.fitness();}
+    // returns '1' if equal fitness, because TreeSet otherwise will consider the States 'equal'
 }

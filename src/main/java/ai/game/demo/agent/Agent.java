@@ -45,9 +45,9 @@ public class Agent<T extends State<T>> extends PausableThread
     public T updateState(T state){return updateState(state,false);}
     public T updateState(T state, boolean pause)
     {
-        currentState = NodeMap.get(state); // get potentially equal state from memory since
-                                          //  it could probably already have been evaluated
-                                         //   then cull unreachable states from memory
+        currentState = currentState.addChild(state); // get potentially equal state from memory since
+                                                    //  it could probably already have been evaluated
+                                                   //   then cull unreachable states from memory
         pause(); awaitPause();
         backlog.clear(); backlog.add(Set.of(currentState).iterator());
         alphaBeta = ai.game.demo.agent.State.newAlphaBeta(currentState);
@@ -84,10 +84,10 @@ public class Agent<T extends State<T>> extends PausableThread
     {
         if (backlog.getFirst().hasNext()) // if there are unrealized children of State being processed
         {
-            T t = backlog.getFirst().next();   // get next State in layer.
-            t.minMax(alphaBeta);               // realize with children *limited by Alpha/Beta*. note: a given child may already exist and even be realized through another parent State.
-            backlog.add(t.children.iterator());// que list of children for processing. note: may be empty
-        }                                      // note: all iterators of States at a given depth follow immediately after each other
+            T state = backlog.getFirst().next(); // get next State in layer.
+            state.minMax(alphaBeta);            // realize with children *limited by Alpha/Beta*. note: a given child may already exist and even be realized through another parent State.
+            backlog.add(state.iterator());     // que list of children for processing. note: may be empty
+        }                                     // note: all iterators of States at a given depth follow immediately after each other and considers priority with regard to minMax
         else backlog.removeFirst(); // when all immediate children of State being processed has been realized, pop State from que.
     }
 
@@ -95,9 +95,9 @@ public class Agent<T extends State<T>> extends PausableThread
     {
         if (backlog.size() < maxDepth && backlog.getLast().hasNext())
         {
-            T t = backlog.getLast().next().minMax();  // find most suitable child for State being processed
-            t.minMax(alphaBeta);                      // realize child with its own children
-            backlog.add(t.children.iterator()); // set child to be processed
+            T state = backlog.getLast().next().minMax(); // find most suitable child for State being processed
+            state.minMax(alphaBeta);                     // realize child with its own children
+            backlog.add(state.iterator());               // set child to be processed
             if (alphaBeta[0].fitness()>=alphaBeta[1].fitness()) backlog.removeLast();
         }
         else backlog.removeLast();
