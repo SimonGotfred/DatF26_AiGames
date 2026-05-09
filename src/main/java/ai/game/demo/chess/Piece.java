@@ -4,6 +4,7 @@ import ai.game.demo.agent.State;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Stream;
 
 import static ai.game.demo.chess.Board.Position;
@@ -16,8 +17,8 @@ public class Piece extends State.Actionable<Board>
 
     public char file(){return (char)(   position.x() +'a');} // letter notion
     public char rank(){return (char)((7-position.y())+'1');} // number notion
-    public char x(){return position.x();}
-    public char y(){return position.y();}
+    public int x(){return position.x();}
+    public int y(){return position.y();}
 
     public Piece(char type, Board board, String pos) {this(type,board,(char)(pos.charAt(0)-'a'),(char)(pos.charAt(1)-'1'));}
     public Piece(char type, Position pos)
@@ -26,11 +27,7 @@ public class Piece extends State.Actionable<Board>
         this.color = type < '♚';
         this.type  = Type.fromChar(type);
     }
-//    public Piece(char type, Board table, int... pos) {this(type, new Position(table, pos));}
-    public Piece(char type, Board board, char... pos)
-    {
-        this(type, new Position(board, pos));
-    }
+    public Piece(char type, Board board, int... pos) {this(type, new Position(board, pos));}
 
     public String name()  {return type.name();}
     public char   icon()  {return this.color ? (char)(type.icon - 6) : type.icon;}
@@ -43,7 +40,7 @@ public class Piece extends State.Actionable<Board>
     public boolean  foeOf(Piece piece) {return this.value() * piece.value() < 0;}
 
     public String position()      {return ""+file()+rank();}
-    public Stream<char[]> moves() {return this.type.movesFrom(position).filter(pos-> !allyOf(position.board().getPiece(pos)));}
+    public Stream<int[]> moves() {return this.type.movesFrom(position).filter(pos -> !allyOf(position.board().getPiece(pos)));}
 
     public int compareTo(Piece other) {return this.value() - other.value();}
     public String toString() {return color() + icon() + position();}
@@ -52,12 +49,12 @@ public class Piece extends State.Actionable<Board>
     public Set<State.Action<Board>> actions()
     {
         Set<State.Action<Board>> actions = new HashSet<>();
-        for (char[] move : moves().toList())
+        for (int[] move : moves().toList())
         {
             actions.add(new State.Action<>(position.board())
             {
                 @Override public Board apply(Board board) {return board.move(position.position(),move);}
-                @Override public int compareTo(State.Action<Board> other) {return 0;} // todo: weigh moves by heuristics}
+                @Override public int compareTo(State.Action<Board> other) {return 0;} // todo: weigh moves by heuristics
             });
         }
         return actions;
