@@ -28,6 +28,16 @@ public enum Type
             if (board.at(position[0]+i, position[1]+d)!='ㅤ')
                 moves.add(new int[]{position[0]+i, position[1]+d});
         }
+        int[] passantPosL = new int[]{position[0]-1, position[1]+(d)};
+        int[] passantPosR = new int[]{position[0]+1, position[1]+(d)};
+        if (board.passantAt(passantPosR))
+        {
+            moves.add(passantPosR);
+        }
+        if (board.passantAt(passantPosL))
+        {
+            moves.add(passantPosL);
+        }
 
         //en passant
 
