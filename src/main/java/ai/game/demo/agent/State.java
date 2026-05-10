@@ -43,7 +43,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         public abstract TreeSet<Action<T>> actions();
     }
 
-    protected     Integer fitness;
+    private Integer fitness;
 //    public  final Iterator<T> iterator;
 //    public  final LinkedHashSet <Action<T>> actions = new LinkedHashSet<>();
 //    public  final Iterator<Action<T>> actionIterator = actions.iterator();

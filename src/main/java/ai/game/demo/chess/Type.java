@@ -26,7 +26,7 @@ public enum Type
         for (int i : mirror())
         {
             int[] checkedPos = new int[]{position[0]+i, position[1]+d};
-            if (board.at(checkedPos)!='ㅤ' || board.passantAt(checkedPos[0],d<0?2:5))
+            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos[0],d<0?2:5))
                 moves.add(checkedPos);
         }
 
@@ -412,4 +412,5 @@ public enum Type
     }
 
     @Override public String toString() {return sIcon;}
+    public String Name(){return color.toString() + ' ' + name().replaceFirst("BLACK_","");}
 }

@@ -19,7 +19,7 @@ public class RestController
     final static boolean runAgent = false;
 
     @PutMapping
-    public ResponseEntity<char[][]> newGame(HttpServletRequest request,
+    public ResponseEntity<Type[][]> newGame(HttpServletRequest request,
                                             @RequestParam(required=false) int[] from,
                                             @RequestParam(required=false) int[] to)
     {
@@ -49,16 +49,16 @@ public class RestController
     {
         if (request.getSession(false)==null) newGame(request,null,null);
         Board board = getAgent(request).getCurrentState();
-        Color color = Type.color(board.at(position));
+        Color color = board.at(position).color;
 
-        List<Object> moves = List.of(board.movesFor(position).filter(m -> Type.color(board.at(m))!=color).toArray());
-//        moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
+        List<Object> moves = List.of(board.movesFor(position).filter(m -> board.at(m).color!=color).toArray());
 //        moves.replaceAll(move -> Board.letterize(move).toCharArray());
+//        moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
         return ResponseEntity.ok(moves);
     }
 
     @PostMapping
-    public ResponseEntity<char[][]> playerMove(HttpServletRequest request,
+    public ResponseEntity<Type[][]> playerMove(HttpServletRequest request,
                                                @RequestParam(required=false) Character promote,
                                                @RequestParam int[] from,
                                                @RequestParam int[] to)
@@ -70,7 +70,7 @@ public class RestController
     }
 
     @PatchMapping
-    public ResponseEntity<char[][]> agentMove(HttpServletRequest request)
+    public ResponseEntity<Type[][]> agentMove(HttpServletRequest request)
     {
         Agent<Board> agent = getAgent(request);
         return ResponseEntity.ok(agent.act(!runAgent).raw());

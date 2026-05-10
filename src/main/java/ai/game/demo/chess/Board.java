@@ -15,7 +15,7 @@ public class Board extends State<Board> implements Comparable<Board>
     public  static final int TO_X, TO_Y, FROM_X, FROM_Y, TURN, PASSANT_X, PASSANT_Y,
                              BLACK_KING, BLACK_LEFT_ROOK, BLACK_RIGHT_ROOK,
                              WHITE_KING, WHITE_LEFT_ROOK, WHITE_RIGHT_ROOK;
-    
+
     static // set flag indexes
     {
         TO_X=flags++;
@@ -33,13 +33,30 @@ public class Board extends State<Board> implements Comparable<Board>
         WHITE_RIGHT_ROOK=flags++;
     }
 
-    public record Dto(char[][] board){};
+    public record Dto(Type[][] board){};
     public Dto toDto() {return new Dto(board);}
 
     private final int hashcode;
-    private final char[][] board;
+    private final Type[][] board;
+    public char[] metadata = "a1a1wpwwwbbb".toCharArray();
 
-    private Board(char[][] board) {this.board = board;this.hashcode = toString().hashCode();}
+    public Board(char[][] board)
+    {
+        int r=0,c=0;
+        this.board = new Type[board.length][];
+        for (char[] row : board)
+        {
+            this.board[r] = new Type[row.length];
+            for (char col : row)
+            {
+                this.board[r][c] = Type.fromChar(col);
+                c++;
+            }
+            r++; c=0;
+        }
+        this.hashcode=toString().hashCode();
+    }
+    public Board(Type[][] board) {this.board = board;this.hashcode = toString().hashCode();}
     public Board(String[] board)
     {
         this.board = new char[9][];
@@ -81,26 +98,22 @@ public class Board extends State<Board> implements Comparable<Board>
         //8,12 black right tower castling legality
     }
 
-    public char[][] raw() {return Arrays.stream(this.board).limit(8).map(char[]::clone).toArray(char[][]::new);}
-    public char     flag(int index){return board[8][index];}
-//    public void     setFlag(int index){board[8][index]++;}
-
-    public Piece    getPiece   (String pos) {return getPiece(normalize(pos.toCharArray()));}
+    public Type[][] raw() {return Arrays.stream(this.board).limit(8).map(Type[]::clone).toArray(Type[][]::new);}
     public Piece    getPiece   (int... pos) {return new Piece(at(pos), this, pos);}
-    public boolean  whiteAt    (int... pos) {return Type.isWhite(at(pos));}
-    public boolean  blackAt    (int... pos) {return Type.isBlack(at(pos));}
-    public boolean  pieceAt    (int... pos) {return Type.isPiece(at(pos));}
-    public char     at         (int... pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return ' ';}}
-
-//    protected char set(Piece piece, int...pos) {return set(piece.icon(),pos);}
-//    protected char set(char  piece, int...pos)
+    public Type     at   (String  pos) {return at(normalize(pos.toCharArray()));}
+    public boolean  whiteAt    (int... pos) {return (at(pos).isWhite());}
+    public boolean  blackAt    (int... pos) {return (at(pos).isBlack());}
+    public boolean  pieceAt    (int... pos) {return (at(pos).isPiece());}
+    public Type     at         (int... pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
+//    protected char  set        (char  piece, int...pos)
 //    {
 //        char past = board[pos[1]][pos[0]];
 //        board[pos[1]][pos[0]] = piece;
 //        return past;
 //    }
+//    protected char set(Piece piece, int...pos) {return set(piece.icon(),pos);}
 
-    public boolean maximize(){return board[8][4]=='w';}
+    public boolean maximize(){return metadata[4]=='w';}
     public Board doWhite(int depth){return this.minMax(depth).furthestAncestor();}
     public Board doBlack(int depth){return this.minMax(depth).furthestAncestor();}
     public Board doWhite(){return this.minMax().furthestAncestor();}
@@ -113,12 +126,12 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         List<Actionable<Board>> pieces = new ArrayList<>();
         char file, rank = 0;
-        for (char[] s : board)
+        for (Type[] s : board)
         {
             file = 0;
-            for (char c : s)
+            for (Type c : s)
             {
-                if (condition.test(c)) pieces.add(new Piece(c, this, file, rank));
+                if (condition.test(c.icon)) pieces.add(new Piece(c, this, file, rank));
                 file++;
             }
             rank++;
@@ -129,11 +142,11 @@ public class Board extends State<Board> implements Comparable<Board>
     public int score()
     {
         int r=0,c=0,buffer = 0;
-        for (char[] row : board)
+        for (Type[] row : board)
         {
-            for (char piece : row)
+            for (Type piece : row)
             {
-                buffer += Type.value(piece) + Type.fromChar(piece).valueAt(r,c);
+                buffer += piece.value + piece.valueAt(r,c);
                 c++;
             }
             r++; c=0;
@@ -166,16 +179,16 @@ public class Board extends State<Board> implements Comparable<Board>
         int sum = 0;
         for (Type type : simple) // pattern for black/white pieces are mostly identical, so only
         {                        //  run each pattern once, collecting both corresponding black/white
-            for (int[] p : type.movesFrom(this,position).filter(p -> Type.fromChar(at(p)) == type).toList())
+            for (int[] p : type.movesFrom(this,position).filter(p -> at(p) == type).toList())
             {
-                sum += Type.value(at(p)); // not just 'type's value, as type at p may be *black* piece
+                sum += at(p).value; // not just 'type's value, as type at p may be *black* piece
             }
         }
 
         for (int i : Type.mirror()) // own logic for pawns as they move differently when capturing
         {
-            if (at(position[0]+1,position[1]+i) ==       PAWN.icon) sum +=       PAWN.value;
-            if (at(position[0]-1,position[1]+i) == BLACK_PAWN.icon) sum += BLACK_PAWN.value;
+            if (at(position[0]+1,position[1]+i) ==       PAWN) sum +=       PAWN.value;
+            if (at(position[0]-1,position[1]+i) == BLACK_PAWN) sum += BLACK_PAWN.value;
         }
         return sum;
     }
@@ -199,6 +212,7 @@ public class Board extends State<Board> implements Comparable<Board>
     public Board move(String from, String to) {return move(normalize(from.toCharArray()),isLegalMove(from+','+to));}
     public Board move(int[] from, int[] to)
     {
+        Type[][] board = Arrays.stream(this.board).map(Type[]::clone).toArray(Type[][]::new);
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
         int fromX = from[0];
         int fromY = from[1];
@@ -279,10 +293,10 @@ public class Board extends State<Board> implements Comparable<Board>
 
     /// below methods primarily used to format data for/from readability ///
 
-    public static void announceCapture(Piece taker, Piece taken)
+    public static void announceCapture(Type taker, Type taken)
     {
-        System.out.println("\033[33;3m" + taker.color() + ' ' + taker.name()
-                                   + " \tcaptures " + taken.color() + ' '
+        System.out.println("\033[33;3m" + taker.color + " " + taker.name()
+                                   + " \tcaptures " + taken.color + " "
                                    + taken.name() + "\033[0m");
     }
 
@@ -323,7 +337,7 @@ public class Board extends State<Board> implements Comparable<Board>
                 if ((i+j) % 2 != 0) square = "░░";
                 else                square = "    ";
 
-                if (Type.isPiece(board[i][j])) joiner.add(space + board[i][j] + space);
+                if (board[i][j].isPiece()) joiner.add(space + board[i][j] + space);
                 else joiner.add(square);
             }
             joiner.add(" "+i+"\n");
@@ -350,7 +364,7 @@ public class Board extends State<Board> implements Comparable<Board>
                 if ((i+j) % 2 != 0) square = "░░";
                 else                square = " ㅤ";
 
-                if (Type.isPiece(board[i][j])) joiner.add(" " + board[i][j]);
+                if (board[i][j].isPiece()) joiner.add(" " + board[i][j]);
                 else joiner.add(square);
             }
 //            joiner.add(" "+i);
@@ -358,7 +372,7 @@ public class Board extends State<Board> implements Comparable<Board>
         }
 
         joiner.add("    a   b   c   d   e   f   g   h");
-        joiner.add("\n").add(board[8][4]+" "+letterize(new int[]{board[8][2], board[8][3]},new int[]{board[8][0], board[8][1]}));
+        joiner.add("\n").add(metadata[4]+" "+letterize(new int[]{metadata[2], metadata[3]},new int[]{metadata[0], metadata[1]}));
 
         return joiner.toString();
     }
