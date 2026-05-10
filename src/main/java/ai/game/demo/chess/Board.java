@@ -2,6 +2,7 @@ package ai.game.demo.chess;
 
 import ai.game.demo.agent.State;
 
+import java.awt.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -179,7 +180,7 @@ public class Board extends State<Board> implements Comparable<Board>
         int sum = 0;
         for (Type type : simple) // pattern for black/white pieces are mostly identical, so only
         {                        //  run each pattern once, collecting both corresponding black/white
-            for (int[] p : type.movesFrom(this,position).filter(p -> at(p) == type).toList())
+            for (int[] p : type.movesFrom(this,position).filter(p->at(p)==type||at(p)==type.invert()).toList())
             {
                 sum += at(p).value; // not just 'type's value, as type at p may be *black* piece
             }
@@ -280,6 +281,33 @@ public class Board extends State<Board> implements Comparable<Board>
     public List<Actionable<Board>> getActionables(boolean isBlackTurn)
     {
         return isBlackTurn ? blacks() : whites();
+    }
+
+    @Override
+    public TreeSet<Action<Board>> getActions(boolean isBlackTurn)
+    {
+        Color color = isBlackTurn ? Color.BLACK : Color.WHITE;
+        TreeSet<Action<Board>> actions = new TreeSet<>();
+        for (int row=0; row<8; row++)
+        {
+            for (int col=0; col<8; col++)
+            {
+                if(board[row][col].color == color)
+                {
+                    int[] pos = new int[]{row, col};
+                    for (int[] move : board[row][col].movesFrom(this, pos).toList())
+                    {
+                        actions.add(new State.Action<>(this)
+                        {
+                            @Override public Board apply(Board board){return board.move(pos,move);}
+                            @Override public int evaluateFitness()   {return board[move[0]][move[1]].value+board[pos[0]][pos[1]].valueAt(move)+state.riskAt(move);}
+                        });
+                    }
+                }
+            }
+        }
+
+        return actions;
     }
 
     public String toString() // simplified String to use for hashCode

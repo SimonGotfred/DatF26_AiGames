@@ -19,6 +19,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
             @Override protected int hashIdentifier()  {return fitness;}
             @Override protected int evaluateFitness() {return fitness;}
             @Override public LinkedHashSet<Actionable<?>> getActionables(boolean minMax) {return new LinkedHashSet<>();}
+            @Override public TreeSet<Actionable<?>> getActions(boolean minMax) {return new TreeSet<>();}
         };
     }
 
@@ -29,7 +30,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     // require subclasses define their own applicable 'Actions'
     public abstract static class Action<T extends State<T>> implements Function<T, T>, Comparable<Action<T>>
     {
-        private   final  T  state;
+        protected final  T  state;
         private   Integer fitness;
         public    Action(T state) {this.state=state;}
         public    final  T apply(){return state.addChild(this.apply(state));}
@@ -96,8 +97,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         T eval = (T)MAX_STATE;
         for (Actionable<T> actionable : getActionables(true))
         {
-            Collection<Action<T>> c = actionable.actions().reversed();
-            for (Action<T> action : c)
+            for (Action<T> action : actionable.actions().reversed())
             {
                 eval = eval.min(action.apply().minMax(ab,depth)); // 'apply' fetches *already existing* State, if duplicate
                 ab[0] = ab[0].min(eval);
@@ -113,8 +113,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         T eval = (T)MIN_STATE;
         for (Actionable<T> actionable : getActionables(false))
         {
-            Collection<Action<T>> c = actionable.actions();
-            for (Action<T> action : c)
+            for (Action<T> action : actionable.actions())
             {
                 eval = eval.max(action.apply().minMax(ab,depth)); // 'apply' fetches *already existing* State, if duplicate
                 ab[1] = ab[1].max(eval);
@@ -127,9 +126,11 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     public T apply(Action<T>  action){return action.apply((T)this);}
     public abstract Collection<Actionable<T>> getActionables(boolean minMax);
     public final    Collection<Actionable<T>> getActionables(){return getActionables(minimize());}
+    public abstract TreeSet<Action<T>> getActions(boolean minMax);
+    public final    TreeSet<Action<T>> getActions(){return getActions(minimize());}
 
     public final T         max(T other) {return fitness()>other.fitness() ? (T)this : other;}
     public final T         min(T other) {return fitness()<other.fitness() ? (T)this : other;}
     public final int compareTo(T other) {return this.fitness()==other.fitness()?super.compareTo(other):other.fitness()-this.fitness();}
-    // returns '1' if equal fitness, because TreeSet otherwise will consider the States 'equal'
+    // returns from supers method (comparing hashes) if equal fitness, because TreeSet otherwise will consider the States 'equal'
 }

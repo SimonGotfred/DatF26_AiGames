@@ -193,7 +193,7 @@ public enum Type
                 moves.add(new int[]{position[0] + i, position[1] + j,0});
             }
         }
-        moves.remove(4);
+        moves.remove(4); // remove own position
 
         int castle = board.whiteAt(position) ? Board.WHITE_KING:Board.BLACK_KING;
         if (board.flag(castle++)=='c')
@@ -397,6 +397,13 @@ public enum Type
         this.value    = value;
         this.pattern  = pattern;
         this.posWorth = posWorth;
+    }
+
+    public Type invert()
+    {
+        if      (isWhite()) return values()[ordinal()+6];
+        else if (isBlack()) return values()[ordinal()-6];
+        else                return VACANT;
     }
 
     public boolean isWhite (){return color == Color.WHITE;}
