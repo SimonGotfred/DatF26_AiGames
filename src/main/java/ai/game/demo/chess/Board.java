@@ -187,12 +187,20 @@ public class Board extends State<Board> implements Comparable<Board>
     public Board move(int [] from, int [] to) {return move(new char[]{(char)from[0],(char)from[1]},new char[]{(char)to[0],(char)to[1]});}
     public Board move(char[] from, char[] to)
     {
-        if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
+        //if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
+
+        //place piece in new position
         board[to[1]][to[0]] = board[from[1]][from[0]];
+
+        //clear previous position
         board[from[1]][from[0]] = 'ㅤ';
+
+        //set last move
         board[8][0] = to[0]; board[8][1] = to[1];
         board[8][2] = from[0]; board[8][3] = from[1];
+
+        //switch current color
         board[8][4] = board[8][4] == 'w' ? 'b' : 'w';
 
         //passant availability check
@@ -200,10 +208,9 @@ public class Board extends State<Board> implements Comparable<Board>
         int fromY = from[1];
         int toX = to[0];
         int toY = to[1];
-        if (board[fromX][fromY] == '♙') {
-
-            //board[8][5] =
-        }
+        if (board[toX][toY] == '♙' && Math.abs(fromY - toY) == 2) {
+            board[8][5] = 't';
+        }else {board[8][5] = 'f';}
 
         // todo: update metadata
 
