@@ -207,6 +207,8 @@ public class Board extends State<Board> implements Comparable<Board>
             if (board[8][5] == toX && board[8][6] == toY)
             {
                 board[toX][fromY] = VACANT.icon;
+                board[8][5] = 'x';
+                board[8][6] = 'y';
             }else {
                 //en passant availability check
                 boolean enPassantAvailable = isPawn(board[toX][toY]) && Math.abs(yDistance) == 2;
