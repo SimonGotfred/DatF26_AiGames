@@ -2,12 +2,13 @@ package ai.game.demo.controller;
 
 import ai.game.demo.agent.Agent;
 import ai.game.demo.chess.Board;
+import ai.game.demo.chess.Type;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
+import java.awt.*;
 import java.util.List;
 
 @CrossOrigin @RequestMapping("play")
@@ -33,12 +34,15 @@ public class RestController
     }
 
     @GetMapping
-    public ResponseEntity<Object> possibleMoves(HttpServletRequest request, @RequestParam int[] position)
+    public ResponseEntity<List<Object>> possibleMoves(HttpServletRequest request, @RequestParam int[] position)
     {
         if (request.getSession(false)==null) newGame(request);
-        List<Object> moves = new java.util.ArrayList<>(getAgent(request).getCurrentState().movesFor(position));
+        Board board = getAgent(request).getCurrentState();
+        Color color = Type.color(board.at(position));
+
+        List<Object> moves = List.of(board.movesFor(position).filter(m -> Type.color(board.at(m))!=color).toArray());
 //        moves.replaceAll(move -> Board.letterize(move).toCharArray());
-        moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
+//        moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
         return ResponseEntity.ok(moves);
     }
 

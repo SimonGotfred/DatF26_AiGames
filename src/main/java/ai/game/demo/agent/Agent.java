@@ -49,10 +49,9 @@ public class Agent<T extends State<T>> extends PausableThread
                                                     //  it could probably already have been evaluated
                                                    //   then cull unreachable states from memory
         pause(); awaitPause();
-        backlog.clear(); backlog.add(Set.of(currentState).iterator());
+        backlog.clear(); backlog.add(Set.of(currentState).iterator()); // todo: more fluid handling of purging backlog
         alphaBeta = ai.game.demo.agent.State.newAlphaBeta(currentState);
-        new Thread(()->{currentState.makeRoot();if(!pause)unpause();}) // set a Thread to cull unreachable States
-                  .start();
+        new Thread(()->{currentState.makeRoot();if(!pause)unpause();}).start(); // set a Thread to cull unreachable States
         return currentState;
     }
 
@@ -96,8 +95,8 @@ public class Agent<T extends State<T>> extends PausableThread
         if (backlog.size() < maxDepth && backlog.getLast().hasNext())
         {
             T state = backlog.getLast().next().minMax(); // find most suitable child for State being processed
-            state.minMax(alphaBeta);                     // realize child with its own children
-            backlog.add(state.iterator());               // set child to be processed
+            state.minMax(alphaBeta);                    // realize child with its own children
+            backlog.add(state.iterator());             // set child to be processed
             if (alphaBeta[0].fitness()>=alphaBeta[1].fitness()) backlog.removeLast();
         }
         else backlog.removeLast();

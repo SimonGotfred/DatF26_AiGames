@@ -40,21 +40,24 @@ public class Piece extends State.Actionable<Board>
     public boolean  foeOf(Piece piece) {return this.value() * piece.value() < 0;}
 
     public String position()      {return ""+file()+rank();}
-    public Stream<int[]> moves() {return this.type.movesFrom(position).filter(pos -> !allyOf(position.board().getPiece(pos)));}
+    public Stream<int[]> moves() {return this.type.movesFrom(position.board(),position.position()).filter(pos -> !allyOf(position.board().getPiece(pos)));}
 
     public int compareTo(Piece other) {return this.value() - other.value();}
     public String toString() {return color() + icon() + position();}
 
     @Override
-    public Set<State.Action<Board>> actions()
+    public TreeSet<State.Action<Board>> actions()
     {
-        Set<State.Action<Board>> actions = new HashSet<>();
+        TreeSet<State.Action<Board>> actions = new TreeSet<>();
         for (int[] move : moves().toList())
         {
             actions.add(new State.Action<>(position.board())
             {
                 @Override public Board apply(Board board) {return board.move(position.position(),move);}
-                @Override public int compareTo(State.Action<Board> other) {return 0;} // todo: weigh moves by heuristics
+                @Override public int evaluateFitness()
+                {
+                    return move[2]+type.valueAt(move)+position.riskAt(move);
+                }
             });
         }
         return actions;

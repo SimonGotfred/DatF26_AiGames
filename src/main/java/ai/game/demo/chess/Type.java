@@ -3,32 +3,30 @@ package ai.game.demo.chess;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
-
-import static ai.game.demo.chess.Board.Position;
 
 public enum Type
 {
     PAWN  ('♟', Color.WHITE, 100,
-    (position) ->
+    (board,position) ->
     {
         List<int[]> moves = new ArrayList<>();
 
-        int d = position.whiteAt() ? -1:1; // check *alleged* pawn color for move direction
-        if (!position.board().pieceAt(position.x(), position.y()+d))
+        int d = board.whiteAt() ? -1:1; // check *alleged* pawn color for move direction
+        if (!board.pieceAt(position[0], position[1]+d))
         {
-            moves.add(new int[]{position.x(), position.y()+d});
+            moves.add(new int[]{position[0], position[1]+d});
 
             //double move
-            if ((position.y() == 6 || position.y() == 1) && !position.board().pieceAt(position.x(), position.y()+d+d))
-                moves.add(new int[]{position.x(), position.y()+d+d});
+            if ((position[1] == 6 || position[1] == 1) && !board.pieceAt(position[0], position[1]+d+d))
+                moves.add(new int[]{position[0], position[1]+d+d});
         }
 
-        for (int i : new int[]{-1,1})
+        for (int i : mirror())
         {
-            if (position.board().at(position.x()+i, position.y()+d)!='ㅤ')
-                moves.add(new int[]{position.x()+i, position.y()+d});
+            if (board.at(position[0]+i, position[1]+d)!='ㅤ')
+                moves.add(new int[]{position[0]+i, position[1]+d});
         }
 
         //en passant
@@ -49,16 +47,16 @@ public enum Type
     }), // todo: promotion & en passant
 
     KNIGHT('♞', Color.WHITE, 320,
-    (position) ->
+    (board,position) ->
     {
         List<int[]> moves = new ArrayList<>();
 
-        for (int i : new int[]{-1,1})
+        for (int i : mirror())
         {
-            for (int j : new int[]{-2,2})
+            for (int j : mirror2())
             {
-                moves.add(new int[]{position.x() + i, position.y() + j});
-                moves.add(new int[]{position.x() + j, position.y() + i});
+                moves.add(new int[]{position[0] + i, position[1] + j});
+                moves.add(new int[]{position[0] + j, position[1] + i});
             }
         }
 
@@ -77,32 +75,32 @@ public enum Type
     }),
 
     BISHOP('♝', Color.WHITE, 330,
-    (position) ->
+    (board,position) ->
     {
         List<int[]> moves = new ArrayList<>();
 
         for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{position.x()+i , position.y()+i});
-            if (position.board().pieceAt(moves.getLast())) break;
+            moves.add(new int[]{position[0]+i , position[1]+i});
+            if (board.pieceAt(moves.getLast())) break;
         }
 
         for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{position.x()-i , position.y()-i});
-            if (position.board().pieceAt(moves.getLast())) break;
+            moves.add(new int[]{position[0]-i , position[1]-i});
+            if (board.pieceAt(moves.getLast())) break;
         }
 
         for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{position.x()+i , position.y()-i});
-            if (position.board().pieceAt(moves.getLast())) break;
+            moves.add(new int[]{position[0]+i , position[1]-i});
+            if (board.pieceAt(moves.getLast())) break;
         }
 
         for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{position.x()-i , position.y()+i});
-            if (position.board().pieceAt(moves.getLast())) break;
+            moves.add(new int[]{position[0]-i , position[1]+i});
+            if (board.pieceAt(moves.getLast())) break;
         }
 
         return moves.stream();
@@ -120,32 +118,32 @@ public enum Type
     }),
 
     ROOK  ('♜', Color.WHITE, 500,
-    (position) ->
+    (board,position) ->
     {
         List<int[]> moves = new ArrayList<>();
 
-        for (int i = position.x()+1; i < 8; i++)
+        for (int i = position[0]+1; i < 8; i++)
         {
-            moves.add(new int[]{i , position.y()});
-            if (position.board().pieceAt(moves.getLast())) break;
+            moves.add(new int[]{i , position[1]});
+            if (board.pieceAt(moves.getLast())) break;
         }
 
-        for (int i = position.x()-1; i > -1; i--)
+        for (int i = position[0]-1; i > -1; i--)
         {
-            moves.add(new int[]{i, position.y()});
-            if (position.board().pieceAt(moves.getLast())) break;
+            moves.add(new int[]{i, position[1]});
+            if (board.pieceAt(moves.getLast())) break;
         }
 
-        for (int i = position.y()+1; i < 8; i++)
+        for (int i = position[1]+1; i < 8; i++)
         {
-            moves.add(new int[]{position.x(), i});
-            if (position.board().pieceAt(moves.getLast())) break;
+            moves.add(new int[]{position[0], i});
+            if (board.pieceAt(moves.getLast())) break;
         }
 
-        for (int i = position.y()-1; i > -1; i--)
+        for (int i = position[1]-1; i > -1; i--)
         {
-            moves.add(new int[]{position.x(), i});
-            if (position.board().pieceAt(moves.getLast())) break;
+            moves.add(new int[]{position[0], i});
+            if (board.pieceAt(moves.getLast())) break;
         }
 
         return moves.stream();
@@ -163,11 +161,11 @@ public enum Type
     }),
 
     QUEEN ('♛', Color.WHITE, 900,
-    (position) ->
+    (board,position) ->
     {
         List<int[]> moves = new ArrayList<>();
-        moves.addAll(BISHOP.movesFrom(position).toList());
-        moves.addAll(ROOK.movesFrom(position).toList());
+        moves.addAll(BISHOP.movesFrom(board,position).toList());
+        moves.addAll(ROOK.movesFrom(board,position).toList());
         return moves.stream();
     },
     new int[][] // boardWorth
@@ -183,7 +181,7 @@ public enum Type
     }),
 
     KING  ('♚', Color.WHITE, 20000,
-    (position) ->
+    (board,position) ->
     {
         List<int[]> moves = new ArrayList<>();
 
@@ -191,13 +189,12 @@ public enum Type
         {
             for (int j = -1; j < 2; j++)
             {
-                moves.add(new int[]{position.x() + i, position.y() + j});
+                moves.add(new int[]{position[0] + i, position[1] + j});
             }
         }
+        moves.remove(4);
 
-        if (moves.contains(null)) System.out.println("what");
-
-        return moves.stream().filter(pos -> !Arrays.equals(pos, position.position()));
+        return moves.stream().filter(pos -> !Arrays.equals(pos, position));
     },
     new int[][] // boardWorth
     {
@@ -214,109 +211,94 @@ public enum Type
     BLACK_PAWN  ('♙', Color.BLACK, -100, PAWN.pattern,
     new int[][] // boardWorth
     {
-        { 30, 30, 30, 30, 30, 30, 30, 30}, // 1
-        { 50, 50, 50, 50, 50, 50, 50, 50}, // 2
-        { 10, 10, 20, 30, 30, 20, 10, 10}, // 3
-        {  5,  5, 10, 25, 25, 10,  5,  5}, // 4
-        {  0,  0,  0, 20, 20,  0,  0,  0}, // 5
-        {  5, -5,-10,  0,  0,-10, -5,  5}, // 6
+        {  0,  0,  0,  0,  0,  0,  0,  0}, // 8
         {  5, 10, 10,-20,-20, 10, 10,  5}, // 7
-        {  0,  0,  0,  0,  0,  0,  0,  0}  // 8
+        {  5, -5,-10,  0,  0,-10, -5,  5}, // 6
+        {  0,  0,  0, 20, 20,  0,  0,  0}, // 5
+        {  5,  5, 10, 25, 25, 10,  5,  5}, // 4
+        { 10, 10, 20, 30, 30, 20, 10, 10}, // 3
+        { 50, 50, 50, 50, 50, 50, 50, 50}, // 2
+        { 30, 30, 30, 30, 30, 30, 30, 30}, // 1
     }),
 
     BLACK_KNIGHT('♘', Color.BLACK, -320, KNIGHT.pattern,
     new int[][] // boardWorth
     {
-        {-50,-40,-30,-30,-30,-30,-40,-50}, // 1
-        {-40,-20,  0,  0,  0,  0,-20,-40}, // 2
-        {-30,  5, 10, 15, 15, 10,  5,-30}, // 3
-        {-30,  0, 15, 20, 20, 15,  0,-30}, // 4
-        {-30,  0, 15, 20, 20, 15,  0,-30}, // 5
-        {-30,  5, 10, 15, 15, 10,  5,-30}, // 6
+        {-50,-40,-30,-30,-30,-30,-40,-50}, // 8
         {-40,-20,  0,  5,  5,  0,-20,-40}, // 7
-        {-50,-40,-30,-30,-30,-30,-40,-50}  // 8
+        {-30,  5, 10, 15, 15, 10,  5,-30}, // 6
+        {-30,  0, 15, 20, 20, 15,  0,-30}, // 5
+        {-30,  0, 15, 20, 20, 15,  0,-30}, // 4
+        {-30,  5, 10, 15, 15, 10,  5,-30}, // 3
+        {-40,-20,  0,  0,  0,  0,-20,-40}, // 2
+        {-50,-40,-30,-30,-30,-30,-40,-50}, // 1
     }),
 
     BLACK_BISHOP('♗', Color.BLACK, -330, BISHOP.pattern,
     new int[][] // boardWorth
     {
-        {-20,-10,-10,-10,-10,-10,-10,-20}, // 1
-        {-10,  0,  0,  0,  0,  0,  0,-10}, // 2
-        {-10,  0,  5, 10, 10,  5,  0,-10}, // 3
-        {-10,  5,  5, 10, 10,  5,  5,-10}, // 4
-        {-10,  0, 10, 10, 10, 10,  0,-10}, // 5
-        {-10, 10, 10, 10, 10, 10, 10,-10}, // 6
+        {-20,-10,-10,-10,-10,-10,-10,-20}, // 8
         {-10,  5,  0,  0,  0,  0,  5,-10}, // 7
-        {-20,-10,-10,-10,-10,-10,-10,-20}  // 8
+        {-10, 10, 10, 10, 10, 10, 10,-10}, // 6
+        {-10,  0, 10, 10, 10, 10,  0,-10}, // 5
+        {-10,  5,  5, 10, 10,  5,  5,-10}, // 4
+        {-10,  0,  5, 10, 10,  5,  0,-10}, // 3
+        {-10,  0,  0,  0,  0,  0,  0,-10}, // 2
+        {-20,-10,-10,-10,-10,-10,-10,-20}, // 1
     }),
 
     BLACK_ROOK  ('♖', Color.BLACK, -500, ROOK.pattern,
     new int[][] // boardWorth
     {
-        {  0,  0,  0,  0,  0,  0,  0,  0}, // 1
-        {  5, 10, 10, 10, 10, 10, 10,  5}, // 2
-        { -5,  0,  0,  0,  0,  0,  0, -5}, // 3
-        { -5,  0,  0,  0,  0,  0,  0, -5}, // 4
-        { -5,  0,  0,  0,  0,  0,  0, -5}, // 5
-        { -5,  0,  0,  0,  0,  0,  0, -5}, // 6
+        {  0,  0,  0,  5,  5,  0,  0,  0}, // 8
         { -5,  0,  0,  0,  0,  0,  0, -5}, // 7
-        {  0,  0,  0,  5,  5,  0,  0,  0}  // 8
+        { -5,  0,  0,  0,  0,  0,  0, -5}, // 6
+        { -5,  0,  0,  0,  0,  0,  0, -5}, // 5
+        { -5,  0,  0,  0,  0,  0,  0, -5}, // 4
+        { -5,  0,  0,  0,  0,  0,  0, -5}, // 3
+        {  5, 10, 10, 10, 10, 10, 10,  5}, // 2
+        {  0,  0,  0,  0,  0,  0,  0,  0}, // 1
     }),
 
     BLACK_QUEEN ('♕', Color.BLACK, -900, QUEEN.pattern,
     new int[][] // boardWorth
     {
-        {-20,-10,-10, -5, -5,-10,-10,-20}, // 1
-        {-10,  0,  0,  0,  0,  0,  0,-10}, // 2
-        {-10,  0,  5,  5,  5,  5,  0,-10}, // 3
-        { -0,  0,  5,  5,  5,  5,  0, -0}, // 4
-        { -0,  0,  5,  5,  5,  5,  0, -0}, // 5
-        {-10,  5,  5,  5,  5,  5,  5,-10}, // 6
+        {-20,-10,-10, -5, -5,-10,-10,-20}, // 8
         {-10,  0,  5,  0,  0,  5,  0,-10}, // 7
-        {-20,-10,-10, -5, -5,-10,-10,-20}  // 8
+        {-10,  5,  5,  5,  5,  5,  5,-10}, // 6
+        { -0,  0,  5,  5,  5,  5,  0, -0}, // 5
+        { -0,  0,  5,  5,  5,  5,  0, -0}, // 4
+        {-10,  0,  5,  5,  5,  5,  0,-10}, // 3
+        {-10,  0,  0,  0,  0,  0,  0,-10}, // 2
+        {-20,-10,-10, -5, -5,-10,-10,-20}, // 1
     }),
 
     BLACK_KING  ('♔', Color.BLACK, -20000, KING.pattern,
     new int[][] // boardWorth
     {
-        {-30,-40,-40,-50,-50,-40,-40,-30}, // 1
-        {-30,-40,-40,-50,-50,-40,-40,-30}, // 2
-        {-30,-40,-40,-50,-50,-40,-40,-30}, // 3
-        {-30,-40,-40,-50,-50,-40,-40,-30}, // 4
-        {-20,-30,-30,-40,-40,-30,-30,-20}, // 5
-        {-10,-20,-20,-20,-20,-20,-20,-10}, // 6
+        { 20, 30, 10,  0,  0, 10, 20, 30}, // 8
         { 20, 20,  0,  0,  0,  0, 20, 20}, // 7
-        { 20, 30, 10,  0,  0, 10, 20, 30}  // 8
+        {-10,-20,-20,-20,-20,-20,-20,-10}, // 6
+        {-20,-30,-30,-40,-40,-30,-30,-20}, // 5
+        {-30,-40,-40,-50,-50,-40,-40,-30}, // 4
+        {-30,-40,-40,-50,-50,-40,-40,-30}, // 3
+        {-30,-40,-40,-50,-50,-40,-40,-30}, // 2
+        {-30,-40,-40,-50,-50,-40,-40,-30}, // 1
     }),
 
-    VACANT('ㅤ', new Color(0,0,0,0),0,(position) -> Stream.empty(), new int[][]{});
+    VACANT('ㅤ', new Color(0,0,0,0),0,(board,position) -> Stream.empty(),new int[][]{});
 
     public static final String white = "♚♛♜♝♞♟";
     public static final String black = "♔♕♖♗♘♙";
+    
+    private static final int[] mirror = new int[]{-1,1};
+    public  static int[] mirror(){return mirror;}
+    private static final int[] mirror2 = new int[]{-2,2};
+    public  static int[] mirror2(){return mirror2;}
 
     public static boolean isPiece(char c) {return c >= '♔' && c <= '♟';}
     public static boolean isWhite(char c) {return c >= '♚' && c <= '♟';}
     public static boolean isBlack(char c) {return c >= '♔' && c <= '♙';}
-
-    public static int value(char c)
-    {
-        return switch (c)
-        {
-            case '♟' ->       PAWN  .value;
-            case '♞' ->       KNIGHT.value;
-            case '♝' ->       BISHOP.value;
-            case '♜' ->       ROOK  .value;
-            case '♛' ->       QUEEN .value;
-            case '♚' ->       KING  .value;
-            case '♙' -> BLACK_PAWN  .value;
-            case '♘' -> BLACK_KNIGHT.value;
-            case '♗' -> BLACK_BISHOP.value;
-            case '♖' -> BLACK_ROOK  .value;
-            case '♕' -> BLACK_QUEEN .value;
-            case '♔' -> BLACK_KING  .value;
-            default  -> 0;
-        };
-    }
 
     public static Type fromChar(char c)
     {
@@ -335,6 +317,37 @@ public enum Type
             case '♕' -> BLACK_QUEEN ;
             case '♔' -> BLACK_KING  ;
             default -> VACANT;
+        };
+    }
+
+    public static Color color(char c)
+    {
+        return c < '♔' || c > '♟' ? VACANT.color : c < '♚' ? Color.BLACK : Color.WHITE;
+//        return switch (c)
+//        {
+//            case '♚','♛','♜','♝','♞','♟' -> Color.WHITE;
+//            case '♔','♕','♖','♗','♘','♙' -> Color.BLACK;
+//            default -> VACANT.color;
+//        };
+    }
+
+    public static int value(char c)
+    {
+        return switch (c)
+        {
+            case '♟' ->       PAWN  .value;
+            case '♞' ->       KNIGHT.value;
+            case '♝' ->       BISHOP.value;
+            case '♜' ->       ROOK  .value;
+            case '♛' ->       QUEEN .value;
+            case '♚' ->       KING  .value;
+            case '♙' -> BLACK_PAWN  .value;
+            case '♘' -> BLACK_KNIGHT.value;
+            case '♗' -> BLACK_BISHOP.value;
+            case '♖' -> BLACK_ROOK  .value;
+            case '♕' -> BLACK_QUEEN .value;
+            case '♔' -> BLACK_KING  .value;
+            default  -> 0;
         };
     }
 
@@ -359,9 +372,9 @@ public enum Type
     public  final Color   color;
     public  final int     value;
     private final int[][] posWorth;
-    private final Function<Position,Stream<int[]>> pattern;
+    private final BiFunction<Board, int[],Stream<int[]>> pattern;
 
-    Type(char icon, Color color, int value, Function<Position,Stream<int[]>> pattern, int[][] posWorth)
+    Type(char icon, Color color, int value, BiFunction<Board, int[], Stream<int[]>> pattern, int[][] posWorth)
     {
         this.icon     = icon;
         this.sIcon    = ""+icon;
@@ -375,9 +388,10 @@ public enum Type
     public boolean isBlack (){return color == Color.BLACK;}
     public boolean isPiece (){return this  != VACANT;}
     public boolean isVacant(){return this  == VACANT;}
-    public Stream<int[]> movesFrom(Position position) // note: includes both moves onto white *and* black pieces regardless of Type
+    public int     valueAt (int... position){try{return posWorth[position[0]][position[1]];}catch(IndexOutOfBoundsException ignored){return 0;}}
+    public Stream<int[]> movesFrom(Board board, int[] position) // note: includes both moves onto white *and* black pieces regardless of Type
     {
-        return pattern.apply(position).filter(p ->
+        return pattern.apply(board,position).filter(p ->
                                                       p[0] <  8 && p[1] <  8
                                                    && p[0] > -1 && p[1] > -1); // filter out moves outside of board
     }

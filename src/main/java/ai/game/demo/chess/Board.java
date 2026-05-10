@@ -4,6 +4,7 @@ import ai.game.demo.agent.State;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static ai.game.demo.chess.Type.*;
 
@@ -41,6 +42,7 @@ public class Board extends State<Board> implements Comparable<Board>
         for (int i = 0; i < board.length; i++) this.board[i] = board[i].toCharArray();
         this.hashcode = toString().hashCode();
     }
+    public Board(String board){this((board+"a1a1wpwwwbbb").split(","));}
     public Board()
     {
         this(new String[] // ! ALL HAIL THE GLORIOUS 'ㅤ' IT STRUCK UPON US FROM BETWEEN THE HANGUL !
@@ -80,7 +82,7 @@ public class Board extends State<Board> implements Comparable<Board>
         board[pos[1]][pos[0]] = piece;
         return past;
     }
-    protected char  set(Piece piece, int...pos) {return set(piece.icon(),pos);}
+    protected char set(Piece piece, int...pos) {return set(piece.icon(),pos);}
 
     public boolean maximize(){return board[8][4]=='w';}
     public Board doWhite(int depth){return this.minMax(depth).furthestAncestor();}
@@ -110,13 +112,15 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public int score()
     {
-        int buffer = 0;
+        int r=0,c=0,buffer = 0;
         for (char[] row : board)
         {
             for (char piece : row)
             {
-                buffer += Type.value(piece);
+                buffer += Type.value(piece) + Type.fromChar(piece).valueAt(r,c);
+                c++;
             }
+            r++; c=0;
         }
         return buffer;
     }
@@ -140,44 +144,40 @@ public class Board extends State<Board> implements Comparable<Board>
 
     private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
     public int riskAt(Position position) {return position.risk();}
-    public int riskAt(int...  position) // sum of pieces threatening the location, by using their patterns reversed
+    public int riskAt(int...   position) // sum of pieces threatening the location, by using their patterns reversed
     {
         if (!(position[0] < 8 && position[1] < 8)) return 0; // skip non-pathable positions
 
         int sum = 0;
-        Position pos = new Position(this,position);
         for (Type type : simple) // pattern for black/white pieces are mostly identical, so only
         {                        //  run each pattern once, collecting both corresponding black/white
-            for (int[] p : type.movesFrom(pos).filter(p -> Type.fromChar(at(p)) == type).toList())
+            for (int[] p : type.movesFrom(this,position).filter(p -> Type.fromChar(at(p)) == type).toList())
             {
-                sum += Type.value(at(p)); // not just 'type', as *opposing* pieces of same type are also relevant
+                sum += Type.value(at(p)); // not just 'type's value, as type at p may be *black* piece
             }
         }
 
-        for (int i : new int[]{-1,1}) // own logic for pawns as they move differently when capturing
+        for (int i : Type.mirror()) // own logic for pawns as they move differently when capturing
         {
-            if (at((char)(position[0]+i),(char)(position[1]+1)) ==  PAWN.icon  ) sum += 1;
-            if (at((char)(position[0]+i),(char)(position[1]+1)) ==  PAWN.icon-6) sum -= 1;
+            if (at(position[0]+1,position[1]+i) ==       PAWN.icon) sum +=       PAWN.value;
+            if (at(position[0]-1,position[1]+i) == BLACK_PAWN.icon) sum += BLACK_PAWN.value;
         }
         return sum;
     }
 
-//    public List<char[]> movesFor(int ... position){return movesFor((char)position[0],(char)position[1]);}
-    public List<int[]> movesFor(int... position){return getPiece(position[0], position[1]).moves().toList();}
-    public boolean isLegalMove(String move) {return move.split(",").length == 2 && isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim());}
-    public boolean isLegalMove(String from, String to) {return isLegalMove(normalize(from.toCharArray()),normalize(to.toCharArray()));}
-    public boolean isLegalMove(int[] from, int[] to)
+    public Stream<int[]> movesFor(int... position){return Type.fromChar(at(position[0], position[1])).movesFrom(this, position);}
+    public boolean    isLegalMove(String move) {return move.split(",").length == 2 && isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim());}
+    public boolean    isLegalMove(String from, String to) {return isLegalMove(normalize(from.toCharArray()),normalize(to.toCharArray()));}
+    public boolean    isLegalMove(int[] from, int[] to)
     {
-        Piece piece = getPiece(from);
-        List<int[]> moves = piece.moves().toList();
+        if(Type.color(at(from))==Type.color(at(to))) return false;
+        Type piece = Type.fromChar(at(from));
+        return movesFor(from).filter(m -> Type.color(at(m)) == piece.color).anyMatch(m -> Arrays.equals(m, to));
 
-        if (moves.stream().anyMatch(m -> Arrays.equals(m, to))) return true;
-        System.out.print("\033[31;1;4mIllegal move: " + letterize(from,to) + " - ");
-        if (piece.allyOf(getPiece(to))) System.out.print("cannot capture own piece.");
-        else System.out.print("no path.");
-        System.out.println("\033[0m");
-
-        return false;
+//        System.out.print("\033[31;1;4mIllegal move: " + letterize(from,to) + " - ");
+//        if (piece.allyOf(getPiece(to))) System.out.print("cannot capture own piece.");
+//        else System.out.print("no path.");
+//        System.out.println("\033[0m");
     }
 
     public Board move(String move) {return move(move.split(",")[0].trim(), move.split(",")[1].trim());}
@@ -187,7 +187,7 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
         board[to[1]][to[0]] = board[from[1]][from[0]]; // put moved piece to target location
-        board[from[1]][from[0]] = 'ㅤ';                // erase moved piece from previous location
+        board[from[1]][from[0]] = VACANT.icon;         // erase moved piece from previous location
         board[8][0] = (char)to  [0]; board[8][1] = (char)to  [1];  // update metadata 'moved to'
         board[8][2] = (char)from[0]; board[8][3] = (char)from[1];  // update metadata 'moved from'
         board[8][4] = board[8][4] == 'w' ? 'b' : 'w';  // update identity of active turn
@@ -240,10 +240,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return ""+pos[0]+pos[1];
     }
 
-    public String letterize(int[] from, int[] to)
-    {
-        return ("-> "+at(to)+" "+letterize(from)+" to "+letterize(to));
-    }
+    public String letterize(int[] from, int[] to){return ("-> "+at(to)+" "+letterize(from)+" to "+letterize(to));}
 
     public String toObsidian() // aligns nicely in Obsidian
     {

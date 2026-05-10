@@ -29,14 +29,18 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     // require subclasses define their own applicable 'Actions'
     public abstract static class Action<T extends State<T>> implements Function<T, T>, Comparable<Action<T>>
     {
-        private final  T state;
-        public  Action(T state) {this.state=state;}
-        public  final  T apply(){return state.addChild(this.apply(state));}
+        private   final  T  state;
+        private   Integer fitness;
+        public    Action(T state) {this.state=state;}
+        public    final  T apply(){return state.addChild(this.apply(state));}
+        protected abstract int evaluateFitness();
+        public    final    int fitness(){return fitness == null ? fitness = evaluateFitness() : fitness;}
+        public    final    int compareTo(Action<T> other){return this.fitness()==other.fitness()?1:other.fitness()-this.fitness();}
     }
 
     public abstract static class Actionable<T extends State<T>> implements Comparable<Actionable<T>>
     {
-        public abstract Set<Action<T>> actions();
+        public abstract TreeSet<Action<T>> actions();
     }
 
     protected     Integer fitness;
@@ -88,7 +92,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         T eval = (T)MAX_STATE;
         for (Actionable<T> actionable : getActionables(true))
         {
-            for (Action<T> action : actionable.actions())
+            for (Action<T> action : actionable.actions().reversed())
             {
                 eval = eval.min(action.apply().minMax(ab,depth)); // 'apply' fetches *already existing* State, if duplicate
                 ab[0] = ab[0].min(eval);
