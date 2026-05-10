@@ -2,12 +2,13 @@ package ai.game.demo.controller;
 
 import ai.game.demo.agent.Agent;
 import ai.game.demo.chess.Board;
+import ai.game.demo.chess.Type;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
+import java.awt.*;
 import java.util.List;
 
 @CrossOrigin @RequestMapping("play")
@@ -17,7 +18,7 @@ public class RestController
     private Agent<Board> getAgent(HttpServletRequest request) {return (Agent<Board>) request.getSession().getAttribute("Agent");}
 
     @PutMapping
-    public ResponseEntity<char[][]> newGame(HttpServletRequest request) throws IOException
+    public ResponseEntity<char[][]> newGame(HttpServletRequest request)
     {
         HttpSession session = request.getSession();
         if (session.getAttribute("Agent")!=null)
@@ -28,23 +29,28 @@ public class RestController
         Board board = new Board();
         Agent<Board> agent = new Agent<>(board);
         session.setAttribute("Agent",agent);
-//        agent.start();
+        agent.start();
         return ResponseEntity.ok(board.raw());
     }
 
     @GetMapping
-    public ResponseEntity<Object> possibleMoves(@RequestParam int[] position, HttpServletRequest request)
-    throws IOException
+    public ResponseEntity<List<Object>> possibleMoves(HttpServletRequest request, @RequestParam int[] position)
     {
         if (request.getSession(false)==null) newGame(request);
-        List<Object> moves = new java.util.ArrayList<>(getAgent(request).getCurrentState().getPiece((char)position[0],(char)position[1]).moves().toList());
+        Board board = getAgent(request).getCurrentState();
+        Color color = Type.color(board.at(position));
+
+        List<Object> moves = List.of(board.movesFor(position).filter(m -> Type.color(board.at(m))!=color).toArray());
 //        moves.replaceAll(move -> Board.letterize(move).toCharArray());
-        moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
+//        moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
         return ResponseEntity.ok(moves);
     }
 
     @PostMapping
-    public ResponseEntity<char[][]> playerMove(@RequestParam int[] from, @RequestParam int[] to, HttpServletRequest request)
+    public ResponseEntity<char[][]> playerMove(HttpServletRequest request,
+                                               @RequestParam(required=false) Character promote,
+                                               @RequestParam int[] from,
+                                               @RequestParam int[] to)
     {
         Agent<Board> agent = getAgent(request);
         agent.updateState(agent.getCurrentState().move(from,to));
@@ -55,7 +61,7 @@ public class RestController
     public ResponseEntity<char[][]> agentMove(HttpServletRequest request)
     {
         Agent<Board> agent = getAgent(request);
-        return ResponseEntity.ok(agent.updateState(agent.getCurrentState().doBlack()).raw());
+        return ResponseEntity.ok(agent.act(true).raw());
     }
 
     @DeleteMapping

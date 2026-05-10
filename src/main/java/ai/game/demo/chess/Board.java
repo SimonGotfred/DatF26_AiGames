@@ -4,6 +4,7 @@ import ai.game.demo.agent.State;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static ai.game.demo.chess.Type.*;
 
@@ -12,21 +13,21 @@ public class Board extends State<Board> implements Comparable<Board>
     public record Dto(char[][] board){};
     public Dto toDto() {return new Dto(board);}
 
-    public record Position(Board board, char... position)
+    public record Position(Board board, int... position)
     {
-        public char x() {return dim(0);}
-        public char y() {return dim(1);}
-        public char         at (char[]  pos) {return board.at(pos);}
+        public int           x () {return dim(0);}
+        public int           y () {return dim(1);}
+        public char         at (int[]  pos) {return board.at(pos);}
         public boolean whiteAt () {return board.whiteAt(position);}
         public boolean blackAt () {return board.blackAt(position);}
         public boolean pieceAt () {return board.pieceAt(position);}
-        public boolean whiteAt (char... pos) {return board.whiteAt(pos);}
-        public boolean blackAt (char... pos) {return board.blackAt(pos);}
-        public boolean pieceAt (char... pos) {return board.pieceAt(pos);}
-        public int      riskAt (char... pos) {return board. riskAt(pos);}
-        public int      risk   ()            {return board. riskAt(position);}
+        public boolean whiteAt (int... pos) {return board.whiteAt(pos);}
+        public boolean blackAt (int... pos) {return board.blackAt(pos);}
+        public boolean pieceAt (int... pos) {return board.pieceAt(pos);}
+        public int      riskAt (int... pos) {return board. riskAt(pos);}
+        public int      risk   ()           {return board. riskAt(position);}
 
-        public char dim(int i) {try {return position[i];}catch(IndexOutOfBoundsException e){return 0;}}
+        public int dim(int i) {try {return position[i];}catch(IndexOutOfBoundsException e){return 0;}}
 
         public String toString(){return board.getPiece(position).toString();}
     }
@@ -41,6 +42,7 @@ public class Board extends State<Board> implements Comparable<Board>
         for (int i = 0; i < board.length; i++) this.board[i] = board[i].toCharArray();
         this.hashcode = toString().hashCode();
     }
+    public Board(String board){this((board+"a1a1wpwwwbbb").split(","));}
     public Board()
     {
         this(new String[] // ! ALL HAIL THE GLORIOUS 'ㅤ' IT STRUCK UPON US FROM BETWEEN THE HANGUL !
@@ -66,31 +68,27 @@ public class Board extends State<Board> implements Comparable<Board>
         //8,11 black right tower castling legality
     }
 
-    public char[][] raw() {return Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);}
-    public Position getPosition(char... pos) {return new Position(this, pos);}
+    public char[][] raw() {return Arrays.stream(this.board).limit(8).map(char[]::clone).toArray(char[][]::new);}
+    public Position getPosition(int... pos) {return new Position(this, pos);}
     public Piece    getPiece   (String  pos) {return getPiece(normalize(pos.toCharArray()));}
-    public Piece    getPiece   (char... pos) {return new Piece(at(pos), this, pos);}
-    public boolean  whiteAt    (char... pos) {return Type.isWhite(at(pos));}
-    public boolean  blackAt    (char... pos) {return Type.isBlack(at(pos));}
-    public boolean  pieceAt    (char... pos) {return Type.isPiece(at(pos));}
-    public char     at         (char... pos)
-    {
-        try   {return board[pos[1]][pos[0]];}
-        catch (ArrayIndexOutOfBoundsException e) {return ' ';}
-    }
-    protected char  set        (char  piece, char...pos)
+    public Piece    getPiece   (int... pos) {return new Piece(at(pos), this, pos);}
+    public boolean  whiteAt    (int... pos) {return Type.isWhite(at(pos));}
+    public boolean  blackAt    (int... pos) {return Type.isBlack(at(pos));}
+    public boolean  pieceAt    (int... pos) {return Type.isPiece(at(pos));}
+    public char     at         (int... pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return ' ';}}
+    protected char  set        (char  piece, int...pos)
     {
         char past = board[pos[1]][pos[0]];
         board[pos[1]][pos[0]] = piece;
         return past;
     }
-    protected char  set        (Piece piece, char...pos) {return set(piece.icon(),pos);}
+    protected char set(Piece piece, int...pos) {return set(piece.icon(),pos);}
 
     public boolean maximize(){return board[8][4]=='w';}
-    public Board doWhite(int depth){return this.minMax(true ,depth).furthestAncestor();}
-    public Board doBlack(int depth){return this.minMax(false,depth).furthestAncestor();}
-    public Board doWhite(){return this.minMax(true ).furthestAncestor();}
-    public Board doBlack(){return this.minMax(false).furthestAncestor();}
+    public Board doWhite(int depth){return this.minMax(depth).furthestAncestor();}
+    public Board doBlack(int depth){return this.minMax(depth).furthestAncestor();}
+    public Board doWhite(){return this.minMax().furthestAncestor();}
+    public Board doBlack(){return this.minMax().furthestAncestor();}
 
     public  Set<Piece> whites(){return pieces(Type::isWhite);}
     public  Set<Piece> blacks(){return pieces(Type::isBlack);}
@@ -114,13 +112,15 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public int score()
     {
-        int buffer = 0;
+        int r=0,c=0,buffer = 0;
         for (char[] row : board)
         {
             for (char piece : row)
             {
-                buffer += Type.value(piece);
+                buffer += Type.value(piece) + Type.fromChar(piece).valueAt(r,c);
+                c++;
             }
+            r++; c=0;
         }
         return buffer;
     }
@@ -144,64 +144,53 @@ public class Board extends State<Board> implements Comparable<Board>
 
     private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
     public int riskAt(Position position) {return position.risk();}
-    public int riskAt(char...  position) // sum of pieces threatening the location, by using their patterns reversed
+    public int riskAt(int...   position) // sum of pieces threatening the location, by using their patterns reversed
     {
         if (!(position[0] < 8 && position[1] < 8)) return 0; // skip non-pathable positions
 
         int sum = 0;
-        Position pos = new Position(this,position);
         for (Type type : simple) // pattern for black/white pieces are mostly identical, so only
         {                        //  run each pattern once, collecting both corresponding black/white
-            for (char[] p : type.movesFrom(pos).filter(p -> Type.fromChar(at(p)) == type).toList())
+            for (int[] p : type.movesFrom(this,position).filter(p -> Type.fromChar(at(p)) == type).toList())
             {
-                sum += Type.value(at(p)); // not just 'type', as *opposing* pieces of same type are also relevant
+                sum += Type.value(at(p)); // not just 'type's value, as type at p may be *black* piece
             }
         }
 
-        for (int i : new int[]{-1,1}) // own logic for pawns as they move differently when capturing
+        for (int i : Type.mirror()) // own logic for pawns as they move differently when capturing
         {
-            if (at((char)(position[0]+i),(char)(position[1]+1)) ==  PAWN.icon  ) sum += 1;
-            if (at((char)(position[0]+i),(char)(position[1]+1)) ==  PAWN.icon-6) sum -= 1;
+            if (at(position[0]+1,position[1]+i) ==       PAWN.icon) sum +=       PAWN.value;
+            if (at(position[0]-1,position[1]+i) == BLACK_PAWN.icon) sum += BLACK_PAWN.value;
         }
         return sum;
     }
 
-    public boolean isLegalMove(String move) {return move.split(",").length == 2 && isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim());}
-    public boolean isLegalMove(String from, String to) {return isLegalMove(normalize(from.toCharArray()),normalize(to.toCharArray()));}
-    public boolean isLegalMove(char[] from, char[] to)
+    public Stream<int[]> movesFor(int... position){return Type.fromChar(at(position[0], position[1])).movesFrom(this, position);}
+    public boolean    isLegalMove(String move) {return move.split(",").length == 2 && isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim());}
+    public boolean    isLegalMove(String from, String to) {return isLegalMove(normalize(from.toCharArray()),normalize(to.toCharArray()));}
+    public boolean    isLegalMove(int[] from, int[] to)
     {
-        Piece piece = getPiece(from);
-        List<char[]> moves = piece.moves().toList();
+        if(Type.color(at(from))==Type.color(at(to))) return false;
+        Type piece = Type.fromChar(at(from));
+        return movesFor(from).filter(m -> Type.color(at(m)) == piece.color).anyMatch(m -> Arrays.equals(m, to));
 
-        if (moves.stream().anyMatch(m -> Arrays.equals(m, to))) return true;
-        System.out.print("\033[31;1;4mIllegal move: " + letterize(from,to) + " - ");
-        if (piece.allyOf(getPiece(to))) System.out.print("cannot capture own piece.");
-        else System.out.print("no path.");
-        System.out.println("\033[0m");
-
-        return false; // "\nPlease enter \"from , to\" as eg. \"a1 , b2\""
+//        System.out.print("\033[31;1;4mIllegal move: " + letterize(from,to) + " - ");
+//        if (piece.allyOf(getPiece(to))) System.out.print("cannot capture own piece.");
+//        else System.out.print("no path.");
+//        System.out.println("\033[0m");
     }
 
     public Board move(String move) {return move(move.split(",")[0].trim(), move.split(",")[1].trim());}
     public Board move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
-    public Board move(int [] from, int [] to) {return move(new char[]{(char)from[0],(char)from[1]},new char[]{(char)to[0],(char)to[1]});}
-    public Board move(char[] from, char[] to)
+    public Board move(char[] from, char[] to) {return move(new int[]{from[0],from[1]},new int[]{to[0],to[1]});}
+    public Board move(int[] from, int[] to)
     {
-        //if (pieceAt(to)) announceCapture(getPiece(from),getPiece(to));
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
-
-        //place piece in new position
-        board[to[1]][to[0]] = board[from[1]][from[0]];
-
-        //clear previous position
-        board[from[1]][from[0]] = 'ㅤ';
-
-        //set last move
-        board[8][0] = to[0]; board[8][1] = to[1];
-        board[8][2] = from[0]; board[8][3] = from[1];
-
-        //switch current color
-        board[8][4] = board[8][4] == 'w' ? 'b' : 'w';
+        board[to[1]][to[0]] = board[from[1]][from[0]]; // put moved piece to target location
+        board[from[1]][from[0]] = VACANT.icon;         // erase moved piece from previous location
+        board[8][0] = (char)to  [0]; board[8][1] = (char)to  [1];  // update metadata 'moved to'
+        board[8][2] = (char)from[0]; board[8][3] = (char)from[1];  // update metadata 'moved from'
+        board[8][4] = board[8][4] == 'w' ? 'b' : 'w';  // update identity of active turn
 
         //passant availability check
         int fromX = from[0];
@@ -214,7 +203,24 @@ public class Board extends State<Board> implements Comparable<Board>
 
         // todo: update metadata
 
-        return addChild(new Board(board));
+        return new Board(board);
+    }
+
+    @Override protected int hashIdentifier() {return hashcode;}
+    @Override protected int evaluateFitness() {return score();}
+    @Override
+    public LinkedHashSet<Actionable<Board>> getActionables(boolean isBlackTurn)
+    {
+        return new LinkedHashSet<>(isBlackTurn ? blacks() : whites());
+    }
+
+    public String toString() // simplified String to use for hashCode
+    {
+        StringJoiner joiner = new StringJoiner("\n");
+        joiner.add(""+board[8][4]);
+        Arrays.stream(board).limit(8).forEach(row -> joiner.add(String.valueOf(row)));
+//        for (char[] s : board) joiner.add(String.valueOf(s));
+        return joiner.toString();//.replace("ㅤ","\uF020");
     }
 
     public Board setVacant(char[] pos, Board state)
@@ -225,15 +231,25 @@ public class Board extends State<Board> implements Comparable<Board>
     }
 
     public static char[] normalize(char[] pos)
+    /// below methods primarily used to format data for/from readability ///
+
+    public static void announceCapture(Piece taker, Piece taken)
     {
-        if(pos[0]>7) pos[0] -= 'a';
-        if(pos[1]>7) pos[1] -= '1';
-        pos[1] = (char)(7-pos[1]);
-        return pos;
+        System.out.println("\033[33;3m" + taker.color() + " " + taker.name()
+                                   + " \tcaptures " + taken.color() + " "
+                                   + taken.name() + "\033[0m");
     }
-    public static char numberize(char c){return (char)('8'-c);}
-    public static char letterize(char c){return c+='A';}
-    public static String letterize(char[] pos)
+
+    public static int[] normalize(char[] pos)
+    {
+        int[] position = new int[pos.length];
+        position[0] = pos[0] - 'a';
+        position[1] = 7 - (pos[1] - '1');
+        return position;
+    }
+    public static char   numberize(char c){return (char)('8'-c);}
+    public static char   letterize(char c){return c+='A';}
+    public static String letterize(int[] pos)
     {
         if(pos[0]<8) pos[0] += 'A';
         pos[1] = (char)('8'-pos[1]);
@@ -241,16 +257,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return ""+pos[0]+pos[1];
     }
 
-    public String letterize(char[] from, char[] to)
-    {
-        return ("-> "+at(to)+" "+letterize(from)+" to "+letterize(to));
-    }
-
-    public void announceCapture(Piece taker, Piece taken)
-    {
-        //System.out.println("\033[33;3m" + taker.color() + " " + taker.name() + " \tcaptures " + taken.color() + " "
-        // + taken.name() + "\033[0m");
-    }
+    public String letterize(int[] from, int[] to){return ("-> "+at(to)+" "+letterize(from)+" to "+letterize(to));}
 
     public String toObsidian() // aligns nicely in Obsidian
     {
@@ -259,7 +266,7 @@ public class Board extends State<Board> implements Comparable<Board>
         String space  = "     ";
 
         joiner.add("```\n");
-        joiner.add("       0  1  2  3  4  5  6  7\n");
+//        joiner.add("       0  1  2  3  4  5  6  7\n");
 
         for (int i = 0; i < 8; i++)
         {
@@ -275,7 +282,7 @@ public class Board extends State<Board> implements Comparable<Board>
             joiner.add(" "+i+"\n");
         }
 
-        joiner.add("       a  b  c  d  e  f  g  h");
+//        joiner.add("       a  b  c  d  e  f  g  h");
         joiner.add("\n```");
 
         return joiner.toString();
@@ -304,25 +311,8 @@ public class Board extends State<Board> implements Comparable<Board>
         }
 
         joiner.add("    a   b   c   d   e   f   g   h");
-        joiner.add("\n").add(board[8][4]+" "+letterize(new char[]{board[8][2], board[8][3]},new char[]{board[8][0], board[8][1]}));
+        joiner.add("\n").add(board[8][4]+" "+letterize(new int[]{board[8][2], board[8][3]},new int[]{board[8][0], board[8][1]}));
 
         return joiner.toString();
-    }
-
-    public String toString() // simplified String to use for hashCode
-    {
-        StringJoiner joiner = new StringJoiner("\n");
-        joiner.add(""+board[8][4]);
-        Arrays.stream(board).limit(8).forEach(row -> joiner.add(String.valueOf(row)));
-//        for (char[] s : board) joiner.add(String.valueOf(s));
-        return joiner.toString();//.replace("ㅤ","\uF020");
-    }
-
-    @Override protected int hashIdentifier() {return hashcode;}
-    @Override protected int evaluateFitness() {return score();}
-    @Override
-    public LinkedHashSet<Actionable<Board>> getActionables(boolean isBlackTurn)
-    {
-        return new LinkedHashSet<>(isBlackTurn ? blacks() : whites());
     }
 }

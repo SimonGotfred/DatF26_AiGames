@@ -13,7 +13,6 @@ import java.util.*;
 
 public class Agent<T extends State<T>> extends PausableThread
 {
-    private static final int maxDepth = 7;
     public static char memSafety  = 2; // safety limit (GB) to pause if usable memory subceeds
     private static final FileStore store;
 
@@ -23,70 +22,81 @@ public class Agent<T extends State<T>> extends PausableThread
         catch (IOException e) {throw new RuntimeException(e);}
     }
 
+    private final NodeMap<T> map; // for debugging
+
     @Getter private T currentState;
-    private final NodeMap<T> map;
     private final ArrayList<Iterator<T>> backlog = new ArrayList<>();
     private final ArrayList<T> memory = new ArrayList<>();
     private T[] alphaBeta;
+    public  int maxDepth = 7;
 
-    private Agent(Class<T> c) {map = NodeMap.of(c);}
+    private Agent(Class<T> c)
+    {
+        map = NodeMap.of(c);
+    }
     public Agent(T state)
     {
         this((Class<T>)state.getClass());
         currentState = NodeMap.get(state);
         backlog.add(Set.of(currentState).iterator());
-        alphaBeta = ai.game.demo.agent.State.getAlphaBeta(currentState);
+        alphaBeta = ai.game.demo.agent.State.newAlphaBeta(currentState);
     }
 
-    public T determine()
+    public T updateState(T state){return updateState(state,false);}
+    public T updateState(T state, boolean pause)
     {
-        pause();
-        return updateState(currentState.fittestChild());
-    }
-
-    public T updateState(T state) // ? weave states, that have not been "thought" of, together with states in memory
-    {                            //  ? currently, if such occurs, entire memory is purged, apart from the new state
-        currentState = NodeMap.get(state); // get potentially equal state from memory since
-                                         //  it could probably already have been evaluated
-                                        //   then cull unreachable states from memory
-        pause(); while (!paused()){}
-        backlog.clear(); backlog.add(Set.of(currentState).iterator());
-        alphaBeta = ai.game.demo.agent.State.getAlphaBeta(currentState);
-        new Thread(()->{currentState.makeRoot();
-            unpause();})
-                .start(); // set a Thread to cull now unreachable States
-//        currentState.makeRoot();
-//        unpause();
+        currentState = currentState.addChild(state); // get potentially equal state from memory since
+                                                    //  it could probably already have been evaluated
+                                                   //   then cull unreachable states from memory
+        pause(); awaitPause();
+        backlog.clear(); backlog.add(Set.of(currentState).iterator()); // todo: more fluid handling of purging backlog
+        alphaBeta = ai.game.demo.agent.State.newAlphaBeta(currentState);
+        new Thread(()->{currentState.makeRoot();if(!pause)unpause();}).start(); // set a Thread to cull unreachable States
         return currentState;
     }
 
-    public T act()
+    public T act(){return act(false);}
+    public T act(boolean pause)
     {
-        while (paused()){} pause(); while (!paused()){}
+        while(paused()){} pause(); awaitPause();
         ai.game.demo.agent.State.debugFlag = true;
-        updateState(currentState.minMax().furthestAncestor());
+        updateState(currentState.minMax().furthestAncestor(),pause);
         ai.game.demo.agent.State.debugFlag = false;
         return currentState;
     }
 
-    private boolean memFlag = false;
+    private boolean memFlag = false; // used for noting in console when stalling because of memory
     @SneakyThrows public boolean noMemory(){return store.getUsableSpace()>>30<memSafety;}
     protected void loop()
     {
-        if (noMemory()) {System.out.println("\033[33;3m No Memory - spinning \033[0m");memFlag=true;}
+        if (noMemory()) {System.out.println("\033[33;3m No Memory - stalling \033[0m");memFlag=true;}
         while(noMemory()) if (pausing()) return; onSpinWait();
         if (memFlag) {System.out.println("\033[33;3m Memory Released - running \033[0m");memFlag=false;}
         if (stopping()) return;
         if (backlog.isEmpty()) {System.out.println("\033[31;1;4m Backlog Exhausted \033[0m");Stop();return;}
 
 //        printBacklog();
+        iterativeDeepening();
+    }
 
+    private void iterativeDeepening()
+    {
+        if (backlog.getFirst().hasNext()) // if there are unrealized children of State being processed
+        {
+            T state = backlog.getFirst().next(); // get next State in layer.
+            state.minMax(alphaBeta);            // realize with children *limited by Alpha/Beta*. note: a given child may already exist and even be realized through another parent State.
+            backlog.add(state.iterator());     // que list of children for processing. note: may be empty
+        }                                     // note: all iterators of States at a given depth follow immediately after each other and considers priority with regard to minMax
+        else backlog.removeFirst(); // when all immediate children of State being processed has been realized, pop State from que.
+    }
+
+    private void depthFirst()
+    {
         if (backlog.size() < maxDepth && backlog.getLast().hasNext())
         {
-            T t = backlog.getLast().next().minMax();
-            t.minMax(alphaBeta);
-            backlog.add(t.children.iterator());
-
+            T state = backlog.getLast().next().minMax(); // find most suitable child for State being processed
+            state.minMax(alphaBeta);                    // realize child with its own children
+            backlog.add(state.iterator());             // set child to be processed
             if (alphaBeta[0].fitness()>=alphaBeta[1].fitness()) backlog.removeLast();
         }
         else backlog.removeLast();

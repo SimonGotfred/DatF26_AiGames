@@ -31,23 +31,26 @@ public class _main
 
     public static void main(String[] args) throws IOException
     {
-        // just printing values of chars for debug reference
-//        for (char c:Type.black.toCharArray()) {System.out.println(c + ": " + ((int)c));}
-//        for (char c:Type.white.toCharArray()) {System.out.println(c + ": " + ((int)c));}
-
         System.out.println("usable space: "+(store.getUsableSpace()>>30)+" GB");
 
-        Board board = new Board();
+        Board board = new Board
+        (
+           "♖♘♗♕♔♗♘♖," +
+           "♙♙♙♙♙♙♙♙," +
+           "ㅤㅤㅤㅤㅤㅤㅤㅤ," +
+           "ㅤㅤㅤㅤㅤㅤㅤㅤ," +
+           "ㅤㅤ♖ㅤ♜ㅤㅤㅤ," +
+           "ㅤㅤㅤㅤㅤㅤㅤㅤ," +
+           "♟♟♟♟♟♟♟♟," +
+           "♜♞♝♛♚♝♞♜,"
+        );
+
+        board.minMax(1);
+        awaitInput();
+
+        board = new Board();
         Agent<Board> agent = new Agent<>(board);
         play(agent);
-
-//        board = board.minMax(2);
-//        System.out.println(board.toPrint());
-//        explore(board,0);
-//        System.out.println(NodeMap.size(Board.class));
-//        truncate(10);
-//        NodeMap.output(Board.class);
-//        System.out.println("Space: " + (Files.getFileStore(Path.of("C:")).getUsableSpace()>>30));
 
         System.out.println("goodbye");
     }
@@ -57,14 +60,13 @@ public class _main
         String move = "";
         Board board = agent.getCurrentState();
         agent.start();
-        while (!move.equals("x"))
+        while(true)
         {
             System.out.println(board.toConsole());
-
             System.out.println("Please enter next move:");
             move = console.readLine();
-
             System.out.println();
+
             if (move.contains("x")) {agent.Stop(); return;}
             if (move.contains("p"))
             {
@@ -73,13 +75,14 @@ public class _main
             }
             if (board.isLegalMove(move))
             {
+                Piece taken = board.getPiece(move.split(",")[1]);
+                if(taken.type != Type.VACANT) Board.announceCapture(board.getPiece(move.split(",")[0]),taken);
                 board = board.move(move);
                 board = agent.updateState(board);
             }
-            else continue;
+            else continue; // "\nPlease enter \"from , to\" as eg. \"a1 , b2\""
 
             System.out.println(board.toConsole());
-
             System.out.println("\nruminating...");
             board = agent.act();
             System.out.println();
@@ -117,7 +120,7 @@ public class _main
     {
         int size = 0;
         LocalDateTime now, then = LocalDateTime.now();
-        try {board.evaluate(depth);}
+        try {board.minMax(depth);}
         catch (OutOfMemoryError e)
         {
             System.out.println("*snap*");
