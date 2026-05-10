@@ -195,9 +195,26 @@ public class Board extends State<Board> implements Comparable<Board>
         board[8][2] = from[0]; board[8][3] = from[1];
         board[8][4] = board[8][4] == 'w' ? 'b' : 'w';
 
+        //passant availability check
+        int fromX = from[0];
+        int fromY = from[1];
+        int toX = to[0];
+        int toY = to[1];
+        if (board[fromX][fromY] == '♙') {
+
+            //board[8][5] =
+        }
+
         // todo: update metadata
 
         return addChild(new Board(board));
+    }
+
+    public Board setVacant(char[] pos, Board state)
+    {
+        char vacant ='ㅤ';
+        state.set(vacant, pos);
+        return state;
     }
 
     public static char[] normalize(char[] pos)
