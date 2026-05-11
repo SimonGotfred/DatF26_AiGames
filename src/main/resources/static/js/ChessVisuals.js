@@ -27,19 +27,37 @@ let chosenCell = null;
 
 let isWaitingForAi = false;
 
+const alphabet = ["a","b","c","d","e","f","g","h"]
+
 function MakeBoard(startState){
-    startState.map((_row) => {
+    startState.map((_row, rowIndex) => {
         const row = document.createElement("tr")
         table.appendChild(row)
 
         board.push([])
-        _row.map((_cell) => {
+        _row.map((_cell, cellIndex) => {
             const cell = document.createElement("th")
             row.appendChild(cell)
 
-            const piece = document.createElement("div")
+            let cornorTextList = []
+            if(cellIndex === 0){
+                const cornorText = document.createElement("p")
+                cell.appendChild(cornorText)
+                cornorText.innerText = 8-rowIndex.toString()
+                cornorText.className = "CornorText TopLeft"
+                cornorTextList.push(cornorText)
+            }
+            if(rowIndex === 7){
+                const cornorText = document.createElement("p")
+                cell.appendChild(cornorText)
+                cornorText.innerText = alphabet[cellIndex]
+                cornorText.className = "CornorText BottomRight"
+                cornorTextList.push(cornorText)
+            }
+
+
+            const piece = document.createElement("img")
             cell.appendChild(piece)
-            piece.innerText = ""
             cell.piece = piece;
 
             piece.className = "Piece"
@@ -53,10 +71,17 @@ function MakeBoard(startState){
 
             //space.addEventListener("click", () => clickSpace(space))
 
-            if(startWhite && isWhite || !startWhite && !isWhite)
+            if(startWhite && isWhite || !startWhite && !isWhite){
                 cell.className += " WhiteSpace"
+                cornorTextList.map((cornorText) => {
+                    cornorText.className += " WhiteSpace"
+                })
+            }
             else{
                 cell.className += " BlackSpace"
+                cornorTextList.map((cornorText) => {
+                    cornorText.className += " BlackSpace"
+                })
             }
 
             isWhite = !isWhite
@@ -78,19 +103,35 @@ function ChangeBoard(state){
         }
     }
 }
+
+const piecesList = ["♖","♘","♗","♕","♔","♙","♜","♞","♝","♛","♚","♟"]
+const pieceImagesList = ["Black_Tower","Black_Knight","Black_Bishop","Black_Queen","Black_King","Black_Pawn",
+"White_Tower","White_Knight","White_Bishop","White_Queen","White_King","White_Pawn"]
 function SetBlackOrWhite(piece){
     let isBlackPiece = false;
     blackChars.map((char) => {
         if(piece.chessPiece === char){
             isBlackPiece = true;
-            piece.innerText = String.fromCharCode(char.charCodeAt(0) + 6)
+            //piece.innerText = String.fromCharCode(char.charCodeAt(0) + 6)
+            //piece.src = "../images/Black_Pawn.png"
             if(!piece.className.includes("BlackPiece"))
                 piece.className += " BlackPiece"
         }
     })
     if(!isBlackPiece){
-        piece.innerText = piece.chessPiece;
+        //piece.src = "../images/Black_Pawn.png"
+        //piece.innerText = piece.chessPiece;
         piece.className = piece.className.replace("BlackPiece", "")
+    }
+    if(piece.chessPiece !== ""){
+        for (let i = 0; i < piecesList.length; i++){
+            if(piecesList[i] === piece.chessPiece){
+                piece.src = `../images/${pieceImagesList[i]}.png`
+            }
+        }
+    }
+    else {
+        piece.src = "../images/Empty.png"
     }
 }
 
@@ -192,6 +233,10 @@ async function pressCell(cell){
 }
 
 function choosePromotionPiece(cell, pieceType, popUp){
+
+    if(cell.piece.className.includes("BlackPiece")){
+        pieceType = String.fromCharCode(pieceType.charCodeAt(0) - 6)
+    }
     cell.piece.chessPiece = pieceType
     SetBlackOrWhite(cell.piece)
 

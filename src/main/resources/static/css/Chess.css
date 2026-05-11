@@ -19,6 +19,7 @@ body{
 
     color: white;
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    overflow: hidden;
 }
 .Piece.BlackPiece{
     color: black;
@@ -35,6 +36,28 @@ body{
     margin-left: auto;
     margin-right: auto;
 }
+.CornorText{
+    position: absolute;
+    font-size: 25px;
+    font-family: "Segoe UI";
+    font-weight: 600;
+    background-color: #00000000;
+}
+.CornorText.TopLeft{
+    margin-top: 2px;
+    margin-left: 5px;
+}
+.CornorText.BottomRight{
+    margin-top: 70px;
+    margin-left: 83px;
+}
+.CornorText.WhiteSpace{
+    color: #739552;
+}
+.CornorText.BlackSpace{
+    color: beige;
+}
+
 .popUp {
     position: fixed;
     top: 0;
