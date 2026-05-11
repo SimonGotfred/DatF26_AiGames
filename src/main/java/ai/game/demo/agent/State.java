@@ -119,8 +119,8 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     }
 
     public T apply(Action<T>  action){return action.apply((T)this);}
-    public abstract LinkedHashSet<Actionable<T>> getActionables(boolean minMax);
-    public final    LinkedHashSet<Actionable<T>> getActionables(){return getActionables(minimize());}
+    public abstract Collection<Actionable<T>> getActionables(boolean minMax);
+    public final    Collection<Actionable<T>> getActionables(){return getActionables(minimize());}
 
     public final T         max(T other) {return fitness()>other.fitness() ? (T)this : other;}
     public final T         min(T other) {return fitness()<other.fitness() ? (T)this : other;}

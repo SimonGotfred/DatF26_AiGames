@@ -365,7 +365,7 @@ public enum Type
         else                      return VACANT;
     }
 
-    public static Piece invert(Piece piece){return new Piece(invert(piece.icon()),piece.position);}
+    public static Piece invert(Piece piece){return new Piece(invert(piece.icon()),piece.board,piece.position);}
 
     public  final char    icon;
     public  final String  sIcon;

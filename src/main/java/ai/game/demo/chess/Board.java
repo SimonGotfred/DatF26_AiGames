@@ -13,25 +13,6 @@ public class Board extends State<Board> implements Comparable<Board>
     public record Dto(char[][] board){};
     public Dto toDto() {return new Dto(board);}
 
-    public record Position(Board board, int... position)
-    {
-        public int           x () {return dim(0);}
-        public int           y () {return dim(1);}
-        public char         at (int[]  pos) {return board.at(pos);}
-        public boolean whiteAt () {return board.whiteAt(position);}
-        public boolean blackAt () {return board.blackAt(position);}
-        public boolean pieceAt () {return board.pieceAt(position);}
-        public boolean whiteAt (int... pos) {return board.whiteAt(pos);}
-        public boolean blackAt (int... pos) {return board.blackAt(pos);}
-        public boolean pieceAt (int... pos) {return board.pieceAt(pos);}
-        public int      riskAt (int... pos) {return board. riskAt(pos);}
-        public int      risk   ()           {return board. riskAt(position);}
-
-        public int dim(int i) {try {return position[i];}catch(IndexOutOfBoundsException e){return 0;}}
-
-        public String toString(){return board.getPiece(position).toString();}
-    }
-
     private final int hashcode;
     private final char[][] board;
 
@@ -69,7 +50,6 @@ public class Board extends State<Board> implements Comparable<Board>
     }
 
     public char[][] raw() {return Arrays.stream(this.board).limit(8).map(char[]::clone).toArray(char[][]::new);}
-    public Position getPosition(int... pos) {return new Position(this, pos);}
     public Piece    getPiece   (String  pos) {return getPiece(normalize(pos.toCharArray()));}
     public Piece    getPiece   (int... pos) {return new Piece(at(pos), this, pos);}
     public boolean  whiteAt    (int... pos) {return Type.isWhite(at(pos));}
@@ -90,12 +70,12 @@ public class Board extends State<Board> implements Comparable<Board>
     public Board doWhite(){return this.minMax().furthestAncestor();}
     public Board doBlack(){return this.minMax().furthestAncestor();}
 
-    public  Set<Piece> whites(){return pieces(Type::isWhite);}
-    public  Set<Piece> blacks(){return pieces(Type::isBlack);}
-    public  Set<Piece> pieces(){return pieces(Type::isPiece);}
-    private Set<Piece> pieces(Predicate<Character> condition)
+    public  List<Actionable<Board>> whites(){return pieces(Type::isWhite);}
+    public  List<Actionable<Board>> blacks(){return pieces(Type::isBlack);}
+    public  List<Actionable<Board>> pieces(){return pieces(Type::isPiece);}
+    private List<Actionable<Board>> pieces(Predicate<Character> condition)
     {
-        Set<Piece> pieces = new HashSet<>();
+        List<Actionable<Board>> pieces = new ArrayList<>();
         char file, rank = 0;
         for (char[] s : board)
         {
@@ -143,7 +123,6 @@ public class Board extends State<Board> implements Comparable<Board>
     }
 
     private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
-    public int riskAt(Position position) {return position.risk();}
     public int riskAt(int...   position) // sum of pieces threatening the location, by using their patterns reversed
     {
         if (!(position[0] < 8 && position[1] < 8)) return 0; // skip non-pathable positions
@@ -182,7 +161,6 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public Board move(String move) {return move(move.split(",")[0].trim(), move.split(",")[1].trim());}
     public Board move(String from, String to) {return move(normalize(from.toCharArray()),normalize(to.toCharArray()));}
-    public Board move(char[] from, char[] to) {return move(new int[]{from[0],from[1]},new int[]{to[0],to[1]});}
     public Board move(int[] from, int[] to)
     {
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
@@ -200,9 +178,9 @@ public class Board extends State<Board> implements Comparable<Board>
     @Override protected int hashIdentifier() {return hashcode;}
     @Override protected int evaluateFitness() {return score();}
     @Override
-    public LinkedHashSet<Actionable<Board>> getActionables(boolean isBlackTurn)
+    public List<Actionable<Board>> getActionables(boolean isBlackTurn)
     {
-        return new LinkedHashSet<>(isBlackTurn ? blacks() : whites());
+        return isBlackTurn ? blacks() : whites();
     }
 
     public String toString() // simplified String to use for hashCode
@@ -211,27 +189,28 @@ public class Board extends State<Board> implements Comparable<Board>
         joiner.add(""+board[8][4]);
         Arrays.stream(board).limit(8).forEach(row -> joiner.add(String.valueOf(row)));
 //        for (char[] s : board) joiner.add(String.valueOf(s));
-        return joiner.toString();//.replace("ㅤ","\uF020");
+        return joiner.toString();
     }
 
     /// below methods primarily used to format data for/from readability ///
 
     public static void announceCapture(Piece taker, Piece taken)
     {
-        System.out.println("\033[33;3m" + taker.color() + " " + taker.name()
-                                   + " \tcaptures " + taken.color() + " "
+        System.out.println("\033[33;3m" + taker.color() + ' ' + taker.name()
+                                   + " \tcaptures " + taken.color() + ' '
                                    + taken.name() + "\033[0m");
     }
 
     public static int[] normalize(char[] pos)
     {
-        int[] position = new int[pos.length];
-        position[0] = pos[0] - 'a';
-        position[1] = 7 - (pos[1] - '1');
-        return position;
+        return new int[]
+        {
+               pos[0]-'a',
+            7-(pos[1]-'1')
+        };
     }
     public static char   numberize(char c){return (char)('8'-c);}
-    public static char   letterize(char c){return c+='A';}
+    public static char   letterize(char c){return        c+='A';} // neat way to implicitly cast result to char
     public static String letterize(int[] pos)
     {
         if(pos[0]<8) pos[0] += 'A';
