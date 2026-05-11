@@ -38,10 +38,10 @@ public class Piece extends State.Actionable<Board>
     public boolean  foeOf(Piece piece) {return this.value() * piece.value() < 0;}
 
     public String position()      {return ""+file()+rank();}
-    public Stream<int[]> moves() {return this.type.movesFrom(board,position).filter(pos -> !allyOf(board.getPiece(pos)));}
+    public Stream<int[]> moves() {return this.type.movesFrom(board,position).filter(pos -> type.color!=Type.color(board.at(pos)));}
 
     public int compareTo(Piece other) {return this.value() - other.value();}
-    public String toString() {return color() + icon() + position();}
+    public String toString() {return color() + type.icon + position();}
 
     @Override
     public TreeSet<State.Action<Board>> actions()

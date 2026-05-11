@@ -29,7 +29,7 @@ public class _main
     }
 
 
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args) throws IOException, InterruptedException
     {
         System.out.println("usable space: "+(store.getUsableSpace()>>30)+" GB");
 
@@ -45,16 +45,16 @@ public class _main
            "♜♞♝♛♚♝♞♜,"
         );
 
-        //board.minMax(1);
+//        board.minMax(1);
 
         board = new Board();
         Agent<Board> agent = new Agent<>(board);
-        play(board);
+        play(agent);
 
         System.out.println("goodbye");
     }
 
-    private static void play(Agent<Board> agent) throws IOException
+    private static void play(Agent<Board> agent) throws IOException, InterruptedException
     {
         String move = "";
         Board board = agent.getCurrentState();
@@ -88,6 +88,8 @@ public class _main
 
             System.out.println(board.toConsole());
             System.out.println("\nruminating...");
+
+            Thread.sleep(1000);
             board = agent.act();
             System.out.println();
         }

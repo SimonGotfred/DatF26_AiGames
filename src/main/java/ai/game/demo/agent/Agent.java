@@ -79,13 +79,21 @@ public class Agent<T extends State<T>> extends PausableThread
         iterativeDeepening();
     }
 
+    private int w = 0, depth = 0;
     private void iterativeDeepening()
     {
         if (backlog.getFirst().hasNext()) // if there are unrealized children of State being processed
         {
             T state = backlog.getFirst().next(); // get next State in layer.
+            if (state.depth() != depth) {depth = state.depth(); System.out.println("depth: " + depth);}
             state.minMax(alphaBeta);            // realize with children *limited by Alpha/Beta*. note: a given child may already exist and even be realized through another parent State.
             backlog.add(state.iterator());     // que list of children for processing. note: may be empty
+            if(w>5)
+            {
+                backlog.removeFirst();
+                w = 0;
+            }
+            else w++;
         }                                     // note: all iterators of States at a given depth follow immediately after each other and considers priority with regard to minMax
         else backlog.removeFirst(); // when all immediate children of State being processed has been realized, pop State from que.
     }

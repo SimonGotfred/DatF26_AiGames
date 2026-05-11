@@ -80,7 +80,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         try
         {
             depth--;
-            if (!children.isEmpty()) return (minMax ? children.getFirst() : children.getLast()).minMax(ab, depth, minMax); // skip calculations if already processed
+            if (!children.isEmpty()) return (minMax ? children.getLast() : children.getFirst()).minMax(ab, depth, minMax); // skip calculations if already processed
             return depth < 0 ? (T)this : minMax ? min(ab, depth) : max(ab, depth);
         }
         catch (StackOverflowError e) {System.out.println("\033[31;1;4m StackOverflow in Diving \033[0m");/**/ return (T)this;}
@@ -92,7 +92,8 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         T eval = (T)MAX_STATE;
         for (Actionable<T> actionable : getActionables(true))
         {
-            for (Action<T> action : actionable.actions().reversed())
+            Collection<Action<T>> c = actionable.actions().reversed();
+            for (Action<T> action : c)
             {
                 eval = eval.min(action.apply().minMax(ab,depth)); // 'apply' fetches *already existing* State, if duplicate
                 ab[0] = ab[0].min(eval);
@@ -108,7 +109,8 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         T eval = (T)MIN_STATE;
         for (Actionable<T> actionable : getActionables(false))
         {
-            for (Action<T> action : actionable.actions())
+            Collection<Action<T>> c = actionable.actions();
+            for (Action<T> action : c)
             {
                 eval = eval.max(action.apply().minMax(ab,depth)); // 'apply' fetches *already existing* State, if duplicate
                 ab[1] = ab[1].max(eval);

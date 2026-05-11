@@ -96,7 +96,6 @@ function ChangeBoard(state){
     for(let i = 0; i < state.length; i++){
         for(let k = 0; k < state[i].length; k++){
             //board[i][k].piece.innerText = state[i][k]
-            if(state[i][k] !== undefined && board[i][k].piece !== undefined)
                 board[i][k].piece.chessPiece = state[i][k]
 
             SetBlackOrWhite(board[i][k].piece)
@@ -108,7 +107,7 @@ const piecesList = ["♖","♘","♗","♕","♔","♙","♜","♞","♝","♛",
 const pieceImagesList = ["Black_Tower","Black_Knight","Black_Bishop","Black_Queen","Black_King","Black_Pawn",
 "White_Tower","White_Knight","White_Bishop","White_Queen","White_King","White_Pawn"]
 function SetBlackOrWhite(piece){
-    let isBlackPiece = false;
+   /* let isBlackPiece = false;
     blackChars.map((char) => {
         if(piece.chessPiece === char){
             isBlackPiece = true;
@@ -117,21 +116,21 @@ function SetBlackOrWhite(piece){
             if(!piece.className.includes("BlackPiece"))
                 piece.className += " BlackPiece"
         }
-    })
-    if(!isBlackPiece){
+    })*/
+    /*if(!isBlackPiece){
         //piece.src = "../images/Black_Pawn.png"
         //piece.innerText = piece.chessPiece;
         piece.className = piece.className.replace("BlackPiece", "")
+    }*/
+    if(piece.chessPiece === "ㅤ" || piece.chessPiece === ""){
+        piece.src = "../images/Empty.png"
     }
-    if(piece.chessPiece !== ""){
+    else {
         for (let i = 0; i < piecesList.length; i++){
             if(piecesList[i] === piece.chessPiece){
                 piece.src = `../images/${pieceImagesList[i]}.png`
             }
         }
-    }
-    else {
-        piece.src = "../images/Empty.png"
     }
 }
 
@@ -219,7 +218,7 @@ async function pressCell(cell){
                         }
                     }
                     else {
-                        makeMove(cellToCharArray(chosenCell), cellToCharArray(cell))//.then(waitForAiMove)
+                        makeMove(cellToCharArray(chosenCell), cellToCharArray(cell)).then(waitForAiMove)
                     }
 
 
@@ -255,7 +254,6 @@ const waitForAiMove = async () => {
     response.map((row) => {
         newBoard.push(row.split(''))
     })
-    console.log(newBoard)
     ChangeBoard(newBoard)
 };
 
