@@ -45,11 +45,11 @@ public class _main
            "♜♞♝♛♚♝♞♜,"
         );
 
-        board.minMax(1);
+        //board.minMax(1);
 
         board = new Board();
         Agent<Board> agent = new Agent<>(board);
-        play(agent);
+        play(board);
 
         System.out.println("goodbye");
     }

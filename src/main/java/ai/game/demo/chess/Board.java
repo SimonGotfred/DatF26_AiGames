@@ -10,8 +10,9 @@ import static ai.game.demo.chess.Type.*;
 
 public class Board extends State<Board> implements Comparable<Board>
 {
+
     public boolean passantAt(int[] passantPos) {
-        return(this.board[8][5] == passantPos[0] && this.board[8][6] == passantPos[1]);
+        return(board[8][5] == passantPos[0] && board[8][6] == passantPos[1]);
     }
 
     public record Dto(char[][] board){};
@@ -168,37 +169,43 @@ public class Board extends State<Board> implements Comparable<Board>
     public Board move(int[] from, int[] to)
     {
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
+        int fromX = from[0];
+        int fromY= from[1];
+        int toY = to[1];
+        int toX = to[0];
+
         board[to[1]][to[0]] = board[from[1]][from[0]]; // put moved piece to target location
         board[from[1]][from[0]] = VACANT.icon;         // erase moved piece from previous location
         board[8][0] = (char)to  [0]; board[8][1] = (char)to  [1];  // update metadata 'moved to'
         board[8][2] = (char)from[0]; board[8][3] = (char)from[1];  // update metadata 'moved from'
         board[8][4] = board[8][4] == 'w' ? 'b' : 'w';  // update identity of active turn
 
-        int fromY = from[1];
-        int toX = to[0];
-        int toY = to[1];
-        int yDistance = fromY-toY;
+        int yDistance = toY-fromY;
         //basic en passant logic :/ check pawn
-        boolean pawn = isPawn(board[toX][toY]);
+        int[] passantTarget = new int[2];
+        boolean pawn = isPawn(board[toY][toX]);
         if (pawn){
-            //take passant target
+            System.out.println("pawn");
+            //take en passant target
             if (board[8][5] == toX && board[8][6] == toY)
             {
-                board[toX][fromY] = VACANT.icon;
-                board[8][5] = 'x';
-                board[8][6] = 'y';
+                System.out.println(toX+"."+fromY);
+                board[fromY][toX] = VACANT.icon;
             }else {
                 //en passant availability check
-                boolean enPassantAvailable = isPawn(board[toX][toY]) && Math.abs(yDistance) == 2;
-
-                board[8][5] = enPassantAvailable ? (char) toX : 'x';
-                board[8][6] = enPassantAvailable ? (char) (toY - (yDistance / 2)) : 'y';
+                boolean enPassantAvailable = Math.abs(yDistance) == 2;
+                passantTarget[0] = enPassantAvailable ?  toX : 0;
+                passantTarget[1] = enPassantAvailable ? (toY - (yDistance / 2)) : 0;
+                System.out.println(passantTarget[0] + "," + passantTarget[1]);
             }
         }
+        board[8][5] = (char) passantTarget[0];
+        board[8][6] = (char) passantTarget[1];
         // todo: update metadata
 
         return new Board(board);
     }
+
     private boolean isPawn(char piece)
     {
        return  (piece == '♙' || piece == '♟');
