@@ -54,7 +54,7 @@ public class RestController
     {
         Agent<Board> agent = getAgent(request);
         agent.updateState(agent.getCurrentState().move(from,to));
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.ok(agent.getCurrentState().raw());
     }
 
     @PatchMapping
