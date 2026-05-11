@@ -1,5 +1,6 @@
 body{
     background-color: #302E2B;
+    margin:0;
 
 }
 .WhiteSpace{
@@ -8,6 +9,9 @@ body{
 .BlackSpace{
     background-color: #739552;
 }
+.Dot{
+    background-color: #444444;
+}
 .Piece{
     width: 100px;
     height: 100px;
@@ -15,6 +19,7 @@ body{
 
     color: white;
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    overflow: hidden;
 }
 .Piece.BlackPiece{
     color: black;
@@ -30,4 +35,71 @@ body{
     border-spacing: 0px;
     margin-left: auto;
     margin-right: auto;
+}
+.CornorText{
+    position: absolute;
+    font-size: 25px;
+    font-family: "Segoe UI";
+    font-weight: 600;
+    background-color: #00000000;
+}
+.CornorText.TopLeft{
+    margin-top: 2px;
+    margin-left: 5px;
+}
+.CornorText.BottomRight{
+    margin-top: 70px;
+    margin-left: 83px;
+}
+.CornorText.WhiteSpace{
+    color: #739552;
+}
+.CornorText.BlackSpace{
+    color: beige;
+}
+
+.popUp {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: rgba(0,0,0,0.2);
+
+    z-index: 9999; /* forces it above everything */
+}
+
+.popUp-content {
+    width: 600px;
+    height: 140px;
+
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+
+    display: flex;
+    gap: 15px;
+}
+
+.popUpPiece {
+    flex: 1;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 80px;
+}
+
+.popUpPiece:hover {
+    background: #dcdcdc;
 }

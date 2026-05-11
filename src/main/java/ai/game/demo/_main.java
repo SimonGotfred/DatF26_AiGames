@@ -46,7 +46,6 @@ public class _main
         );
 
         board.minMax(1);
-        awaitInput();
 
         board = new Board();
         Agent<Board> agent = new Agent<>(board);
@@ -80,7 +79,12 @@ public class _main
                 board = board.move(move);
                 board = agent.updateState(board);
             }
-            else continue; // "\nPlease enter \"from , to\" as eg. \"a1 , b2\""
+            else
+            {
+                System.out.print  ("\n\033[33;3m Illegal move:"+move+"\033[0m");
+                System.out.println("\n\033[33;3m Please enter \"from , to\" as eg. \"a1,b2\" \033[0m");
+                continue;
+            }
 
             System.out.println(board.toConsole());
             System.out.println("\nruminating...");
