@@ -78,7 +78,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             return child;        // return child that is *verifiably* in map
         }
 
-        public  void makeRoot() {for(Node<T> node : parents) node.cull(this);}
+        public  void makeRoot() {for(Node<T> node : parents) node.cull(this); parents.clear();}
         private void cull(Node<?> newRoot)
         {
             if (this==newRoot) return;
