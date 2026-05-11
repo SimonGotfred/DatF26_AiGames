@@ -13,7 +13,7 @@ public enum Type
     {
         List<int[]> moves = new ArrayList<>();
 
-        int d = board.whiteAt() ? -1:1; // check *alleged* pawn color for move direction
+        int d = board.whiteAt(position) ? -1:1; // check *alleged* pawn color for move direction
         if (!board.pieceAt(position[0], position[1]+d))
         {
             moves.add(new int[]{position[0], position[1]+d});

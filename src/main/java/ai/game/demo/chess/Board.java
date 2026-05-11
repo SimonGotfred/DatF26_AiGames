@@ -151,7 +151,7 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         if(Type.color(at(from))==Type.color(at(to))) return false;
         Type piece = Type.fromChar(at(from));
-        return movesFor(from).filter(m -> Type.color(at(m)) == piece.color).anyMatch(m -> Arrays.equals(m, to));
+        return movesFor(from).filter(m -> Type.color(at(m)) != piece.color).anyMatch(m -> Arrays.equals(m, to));
 
 //        System.out.print("\033[31;1;4mIllegal move: " + letterize(from,to) + " - ");
 //        if (piece.allyOf(getPiece(to))) System.out.print("cannot capture own piece.");

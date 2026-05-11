@@ -54,7 +54,7 @@ public class Piece extends State.Actionable<Board>
                 @Override public Board apply(Board board) {return board.move(position,move);}
                 @Override public int evaluateFitness()
                 {
-                    return move[2]+type.valueAt(move)+board.riskAt(move);
+                    return Type.value(board.at(move))+type.valueAt(move)+board.riskAt(move);
                 }
             });
         }
