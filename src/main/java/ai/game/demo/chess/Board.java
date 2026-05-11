@@ -200,7 +200,7 @@ public class Board extends State<Board> implements Comparable<Board>
         int toX = to[0];
         int toY = to[1];
         int yDistance = fromY-toY;
-        //check pawn
+        //basic en passant logic :/ check pawn
         boolean pawn = isPawn(board[toX][toY]);
         if (pawn){
             //take passant target
