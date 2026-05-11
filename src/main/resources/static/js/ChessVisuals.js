@@ -7,7 +7,7 @@ table.className = "Table"
 
 let board = []
 
-const startState = [
+/*const startState = [
     ["♖","♘","♗","♕","♔","♗","♘","♖"],
     ["♙","♙","♙","♙","♙","♙","♙","♙"],
     ["","","","","","","",""],
@@ -15,7 +15,7 @@ const startState = [
     ["","","","","","","",""],
     ["","","","","","","",""],
     ["♟","♟","♟","♟","♟","♟","♟","♟",],
-    ["♜","♞","♝","♛","♚","♝","♞","♜"],]
+    ["♜","♞","♝","♛","♚","♝","♞","♜"],]*/
 
 //let dd = String.fromCharCode("♕".charCodeAt(0) + 6)
 let startWhite = false;
@@ -29,7 +29,15 @@ let isWaitingForAi = false;
 
 const alphabet = ["a","b","c","d","e","f","g","h"]
 
-function MakeBoard(startState){
+async function MakeBoard(){
+
+    const response= await newGame()
+    console.log("res " + response)
+    const startState = []
+    response.map((row) => {
+        startState.push(row.split(''))
+    })
+    console.log("startstate: " + startState)
     startState.map((_row, rowIndex) => {
         const row = document.createElement("tr")
         table.appendChild(row)
@@ -257,7 +265,8 @@ const waitForAiMove = async () => {
     ChangeBoard(newBoard)
 };
 
-MakeBoard(startState)
+
+
 /*const testState = [
     ["♖","♘","♗","♕","♔","♗","♘","♖"],
     ["♙","♙","♙","♙","","♙","♙","♙"],
@@ -268,6 +277,7 @@ MakeBoard(startState)
     ["♟","♟","♟","","♟","♟","♟","♟",],
     ["♜","♞","♝","♚","♛","♝","♞","♜"],]
 ChangeBoard(testState)*/
+MakeBoard()
 console.log(board)
 
 /*HighlightSquare(3,4)
