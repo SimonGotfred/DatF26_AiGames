@@ -4,6 +4,7 @@ export async function newGame(){
     const response = await putBackend("play")
     const json = await response.json()
     console.log("new game: ", json)
+    return json;
 }
 export async function getPossibleMoves(position){
     const response = await getBackend(`play?position=${position[1]},${position[0]}`)
@@ -27,4 +28,4 @@ export async function getAiMove(){
     console.log("ai move response: ", json)
     return json
 }
-newGame()
+

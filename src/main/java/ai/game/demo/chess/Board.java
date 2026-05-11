@@ -10,6 +10,11 @@ import static ai.game.demo.chess.Type.*;
 
 public class Board extends State<Board> implements Comparable<Board>
 {
+
+    public boolean passantAt(int[] passantPos) {
+        return(board[8][5] == passantPos[0] && board[8][6] == passantPos[1]);
+    }
+
     public record Dto(char[][] board){};
     public Dto toDto() {return new Dto(board);}
 
@@ -36,17 +41,17 @@ public class Board extends State<Board> implements Comparable<Board>
             "ㅤㅤㅤㅤㅤㅤㅤㅤ",
             "♟♟♟♟♟♟♟♟",
             "♜♞♝♛♚♝♞♜",
-            "a1a1wpwwwbbb"
+            "a1a1wxywwwbbb"
         });
         //8,0-3 prev pos
         //8,4 current turn
-        //8,5 en passant legality
-        //8,6 white king castling legality
-        //8,7 white left tower castling legality
-        //8,8 white right tower castling legality
-        //8,9 black white king move castling legality
-        //8,10 black left tower castling legality
-        //8,11 black right tower castling legality
+        //8,5-6 en passant target
+        //8,7 white king castling legality
+        //8,8 white left tower castling legality
+        //8,9 white right tower castling legality
+        //8,10 black white king move castling legality
+        //8,11 black left tower castling legality
+        //8,12 black right tower castling legality
     }
 
     public char[][] raw() {return Arrays.stream(this.board).limit(8).map(char[]::clone).toArray(char[][]::new);}
@@ -164,16 +169,48 @@ public class Board extends State<Board> implements Comparable<Board>
     public Board move(int[] from, int[] to)
     {
         char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
+        int fromX = from[0];
+        int fromY= from[1];
+        int toY = to[1];
+        int toX = to[0];
+
         board[to[1]][to[0]] = board[from[1]][from[0]]; // put moved piece to target location
         board[from[1]][from[0]] = VACANT.icon;         // erase moved piece from previous location
         board[8][0] = (char)to  [0]; board[8][1] = (char)to  [1];  // update metadata 'moved to'
         board[8][2] = (char)from[0]; board[8][3] = (char)from[1];  // update metadata 'moved from'
         board[8][4] = board[8][4] == 'w' ? 'b' : 'w';  // update identity of active turn
 
+        int yDistance = toY-fromY;
+        //basic en passant logic :/ check pawn
+        int[] passantTarget = new int[2];
+        boolean pawn = isPawn(board[toY][toX]);
+        if (pawn){
+            System.out.println("pawn");
+            //take en passant target
+            if (board[8][5] == toX && board[8][6] == toY)
+            {
+                System.out.println(toX+"."+fromY);
+                board[fromY][toX] = VACANT.icon;
+            }else {
+                //en passant availability check
+                boolean enPassantAvailable = Math.abs(yDistance) == 2;
+                passantTarget[0] = enPassantAvailable ?  toX : 0;
+                passantTarget[1] = enPassantAvailable ? (toY - (yDistance / 2)) : 0;
+                System.out.println(passantTarget[0] + "," + passantTarget[1]);
+            }
+        }
+        board[8][5] = (char) passantTarget[0];
+        board[8][6] = (char) passantTarget[1];
         // todo: update metadata
 
         return new Board(board);
     }
+
+    private boolean isPawn(char piece)
+    {
+       return  (piece == '♙' || piece == '♟');
+    }
+
 
     @Override protected int hashIdentifier() {return hashcode;}
     @Override protected int evaluateFitness() {return score();}
@@ -191,7 +228,6 @@ public class Board extends State<Board> implements Comparable<Board>
 //        for (char[] s : board) joiner.add(String.valueOf(s));
         return joiner.toString();
     }
-
     /// below methods primarily used to format data for/from readability ///
 
     public static void announceCapture(Piece taker, Piece taken)
