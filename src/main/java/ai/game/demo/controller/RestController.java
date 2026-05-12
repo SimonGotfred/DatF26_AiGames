@@ -19,13 +19,23 @@ public class RestController
     final static boolean runAgent = false;
 
     @PutMapping
-    public ResponseEntity<char[][]> newGame(HttpServletRequest request)
+    public ResponseEntity<char[][]> newGame(HttpServletRequest request,
+                                            @RequestParam(required=false) int[] from,
+                                            @RequestParam(required=false) int[] to)
     {
         HttpSession session = request.getSession();
         if (session.getAttribute("Agent")!=null)
         {
-            getAgent(request).Stop();
-            session.removeAttribute("Agent");
+            Agent<Board> agent = getAgent(request);
+            if (from==null||to==null)
+            {
+                agent.Stop();
+                session.removeAttribute("Agent");
+            }
+            else
+            {
+                return ResponseEntity.ok(agent.updateState(agent.getCurrentState().move(from,to),true).raw());
+            }
         }
         Board board = new Board();
         Agent<Board> agent = new Agent<>(board);
@@ -37,7 +47,7 @@ public class RestController
     @GetMapping
     public ResponseEntity<List<Object>> possibleMoves(HttpServletRequest request, @RequestParam int[] position)
     {
-        if (request.getSession(false)==null) newGame(request);
+        if (request.getSession(false)==null) newGame(request,null,null);
         Board board = getAgent(request).getCurrentState();
         Color color = Type.color(board.at(position));
 
@@ -54,7 +64,8 @@ public class RestController
                                                @RequestParam int[] to)
     {
         Agent<Board> agent = getAgent(request);
-        agent.updateState(agent.getCurrentState().move(from,to),!runAgent);
+        Board board = agent.getCurrentState();
+        agent.updateState(board.move(from,board.isLegalMove(from,to)),!runAgent);
         return ResponseEntity.ok(agent.getCurrentState().raw());
     }
 

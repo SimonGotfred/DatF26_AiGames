@@ -238,7 +238,7 @@ public class Board extends State<Board> implements Comparable<Board>
 
     private boolean isPawn(char piece){return (piece=='♙'||piece=='♟');}
 
-    public boolean passantAt(int[] passantPos){return(board[8][5]==passantPos[0]&&board[8][6]==passantPos[1]);}
+    public boolean passantAt(int... passantPos){return(board[8][5]==passantPos[0]&&board[8][6]==passantPos[1]);}
 
     private void castling(char[][] board,int[] move)
     {

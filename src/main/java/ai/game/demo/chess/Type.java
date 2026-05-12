@@ -26,8 +26,8 @@ public enum Type
         for (int i : mirror())
         {
             int[] checkedPos = new int[]{position[0]+i, position[1]+d};
-            if (board.at(checkedPos)!='ㅤ' || board.passantAt(checkedPos))
-                moves.add(new int[]{position[0]+i, position[1]+d});
+            if (board.at(checkedPos)!='ㅤ' || board.passantAt(checkedPos[0],d<0?2:5))
+                moves.add(checkedPos);
         }
 
         //en passant
