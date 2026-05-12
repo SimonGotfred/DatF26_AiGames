@@ -16,6 +16,7 @@ import java.util.List;
 public class RestController
 {
     private Agent<Board> getAgent(HttpServletRequest request) {return (Agent<Board>) request.getSession().getAttribute("Agent");}
+    final static boolean runAgent = false;
 
     @PutMapping
     public ResponseEntity<char[][]> newGame(HttpServletRequest request)
@@ -29,7 +30,7 @@ public class RestController
         Board board = new Board();
         Agent<Board> agent = new Agent<>(board);
         session.setAttribute("Agent",agent);
-        agent.start();
+        agent.start(runAgent);if(!runAgent)agent.Stop();
         return ResponseEntity.ok(board.raw());
     }
 
@@ -41,8 +42,8 @@ public class RestController
         Color color = Type.color(board.at(position));
 
         List<Object> moves = List.of(board.movesFor(position).filter(m -> Type.color(board.at(m))!=color).toArray());
-//        moves.replaceAll(move -> Board.letterize(move).toCharArray());
 //        moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
+//        moves.replaceAll(move -> Board.letterize(move).toCharArray());
         return ResponseEntity.ok(moves);
     }
 
@@ -53,7 +54,7 @@ public class RestController
                                                @RequestParam int[] to)
     {
         Agent<Board> agent = getAgent(request);
-        agent.updateState(agent.getCurrentState().move(from,to));
+        agent.updateState(agent.getCurrentState().move(from,to),!runAgent);
         return ResponseEntity.ok(agent.getCurrentState().raw());
     }
 
@@ -61,7 +62,7 @@ public class RestController
     public ResponseEntity<char[][]> agentMove(HttpServletRequest request)
     {
         Agent<Board> agent = getAgent(request);
-        return ResponseEntity.ok(agent.act(true).raw());
+        return ResponseEntity.ok(agent.act(!runAgent).raw());
     }
 
     @DeleteMapping

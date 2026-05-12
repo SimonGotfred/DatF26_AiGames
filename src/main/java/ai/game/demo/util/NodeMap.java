@@ -90,7 +90,10 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
                     for (Node<?> child : children) {child.parents.remove(this);}
                     for (Node<?> child : children) {if(NodeMap.contains((T)child))child.cull(newRoot);}
                 }
-                catch (StackOverflowError ignored){System.out.println("\033[31;1;4m StackOverflow in Culling \033[0m");}
+                catch (StackOverflowError ignored)
+                {
+                    System.out.println("\033[31;1;4m StackOverflow in Culling \033[0m");
+                }
             }
         }
 

@@ -55,9 +55,12 @@ public class Agent<T extends State<T>> extends PausableThread
         return currentState;
     }
 
+    public void start(boolean start){if(start)start();else Stop();}
+
     public T act(){return act(false);}
     public T act(boolean pause)
     {
+        if (stopping()) return currentState;
         while(paused()){} pause(); awaitPause();
         ai.game.demo.agent.State.debugFlag = true;
         updateState(currentState.minMax().furthestAncestor(),pause);

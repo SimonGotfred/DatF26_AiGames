@@ -190,7 +190,7 @@ public enum Type
         {
             for (int j = -1; j < 2; j++)
             {
-                moves.add(new int[]{position[0] + i, position[1] + j});
+                moves.add(new int[]{position[0] + i, position[1] + j,0});
             }
         }
         moves.remove(4);

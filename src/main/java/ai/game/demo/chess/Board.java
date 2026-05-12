@@ -244,16 +244,21 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         if(move.length>2) // castling
         {
-            if(move[2]<0){board[move[1]][move[0]+1]= board[move[1]][0];board[move[1]][0]= VACANT.icon;} // left
-            else         {board[move[1]][move[0]-1]= board[move[1]][7];board[move[1]][7]= VACANT.icon;}// right
-            board[8][move[1]>0?7:10]=' '; // erase king castling-flag
+            if      (move[2]<0){board[move[1]][move[0]+1]= board[move[1]][0];board[move[1]][0]= VACANT.icon;} // left
+            else if (move[2]>0){board[move[1]][move[0]-1]= board[move[1]][7];board[move[1]][7]= VACANT.icon;}// right
+            board[8][move[1]>1?WHITE_KING:BLACK_KING]=' '; // erase king castling-flag
         }
-        else if (board[0][0]!='♖')board[8][BLACK_LEFT_ROOK ]=' '; // check if expected piece is present.
-        else if (board[0][7]!='♖')board[8][BLACK_RIGHT_ROOK]=' '; // the alternative would be to check
-        else if (board[7][0]!='♜')board[8][WHITE_LEFT_ROOK ]=' '; // if *either* to or from each if they
-        else if (board[7][7]!='♜')board[8][WHITE_RIGHT_ROOK]=' '; // match coordinates, ie double the checks
+        if(board[8][BLACK_KING]!=' ')
+        {
+            if (board[0][0] != '♖') board[8][ BLACK_LEFT_ROOK] = ' '; // check if expected piece is present.
+            if (board[0][7] != '♖') board[8][BLACK_RIGHT_ROOK] = ' '; // the alternative would be to check
+        }
+        if(board[8][WHITE_KING]!=' ')
+        {
+            if (board[7][0] != '♜') board[8][ WHITE_LEFT_ROOK] = ' '; // if *either* to or from each if they
+            if (board[7][7] != '♜') board[8][WHITE_RIGHT_ROOK] = ' '; // match coordinates, ie double the checks
+        }
     }
-
 
     @Override protected int hashIdentifier (){return hashcode;}
     @Override protected int evaluateFitness(){return score ();}
@@ -266,9 +271,9 @@ public class Board extends State<Board> implements Comparable<Board>
     public String toString() // simplified String to use for hashCode
     {
         StringJoiner joiner = new StringJoiner("\n");
-        joiner.add(""+board[8][4]);
-        Arrays.stream(board).limit(8).forEach(row -> joiner.add(String.valueOf(row)));
-//        for (char[] s : board) joiner.add(String.valueOf(s));
+//        joiner.add(""+board[8][4]);
+//        Arrays.stream(board).limit(8).forEach(row -> joiner.add(String.valueOf(row)));
+        for (char[] s : board) joiner.add(String.valueOf(s));
         return joiner.toString();
     }
 

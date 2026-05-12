@@ -83,7 +83,11 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
             if (!children.isEmpty()) return (minMax ? children.getLast() : children.getFirst()).minMax(ab, depth, minMax); // skip calculations if already processed
             return depth < 0 ? (T)this : minMax ? min(ab, depth) : max(ab, depth);
         }
-        catch (StackOverflowError e) {System.out.println("\033[31;1;4m StackOverflow in Diving \033[0m");/**/ return (T)this;}
+        catch (StackOverflowError e)
+        {
+            System.out.println("\033[31;1;4m StackOverflow in Diving \033[0m");
+            return (T)this;
+        }
     }
 
     private T min(T[]ab){return min(ab,0);}
