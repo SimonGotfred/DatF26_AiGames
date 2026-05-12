@@ -9,6 +9,7 @@ import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,34 +30,42 @@ public class _main
     }
 
 
-    public static void main(String[] args) throws IOException, InterruptedException
+    public static void main(String[] args) throws IOException, InterruptedException, IllegalAccessException
     {
         System.out.println("usable space: "+(store.getUsableSpace()>>30)+" GB");
 
         Board board = new Board
         (
-           "♖♘♗♕♔♗♘♖," +
-           "♙♙♙♙♙♙♙♙," +
-           "ㅤㅤㅤㅤㅤㅤㅤㅤ," +
-           "ㅤㅤㅤㅤㅤㅤㅤㅤ," +
-           "ㅤㅤ♖ㅤ♜ㅤㅤㅤ," +
-           "ㅤㅤㅤㅤㅤㅤㅤㅤ," +
-           "♟♟♟♟♟♟♟♟," +
-           "♜♞♝♛♚♝♞♜,"
+           "♖♘♗♕♔♗♘♖" +
+           "♙♙♙♙♙♙♙♙" +
+           "ㅤㅤㅤㅤㅤㅤㅤㅤ" +
+           "ㅤㅤㅤㅤㅤㅤㅤㅤ" +
+           "ㅤㅤ♖ㅤ♜ㅤㅤㅤ" +
+           "ㅤ♞♝♛ㅤㅤㅤㅤ" +
+           "♟♟♟♟♟♟♟♟" +
+           "♜ㅤㅤㅤ♚ㅤㅤ♜"
         );
 
 //        board.minMax(1);
 
-        board = new Board();
-        Agent<Board> agent = new Agent<>(board);
-        play(agent);
+//        board = new Board();
+//        Agent<Board> agent = new Agent<>(board);
+//        play(agent);
+        play(board);
+
+//        for (Field field : Board.class.getDeclaredFields())
+//        {
+//            try {System.out.println(field.getName()+" = " + field.getInt(null));}
+//            catch (IllegalAccessException ignored){}
+//            catch (NullPointerException ignored){System.out.println(field.getName()+" = NULL");}
+//        }
 
         System.out.println("goodbye");
     }
 
     private static void play(Agent<Board> agent) throws IOException, InterruptedException
     {
-        String move = "";
+        String move = ""; int[] m;
         Board board = agent.getCurrentState();
         agent.start();
         while(true)
@@ -72,7 +81,8 @@ public class _main
                 agent.pause();
                 continue;
             }
-            if (board.isLegalMove(move))
+            m = board.isLegalMove(move);
+            if (m!=null)
             {
                 Piece taken = board.getPiece(move.split(",")[1]);
                 if(taken.type != Type.VACANT) Board.announceCapture(board.getPiece(move.split(",")[0]),taken);
@@ -101,24 +111,15 @@ public class _main
         while (!move.equals("x"))
         {
             System.out.println(board.toConsole());
-
             System.out.println("Please enter next move:");
             move = console.readLine();
-
             System.out.println();
-            if (board.isLegalMove(move))
-                board = board.move(move);
-
-            board.makeRoot();
-
-            System.out.println(board.toConsole());
-            System.out.println("\nruminating...\n");
-//            board = board.doWhite();
-            board = board.doBlack();
-
-            board.makeRoot();
-
-            // todo: board = Agent.act(board);
+            if (board.isLegalMove(move)!=null) board= board.move(move);
+            else
+            {
+                System.out.print  ("\n\033[33;3m Illegal move:"+move+"\033[0m");
+                System.out.println("\n\033[33;3m Please enter \"from , to\" as eg. \"a1,b2\" \033[0m");
+            }
         }
     }
 

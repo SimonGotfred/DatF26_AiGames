@@ -195,7 +195,21 @@ public enum Type
         }
         moves.remove(4);
 
-        return moves.stream().filter(pos -> !Arrays.equals(pos, position));
+        int castle = board.whiteAt(position) ? Board.WHITE_KING:Board.BLACK_KING;
+        if (board.flag(castle++)=='c')
+        {
+            if (board.flag(castle++)=='c'
+                    && board.at(position[0]-1,position[1])=='ㅤ'
+                    && board.at(position[0]-2,position[1])=='ㅤ'
+                    && board.at(position[0]-3,position[1])=='ㅤ')
+                moves.add(new int[]{position[0]-2,position[1],-1});
+            if (board.flag(castle  )=='c'
+                    && board.at(position[0]+1,position[1])=='ㅤ'
+                    && board.at(position[0]+2,position[1])=='ㅤ')
+                moves.add(new int[]{position[0]+2,position[1], 1});
+        }
+
+        return moves.stream();
     },
     new int[][] // boardWorth
     {
