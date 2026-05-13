@@ -19,8 +19,10 @@ export async function getPossibleMoves(position){
 export async function makeMove(fromPosition, toPosition, promote){
     const response = await postBackend("play?" + (promote ? `promote=${promote}&` : "") + `from=${fromPosition[1]},${fromPosition[0]}&to=${toPosition[1]},${toPosition[0]}`)
     //const json = await response.json()
-    console.log("response: ", response)
-    return response
+
+    const json = await response.json()
+    console.log("response: ", json)
+    return json
 }
 export async function getAiMove(){
     const response = await patchBackend("play")
