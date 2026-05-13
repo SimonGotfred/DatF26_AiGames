@@ -23,7 +23,7 @@ public class Piece extends State.Actionable<Board>
     {
         this.board = board;
         this.position = pos;
-        this.type  = Type.fromChar(type);
+        this.type  = Type.from(type);
         this.color = this.type.color==Color.BLACK;
     }
 
@@ -38,7 +38,7 @@ public class Piece extends State.Actionable<Board>
     public boolean  foeOf(Piece piece) {return this.value() * piece.value() < 0;}
 
     public String position()      {return ""+file()+rank();}
-    public Stream<int[]> moves() {return this.type.movesFrom(board,position).filter(pos -> type.color!=Type.color(board.at(pos)));}
+    public Stream<int[]> moves() {return this.type.movesFrom(board,position).filter(pos -> type.color!=board.at(pos).color);}
 
     public int compareTo(Piece other) {return this.value() - other.value();}
     public String toString() {return color() + type.icon + position();}
@@ -54,8 +54,8 @@ public class Piece extends State.Actionable<Board>
                 @Override public Board apply(Board board) {return board.move(position,move);}
                 @Override public int evaluateFitness()
                 {
-                    return Type.value(board.at(move))+type.valueAt(move)+board.riskAt(move);
-                }
+                    return type.valueOf(move)+board.riskAt(move)-(board.at(move).value);
+                } // subtract taken piece's value as it's value is negative to moves purpose
             });
         }
         return actions;

@@ -39,10 +39,11 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
 
     public abstract static class Node<T extends Node<T>> implements Comparable<T>
     {
-        protected final TreeSet<T> parents  = new TreeSet<>();
+        protected final LinkedHashSet<T> parents  = new LinkedHashSet<>();
         protected final TreeSet<T> children = new TreeSet<>();
 
         public int depth(){return parents.isEmpty() ? 0 : 1+parents.getFirst().depth();}
+        @SuppressWarnings("unchecked")
         public T  remove()
         {
             T t = NodeMap.delete((T)this);
@@ -66,15 +67,13 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
 
         protected boolean removeChild (T child) {return children.remove( child);}
         protected boolean removeParent(T parent){return parents .remove(parent);}
-        public    boolean addParent   (T parent){return parents.isEmpty() && parents.add(parent);}
+        public    boolean addParent   (T parent){return parents .add   (parent);}
         public T addChild(T child)
         {
-            T child2 = add(child);  // substitute for potentially *equal* node already in map
-//            if (child!=child2) return child2; // todo: fix infinite looping
-            if (parents.contains(child2)) ;
-            if (parents.contains(child2)) return child2;
+            child = add(child);  // substitute for potentially *equal* node already in map
+            if (legacy().contains(child)) return child; // avoid infinite loops
             child.addParent((T)this);
-            children.add(child); // ? check if somehow child is already in children - should be impossible
+            children.add(child);
             return child;        // return child that is *verifiably* in map
         }
 
@@ -112,13 +111,21 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
         }
         public LinkedHashSet<T> legacy()
         {
-            LinkedHashSet<T> legacy = parents.isEmpty() ? new LinkedHashSet<>() : parents.getFirst().legacy();
-            legacy.add((T)this); // 'this' will be 'T' or a subclass thereof, due to type bound
-            return legacy;
+            try
+            {
+                LinkedHashSet<T> legacy = parents.isEmpty() ? new LinkedHashSet<>() : parents.getFirst().legacy();
+                legacy.add((T)this); // 'this' will be 'T' or a subclass thereof, due to type bound
+                return legacy;
+            }
+            catch (StackOverflowError e)
+            {
+                System.out.println("\033[31;1;4m StackOverflow in Legacy \033[0m");
+                return new LinkedHashSet<>(List.of((T)this));
+            }
         }
 
-        public String toObsidian(){return toString();} // todo: belongs in other class
-        public void output()
+        public String toObsidian(){return toString();}
+        public void output() // todo: belongs in other class
         {
             StringBuilder s = new StringBuilder(this.toObsidian());
 
