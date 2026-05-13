@@ -4,6 +4,7 @@ import ai.game.demo.agent.State;
 
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -12,8 +13,8 @@ import static ai.game.demo.chess.Type.*;
 public class Board extends State<Board> implements Comparable<Board>
 {
     private static int flags=0;
-    private static final String[] initialFlags= new String[]{"a1a1wxycccccc"};
-    public  static final int TO_X, TO_Y, FROM_X, FROM_Y, TURN, PASSANT_X, PASSANT_Y,
+    private static final String[] initialFlags= new String[]{"a1a1wpxycccccc"}; // ! yes, there is a reason for this being an array
+    public  static final int TO_X, TO_Y, FROM_X, FROM_Y, TURN, PROMOTION, PASSANT_X, PASSANT_Y,
                              BLACK_KING, BLACK_LEFT_ROOK, BLACK_RIGHT_ROOK,
                              WHITE_KING, WHITE_LEFT_ROOK, WHITE_RIGHT_ROOK;
 
@@ -24,6 +25,7 @@ public class Board extends State<Board> implements Comparable<Board>
         FROM_X=flags++;
         FROM_Y=flags++;
         TURN=flags++;
+        PROMOTION=flags++;
         PASSANT_X=flags++;
         PASSANT_Y=flags++;
         BLACK_KING=flags++;
@@ -39,7 +41,7 @@ public class Board extends State<Board> implements Comparable<Board>
 
     private final int hashcode;
     private final Type[][] board;
-    public char[] metadata = "a1a1wpwwwbbb".toCharArray();
+    private final char[] metadata;// = initialFlags[0].toCharArray();
 
     public Board(char[][] board)
     {
@@ -50,30 +52,33 @@ public class Board extends State<Board> implements Comparable<Board>
             this.board[r] = new Type[row.length];
             for (char col : row)
             {
-                this.board[r][c] = Type.fromChar(col);
+                this.board[r][c] = Type.from(col);
                 c++;
             }
             r++; c=0;
         }
+        this.metadata=board.length>8?board[8]:initialFlags[0].toCharArray();
         this.hashcode=toString().hashCode();
     }
-    public Board(Type[][] board) {this.board = board;this.hashcode = toString().hashCode();}
+    public Board(Type[][] board) {this(board,initialFlags[0]);}
+    public Board(Type[][] board,String meta) {this.board=board;this.metadata=meta.toCharArray();this.hashcode=toString().hashCode();}
     public Board(String[] board)
     {
-        this.board = new char[9][];
-        for (int i = 0; i < board.length; i++) this.board[i] = board[i].toCharArray();
-        if (board.length==8) this.board[8]=initialFlags[0].toCharArray();
+        this.board = new Type[8][];
+        for (int i = 0; i < 8; i++) this.board[i] = board[i].chars().mapToObj(Type::from).toArray(Type[]::new);
+        if (board.length==8) this.metadata=initialFlags[0].toCharArray();
         else if (board.length<9) throw new IllegalArgumentException("ChessBoard Bad Length");
+        else metadata = board[8].toCharArray();
         if (Stream.of(this.board).limit(8).anyMatch(row->row.length!=8))
             throw new IllegalArgumentException("ChessBoard Bad Width");
-        if (this.board[8].length!=flags)
+        if (board[8].length()!=flags)
             throw new IllegalArgumentException("ChessBoard Bad MetaData");
         this.hashcode = toString().hashCode();
     }
-    public Board(String board){this(Stream.of(
-            board.substring(0,64).split("(?<=\\G........)"),
-            board.length()>64 ? new String[]{board.substring(64)} : initialFlags)
-                                            .flatMap(Stream::of).toArray(String[]::new));}
+    public Board(String board)
+    {this(Stream.of(board.substring(0,64).split("(?<=\\G........)"),
+                    board.length()>64 ? new String[]{board.substring(64)} : initialFlags)
+                                                          .flatMap(Stream::of).toArray(String[]::new));}
     public Board()
     {
         this(new String[] // ! ALL HAIL THE GLORIOUS 'ㅤ' IT STRUCK UPON US FROM BETWEEN THE HANGUL !
@@ -100,25 +105,21 @@ public class Board extends State<Board> implements Comparable<Board>
     }
 
     public Type[][] raw() {return Arrays.stream(this.board).limit(8).map(Type[]::clone).toArray(Type[][]::new);}
-    public Piece    getPiece   (int... pos) {return new Piece(at(pos), this, pos);}
-    public Type     at   (String  pos) {return at(normalize(pos.toCharArray()));}
-    public boolean  whiteAt    (int... pos) {return (at(pos).isWhite());}
-    public boolean  blackAt    (int... pos) {return (at(pos).isBlack());}
-    public boolean  pieceAt    (int... pos) {return (at(pos).isPiece());}
-    public Type     at         (int... pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
-//    protected char  set        (char  piece, int...pos)
-//    {
-//        char past = board[pos[1]][pos[0]];
-//        board[pos[1]][pos[0]] = piece;
-//        return past;
-//    }
-//    protected char set(Piece piece, int...pos) {return set(piece.icon(),pos);}
+    public char flag(int index){return metadata[index];}
+    
+    public Piece    getPiece   (int...  pos) {return new Piece(at(pos).icon, this, pos);}
+    public boolean  whiteAt    (int...  pos) {return at(pos).isWhite(   );}
+    public boolean  blackAt    (int...  pos) {return at(pos).isBlack(   );}
+    public boolean  pieceAt    (int...  pos) {return at(pos).isPiece(   );}
+    public int      valueAt    (int...  pos) {return at(pos).valueOf(pos);}
+    public Type     at         (int...  pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
+    public Type     at         (String  pos) {return at(normalize(pos.toCharArray()));}
 
     public boolean maximize(){return metadata[4]=='w';}
-    public Board doWhite(int depth){return this.minMax(depth).furthestAncestor();}
-    public Board doBlack(int depth){return this.minMax(depth).furthestAncestor();}
-    public Board doWhite(){return this.minMax().furthestAncestor();}
-    public Board doBlack(){return this.minMax().furthestAncestor();}
+    public Board   doWhite(int depth){return this.minMax(depth).furthestAncestor();}
+    public Board   doBlack(int depth){return this.minMax(depth).furthestAncestor();}
+    public Board   doWhite(){return this.minMax().furthestAncestor();}
+    public Board   doBlack(){return this.minMax().furthestAncestor();}
 
     public  List<Actionable<Board>> whites(){return pieces(Type::isWhite);}
     public  List<Actionable<Board>> blacks(){return pieces(Type::isBlack);}
@@ -132,7 +133,7 @@ public class Board extends State<Board> implements Comparable<Board>
             file = 0;
             for (Type c : s)
             {
-                if (condition.test(c.icon)) pieces.add(new Piece(c, this, file, rank));
+                if (condition.test(c.icon)) pieces.add(new Piece(c.icon, this, file, rank));
                 file++;
             }
             rank++;
@@ -147,7 +148,7 @@ public class Board extends State<Board> implements Comparable<Board>
         {
             for (Type piece : row)
             {
-                buffer += piece.value + piece.valueAt(r,c);
+                buffer += piece.valueAt(r, c);
                 c++;
             }
             r++; c=0;
@@ -194,7 +195,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return sum;
     }
 
-    public Stream<int[]> movesFor(int... position){return Type.fromChar(at(position[0], position[1])).movesFrom(this, position);}
+    public Stream<int[]> movesFor(int... position){return at(position[0], position[1]).movesFrom(this, position);}
     public int[] isLegalMove(String move) {return move.split(",").length == 2
                                                 ? isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim())
                                                 : null;}
@@ -202,9 +203,9 @@ public class Board extends State<Board> implements Comparable<Board>
                                                                         normalize(to.toCharArray()));}
     public int[] isLegalMove(int[] from, int[] to)
     {
-        if(Type.color(at(from))==Type.color(at(to))) return null;
-        Type piece = Type.fromChar(at(from));
-        return movesFor(from).filter(m -> Type.color(at(m)) != piece.color)
+        if(at(from).color==at(to).color) return null;
+        Type piece = at(from);
+        return movesFor(from).filter(m -> at(m).color != piece.color)
                              .filter(m -> m[0]==to[0]&&m[1]==to[1])
                              .findAny().orElse(null);
     }
@@ -214,29 +215,29 @@ public class Board extends State<Board> implements Comparable<Board>
     public Board move(int[] from, int[] to)
     {
         Type[][] board = Arrays.stream(this.board).map(Type[]::clone).toArray(Type[][]::new);
-        char[][] board = Arrays.stream(this.board).map(char[]::clone).toArray(char[][]::new);
         int fromX = from[0];
         int fromY = from[1];
         int   toX =   to[0];
         int   toY =   to[1];
 
         board[to[1]][to[0]] = board[from[1]][from[0]]; // put moved piece to target location
-        board[from[1]][from[0]] = VACANT.icon;        //  erase moved piece from previous location
-        board[8][  TO_X] = (char)to  [0]; board[8][  TO_Y] = (char)to  [1];  // update metadata 'moved to'
-        board[8][FROM_X] = (char)from[0]; board[8][FROM_Y] = (char)from[1];  // update metadata 'moved from'
-        board[8][TURN] = board[8][TURN] == 'w' ? 'b' : 'w';  // update identity of active turn
+        board[from[1]][from[0]] = VACANT;        //  erase moved piece from previous location
+        
+        metadata[  TO_X] = (char)to  [0]; metadata[  TO_Y] = (char)to  [1];  // update metadata 'moved to'
+        metadata[FROM_X] = (char)from[0]; metadata[FROM_Y] = (char)from[1];  // update metadata 'moved from'
+        metadata[TURN] = metadata[TURN] == 'w' ? 'b' : 'w';  // update identity of active turn
 
         castling(board,to); // apply castling rules
 
         int yDistance = toY-fromY;
         //basic en passant logic :/ check pawn
         int[] passantTarget = new int[2];
-        boolean pawn = isPawn(board[toY][toX]);
-        if (pawn){
+        if (board[toY][toX].isType(PAWN))
+        {
             //take en passant target
-            if (board[8][5] == toX && board[8][6] == toY)
+            if (metadata[5] == toX && metadata[6] == toY)
             {
-                board[fromY][toX] = VACANT.icon;
+                board[fromY][toX] = VACANT;
             }else {
                 //en passant availability check
                 boolean enPassantAvailable = Math.abs(yDistance) == 2;
@@ -244,8 +245,8 @@ public class Board extends State<Board> implements Comparable<Board>
                 passantTarget[1] = enPassantAvailable ? (toY - (yDistance / 2)) : 0;
             }
         }
-        board[8][5] = (char) passantTarget[0];
-        board[8][6] = (char) passantTarget[1];
+        metadata[5] = (char) passantTarget[0];
+        metadata[6] = (char) passantTarget[1];
         // todo: update metadata
 
         return new Board(board);
@@ -253,25 +254,25 @@ public class Board extends State<Board> implements Comparable<Board>
 
     private boolean isPawn(char piece){return (piece=='♙'||piece=='♟');}
 
-    public boolean passantAt(int... passantPos){return(board[8][5]==passantPos[0]&&board[8][6]==passantPos[1]);}
+    public boolean passantAt(int... passantPos){return(metadata[5]==passantPos[0]&&metadata[6]==passantPos[1]);}
 
-    private void castling(char[][] board,int[] move)
+    private void castling(Type[][] board,int[] move)
     {
         if(move.length>2) // castling
         {
-            if      (move[2]<0){board[move[1]][move[0]+1]= board[move[1]][0];board[move[1]][0]= VACANT.icon;} // left
-            else if (move[2]>0){board[move[1]][move[0]-1]= board[move[1]][7];board[move[1]][7]= VACANT.icon;}// right
-            board[8][move[1]>1?WHITE_KING:BLACK_KING]=' '; // erase king castling-flag
+            if      (move[2]<0){board[move[1]][move[0]+1]= board[move[1]][0];board[move[1]][0]= VACANT;} // left
+            else if (move[2]>0){board[move[1]][move[0]-1]= board[move[1]][7];board[move[1]][7]= VACANT;}// right
+            metadata[move[1]>1?WHITE_KING:BLACK_KING]=' '; // erase king castling-flag
         }
-        if(board[8][BLACK_KING]!=' ')
+        if(metadata[BLACK_KING]!=' ')
         {
-            if (board[0][0] != '♖') board[8][ BLACK_LEFT_ROOK] = ' '; // check if expected piece is present.
-            if (board[0][7] != '♖') board[8][BLACK_RIGHT_ROOK] = ' '; // the alternative would be to check
+            if (board[0][0] != BLACK_ROOK) metadata[ BLACK_LEFT_ROOK] = ' '; // check if expected piece is present.
+            if (board[0][7] != BLACK_ROOK) metadata[BLACK_RIGHT_ROOK] = ' '; // the alternative would be to check
         }
-        if(board[8][WHITE_KING]!=' ')
+        if(metadata[WHITE_KING]!=' ')
         {
-            if (board[7][0] != '♜') board[8][ WHITE_LEFT_ROOK] = ' '; // if *either* to or from each if they
-            if (board[7][7] != '♜') board[8][WHITE_RIGHT_ROOK] = ' '; // match coordinates, ie double the checks
+            if (board[7][0] != ROOK) metadata[ WHITE_LEFT_ROOK] = ' '; // if *either* to or from each if they
+            if (board[7][7] != ROOK) metadata[WHITE_RIGHT_ROOK] = ' '; // match coordinates, ie double the checks
         }
     }
 
@@ -300,7 +301,7 @@ public class Board extends State<Board> implements Comparable<Board>
                         actions.add(new State.Action<>(this)
                         {
                             @Override public Board apply(Board board){return board.move(pos,move);}
-                            @Override public int evaluateFitness()   {return board[move[0]][move[1]].value+board[pos[0]][pos[1]].valueAt(move)+state.riskAt(move);}
+                            @Override public int evaluateFitness()   {return board[move[0]][move[1]].value+board[pos[0]][pos[1]].valueOf(move)+state.riskAt(move);}
                         });
                     }
                 }
@@ -313,9 +314,10 @@ public class Board extends State<Board> implements Comparable<Board>
     public String toString() // simplified String to use for hashCode
     {
         StringJoiner joiner = new StringJoiner("\n");
-//        joiner.add(""+board[8][4]);
+//        joiner.add(""+metadata[4]);
 //        Arrays.stream(board).limit(8).forEach(row -> joiner.add(String.valueOf(row)));
-        for (char[] s : board) joiner.add(String.valueOf(s));
+        for (Type[] s : board) joiner.add(String.valueOf(s));
+        joiner.add(String.valueOf(metadata));
         return joiner.toString();
     }
 
@@ -323,8 +325,8 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public static void announceCapture(Type taker, Type taken)
     {
-        System.out.println("\033[33;3m" + taker.color + " " + taker.name()
-                                   + " \tcaptures " + taken.color + " "
+        System.out.println("\033[33;3m" + taker.color + ' ' + taker.name()
+                                   + " \tcaptures " + taken.color + ' '
                                    + taken.name() + "\033[0m");
     }
 

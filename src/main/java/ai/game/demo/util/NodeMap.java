@@ -43,6 +43,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
         protected final TreeSet<T> children = new TreeSet<>();
 
         public int depth(){return parents.isEmpty() ? 0 : 1+parents.getFirst().depth();}
+        @SuppressWarnings("unchecked")
         public T  remove()
         {
             T t = NodeMap.delete((T)this);
