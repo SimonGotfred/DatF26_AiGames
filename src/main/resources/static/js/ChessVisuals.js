@@ -100,11 +100,15 @@ async function MakeBoard(){
 
 }
 
-function ChangeBoard(state){
-    for(let i = 0; i < state.length; i++){
-        for(let k = 0; k < state[i].length; k++){
+function ChangeBoard(response){
+    const newBoard = []
+    response.map((row) => {
+        newBoard.push(row.split(''))
+    })
+    for(let i = 0; i < newBoard.length; i++){
+        for(let k = 0; k < newBoard[i].length; k++){
             //board[i][k].piece.innerText = state[i][k]
-                board[i][k].piece.chessPiece = state[i][k]
+                board[i][k].piece.chessPiece = newBoard[i][k]
 
             SetBlackOrWhite(board[i][k].piece)
         }
@@ -195,15 +199,15 @@ async function pressCell(cell){
         //check if you can take piece to there, else do nothing or unhighlight
 
         if(LegalMoves !== null) {
-            LegalMoves.map((legalMove) => {
+            LegalMoves.map(async (legalMove) => {
                 if (board[legalMove[0]][legalMove[1]] === cell) {
-                    cell.piece.chessPiece = chosenCell.piece.chessPiece
-                    SetBlackOrWhite(cell.piece)
-                    chosenCell.piece.chessPiece = ""
-                    SetBlackOrWhite(chosenCell.piece)
+                    //cell.piece.chessPiece = chosenCell.piece.chessPiece
+                    //SetBlackOrWhite(cell.piece)
+                    //chosenCell.piece.chessPiece = ""
+                    //SetBlackOrWhite(chosenCell.piece)
 
                     console.log("row " + legalMove[0] + "piece " + cell.piece.chessPiece)
-                    if((legalMove[0] === 0 || legalMove[0] === 7) && (cell.piece.chessPiece === "♙" || cell.piece.chessPiece === "♟")){
+                    if ((legalMove[0] === 0 || legalMove[0] === 7) && (cell.piece.chessPiece === "♙" || cell.piece.chessPiece === "♟")) {
                         //alert("you can now promote")
 
                         //make them choose piece
@@ -217,18 +221,18 @@ async function pressCell(cell){
                         choosePiecePopUp.appendChild(choosePiecePopUpContent)
 
 
-                        for (let i = 0; i < promotablePieces.length; i++){
+                        for (let i = 0; i < promotablePieces.length; i++) {
                             const choosablePiece = document.createElement("div")
                             choosePiecePopUpContent.appendChild(choosablePiece)
                             choosablePiece.innerText = promotablePieces[i]
                             choosablePiece.className = "popUpPiece"
                             choosablePiece.addEventListener("click", () => choosePromotionPiece(cell, promotablePieces[i], choosePiecePopUp))
                         }
+                    } else {
+                        const response = await makeMove(cellToCharArray(chosenCell), cellToCharArray(cell))
+                        ChangeBoard(response)
+                        waitForAiMove()
                     }
-                    else {
-                        makeMove(cellToCharArray(chosenCell), cellToCharArray(cell)).then(waitForAiMove)
-                    }
-
 
 
                 }
@@ -258,11 +262,11 @@ const waitForAiMove = async () => {
     console.log("started waiting")
     await delay(15000);
     const response =  await getAiMove()
-    const newBoard = []
+    /*const newBoard = []
     response.map((row) => {
         newBoard.push(row.split(''))
-    })
-    ChangeBoard(newBoard)
+    })*/
+    ChangeBoard(response)
 };
 
 
