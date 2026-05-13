@@ -9,6 +9,13 @@
 </head>
 <body>
     <h1>Welcome to Chess!</h1>
+    <div style="display: flex">
+        <p>Play Vs Ai:</p>
+        <input type="checkbox" id="PlayAi" checked="checked">
+        <p>ㅤWait Time(seconds):</p>
+        <input type="number" id="AiTime" value="15" class="AiWaitTime">
+    </div>
+
 </body>
 <script type="module" th:src="@{/js/ChessFrontend.js}"></script>
 <script type="module" th:src="@{/js/ChessVisuals.js}"></script>

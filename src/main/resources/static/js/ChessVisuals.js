@@ -105,14 +105,29 @@ function ChangeBoard(response){
     response.map((row) => {
         newBoard.push(row.split(''))
     })
+
+    let whiteKingExists = false;
+    let blackKingExists = false;
     for(let i = 0; i < newBoard.length; i++){
         for(let k = 0; k < newBoard[i].length; k++){
             //board[i][k].piece.innerText = state[i][k]
                 board[i][k].piece.chessPiece = newBoard[i][k]
 
             SetBlackOrWhite(board[i][k].piece)
+
+            if(newBoard[i][k] === "♔")
+                blackKingExists = true
+            else if(newBoard[i][k] === "♚")
+                whiteKingExists = true
         }
     }
+    if(!blackKingExists){
+        alert("White has won")
+    }
+    else if(!whiteKingExists){
+        alert("Black has won")
+    }
+
 }
 
 const piecesList = ["♖","♘","♗","♕","♔","♙","♜","♞","♝","♛","♚","♟"]
@@ -231,7 +246,9 @@ async function pressCell(cell){
                     } else {
                         const response = await makeMove(cellToCharArray(chosenCell), cellToCharArray(cell))
                         ChangeBoard(response)
-                        waitForAiMove()
+                        const PlayAi = document.getElementById("PlayAi")
+                        if(PlayAi.checked)
+                            waitForAiMove()
                     }
 
 
@@ -260,13 +277,26 @@ function choosePromotionPiece(cell, pieceType, popUp){
 const delay = ms => new Promise(res => setTimeout(res, ms));
 const waitForAiMove = async () => {
     console.log("started waiting")
-    await delay(15000);
+
+    const waitForAiPopUp = document.createElement("div")
+    waitForAiPopUp.className = "popUp"
+    document.body.appendChild(waitForAiPopUp)
+
+    const loadingBar = document.createElement("img")
+    loadingBar.src = "../images/LoadingBar.gif"
+    loadingBar.className = "LoadingBar"
+    waitForAiPopUp.appendChild(loadingBar)
+
+
+    const AiTime = document.getElementById("AiTime")
+    await delay(AiTime.value * 1000);
     const response =  await getAiMove()
     /*const newBoard = []
     response.map((row) => {
         newBoard.push(row.split(''))
     })*/
     ChangeBoard(response)
+    waitForAiPopUp.remove()
 };
 
 
