@@ -334,6 +334,9 @@ MakeBoard().then(() => {
     RestartButton.addEventListener("click", async () => {
         const response = await newGame()
         ChangeBoard(response)
+        if(!playerIsWhite){
+            waitForAiMove()
+        }
     })
     const changeSideButton = document.getElementById("changeSideButton")
     changeSideButton.addEventListener("click", changeSide)
