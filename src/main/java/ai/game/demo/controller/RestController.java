@@ -16,7 +16,7 @@ import java.util.List;
 public class RestController
 {
     private Agent<Board> getAgent(HttpServletRequest request) {return (Agent<Board>) request.getSession().getAttribute("Agent");}
-    final static boolean runAgent = false;
+    final static boolean runAgent = true;
 
     @PutMapping
     public ResponseEntity<Type[][]> newGame(HttpServletRequest request,

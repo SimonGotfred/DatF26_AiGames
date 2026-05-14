@@ -303,7 +303,13 @@ const waitForAiMove = async () => {
     ["♟","♟","♟","","♟","♟","♟","♟",],
     ["♜","♞","♝","♚","♛","♝","♞","♜"],]
 ChangeBoard(testState)*/
-MakeBoard()
+MakeBoard().then(() => {
+    const RestartButton = document.getElementById("RestartButton")
+    RestartButton.addEventListener("click", async () => {
+        const response = await newGame()
+        ChangeBoard(response)
+    })
+})
 
 /*HighlightSquare(3,4)
 HighlightSquare(4,6)*/
