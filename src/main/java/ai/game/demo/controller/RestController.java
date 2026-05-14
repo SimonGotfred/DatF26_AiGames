@@ -2,7 +2,6 @@ package ai.game.demo.controller;
 
 import ai.game.demo.agent.Agent;
 import ai.game.demo.chess.Board;
-import ai.game.demo.chess.Type;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +15,7 @@ import java.util.List;
 public class RestController
 {
     private Agent<Board> getAgent(HttpServletRequest request) {return (Agent<Board>) request.getSession().getAttribute("Agent");}
-    final static boolean runAgent = false;
+    final static boolean runAgent = true;
 
     @PutMapping
     public ResponseEntity<char[][]> newGame(HttpServletRequest request,
