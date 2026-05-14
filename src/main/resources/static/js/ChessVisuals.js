@@ -31,7 +31,12 @@ const alphabet = ["a","b","c","d","e","f","g","h"]
 
 async function MakeBoard(){
 
-    const startState = await newGame()
+    const response= await newGame()
+    console.log("res " + response)
+    const startState = []
+    response.map((row) => {
+        startState.push(row.split(''))
+    })
     console.log("startstate: " + startState)
     startState.map((_row, rowIndex) => {
         const row = document.createElement("tr")
@@ -95,8 +100,11 @@ async function MakeBoard(){
 
 }
 
-function ChangeBoard(newBoard){
-
+function ChangeBoard(response){
+    const newBoard = []
+    response.map((row) => {
+        newBoard.push(row.split(''))
+    })
 
     let whiteKingExists = false;
     let blackKingExists = false;
@@ -304,6 +312,7 @@ const waitForAiMove = async () => {
     ["♜","♞","♝","♚","♛","♝","♞","♜"],]
 ChangeBoard(testState)*/
 MakeBoard()
+console.log(board)
 
 /*HighlightSquare(3,4)
 HighlightSquare(4,6)*/
