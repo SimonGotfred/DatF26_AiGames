@@ -2,7 +2,6 @@ package ai.game.demo.controller;
 
 import ai.game.demo.agent.Agent;
 import ai.game.demo.chess.Board;
-import ai.game.demo.chess.Type;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +18,7 @@ public class RestController
     final static boolean runAgent = true;
 
     @PutMapping
-    public ResponseEntity<Type[][]> newGame(HttpServletRequest request,
+    public ResponseEntity<char[][]> newGame(HttpServletRequest request,
                                             @RequestParam(required=false) int[] from,
                                             @RequestParam(required=false) int[] to)
     {
@@ -58,7 +57,7 @@ public class RestController
     }
 
     @PostMapping
-    public ResponseEntity<Type[][]> playerMove(HttpServletRequest request,
+    public ResponseEntity<char[][]> playerMove(HttpServletRequest request,
                                                @RequestParam(required=false) Character promote,
                                                @RequestParam int[] from,
                                                @RequestParam int[] to)
@@ -70,7 +69,7 @@ public class RestController
     }
 
     @PatchMapping
-    public ResponseEntity<Type[][]> agentMove(HttpServletRequest request)
+    public ResponseEntity<char[][]> agentMove(HttpServletRequest request)
     {
         Agent<Board> agent = getAgent(request);
         return ResponseEntity.ok(agent.act(!runAgent).raw());

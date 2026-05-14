@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+@SuppressWarnings({"unchecked"})
 public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<Integer,T> // todo: testing & cleanup
 {
     private static final HashMap<Class<? extends Node<?>>, NodeMap<?>> clients = new HashMap<>();
@@ -42,8 +43,15 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
         protected final LinkedHashSet<T> parents  = new LinkedHashSet<>();
         protected final TreeSet<T> children = new TreeSet<>();
 
-        public int depth(){return parents.isEmpty() ? 0 : 1+parents.getFirst().depth();}
-        @SuppressWarnings("unchecked")
+        public int depth()
+        {
+            try {return parents.isEmpty() ? 0 : 1 + parents.getFirst().depth();}
+            catch (StackOverflowError ignored)
+            {
+                System.out.println("\033[31;1;4m StackOverflow in Depth \033[0m");
+                return 0;
+            }
+        }
         public T  remove()
         {
             T t = NodeMap.delete((T)this);
