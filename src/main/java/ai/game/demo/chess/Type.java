@@ -386,6 +386,8 @@ public enum Type
     public boolean isType  (Type type){return isType(type.icon);}
     public boolean isType  (char type){return type==type();}
 
+    public boolean isTurn  (char turn){return turn==(color==Color.WHITE?'w':'b');}
+
     public boolean isWhite (){return color == Color.WHITE;}
     public boolean isBlack (){return color == Color.BLACK;}
     public boolean isPiece (){return this  != VACANT;}
