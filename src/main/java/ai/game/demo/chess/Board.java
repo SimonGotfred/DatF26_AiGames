@@ -176,10 +176,8 @@ public class Board extends State<Board> implements Comparable<Board>
     }
 
     private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
-    public int riskAt(int...   position) // sum of pieces threatening the location, by using their patterns reversed
+    public int riskAt(int... position) // sum of pieces threatening the location, by using their patterns reversed
     {
-//        if (!(position[0] < 8 && position[1] < 8)) return 0; // skip non-pathable positions
-
         int sum = 0;
         for (Type type : simple) // pattern for black/white pieces are mostly identical, so only
         {                        //  run each pattern once, collecting both corresponding black/white
@@ -197,7 +195,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return sum;
     }
 
-    public Stream<int[]> movesFor(int... position){return at(position[0], position[1]).movesFrom(this, position);}
+    public Stream<int[]> movesFor(int... position){return at(position[0], position[1]).isTurn(flag(TURN)) ? at(position[0], position[1]).movesFrom(this, position) : Stream.empty();}
     public int[] isLegalMove(String move) {return move.split(",").length == 2
                                                 ? isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim())
                                                 : null;}
@@ -282,10 +280,7 @@ public class Board extends State<Board> implements Comparable<Board>
     @Override protected int hashIdentifier (){return hashcode;}
     @Override protected int evaluateFitness(){return score ();}
     @Override
-    public List<Actionable<Board>> getActionables(boolean isBlackTurn)
-    {
-        return isBlackTurn ? blacks() : whites();
-    }
+    public List<Actionable<Board>> getActionables(boolean isBlackTurn) {return isBlackTurn ? blacks() : whites();}
 
     @Override
     public TreeSet<Action<Board>> getActions(boolean isBlackTurn)
