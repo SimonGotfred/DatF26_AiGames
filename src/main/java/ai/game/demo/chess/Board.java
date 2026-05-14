@@ -105,7 +105,8 @@ public class Board extends State<Board> implements Comparable<Board>
         //8,12 black right tower castling legality
     }
 
-    public char[][] raw() {return Arrays.stream(this.board).map(row->Arrays.stream(row).map(Type::toString).collect(Collectors.joining()).toCharArray()).toArray(char[][]::new);}
+//    public char[][] raw() {return Arrays.stream(this.board).map(row->Arrays.stream(row).map(Type::toString).collect(Collectors.joining()).toCharArray()).toArray(char[][]::new);}
+    public char[][] raw() {return Stream.of(nef().substring(0,64).split("(?<=\\G........)"), new String[]{String.valueOf(metadata)}).flatMap(Stream::of).map(String::toCharArray).toArray(char[][]::new);}
     public char flag(int index){return metadata[index];}
     
     public Piece    getPiece   (int...  pos) {return new Piece(at(pos).icon, this, pos);}
@@ -313,7 +314,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return actions;
     }
 
-    public String nef(){return Arrays.stream(raw()).map(String::valueOf).collect(Collectors.joining())+String.valueOf(metadata);}
+    public String nef(){return Arrays.stream(Arrays.stream(this.board).map(row->Arrays.stream(row).map(Type::toString).collect(Collectors.joining()).toCharArray()).toArray(char[][]::new)).map(String::valueOf).collect(Collectors.joining())+String.valueOf(metadata);}
 
     public String toString() // simplified String to use for hashCode
     {
