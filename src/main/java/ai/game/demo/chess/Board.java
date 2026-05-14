@@ -43,6 +43,7 @@ public class Board extends State<Board> implements Comparable<Board>
     private final int hashcode;
     private final Type[][] board;
     private final char[] metadata;// = initialFlags[0].toCharArray();
+    private final Piece[] threats;
 
     public Board(char[][] board)
     {
@@ -60,9 +61,10 @@ public class Board extends State<Board> implements Comparable<Board>
         }
         this.metadata=board.length>8?board[8]:initialFlags[0].toCharArray();
         this.hashcode=nef().hashCode();
+        this.threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).toArray(Piece[]::new);
     }
     public Board(Type[][] board) {this(board,initialFlags[0].toCharArray());}
-    public Board(Type[][] board,char[] meta) {this.board=board;this.metadata=meta;this.hashcode=nef().hashCode();}
+    public Board(Type[][] board,char[] meta) {this.board=board;this.metadata=meta;this.hashcode=nef().hashCode();this.threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).toArray(Piece[]::new);}
     public Board(String[] board)
     {
         this.board = new Type[8][];
@@ -75,6 +77,7 @@ public class Board extends State<Board> implements Comparable<Board>
         if (board[8].length()!=flags)
             throw new IllegalArgumentException("ChessBoard Bad MetaData");
         this.hashcode = nef().hashCode();
+        this.threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).toArray(Piece[]::new);
     }
     public Board(String board)
     {this(Stream.of(board.substring(0,64).split("(?<=\\G........)"),
@@ -109,7 +112,7 @@ public class Board extends State<Board> implements Comparable<Board>
     public char[][] raw() {return Stream.of(nef().substring(0,64).split("(?<=\\G........)"), new String[]{String.valueOf(metadata)}).flatMap(Stream::of).map(String::toCharArray).toArray(char[][]::new);}
     public char flag(int index){return metadata[index];}
     
-    public Piece    getPiece   (int...  pos) {return new Piece(at(pos).icon, this, pos);}
+    public Piece    getPiece   (int...  pos) {return new Piece(at(pos), this, pos);}
     public boolean  whiteAt    (int...  pos) {return at(pos).isWhite(   );}
     public boolean  blackAt    (int...  pos) {return at(pos).isBlack(   );}
     public boolean  pieceAt    (int...  pos) {return at(pos).isPiece(   );}
@@ -135,7 +138,7 @@ public class Board extends State<Board> implements Comparable<Board>
             file = 0;
             for (Type c : s)
             {
-                if (condition.test(c.icon)) pieces.add(new Piece(c.icon, this, file, rank));
+                if (condition.test(c.icon)) pieces.add(new Piece(c, this, file, rank));
                 file++;
             }
             rank++;
@@ -175,27 +178,52 @@ public class Board extends State<Board> implements Comparable<Board>
         return inverted;
     }
 
-    private static final Type[] simple =  new Type[]{KNIGHT, BISHOP, ROOK, QUEEN, KING};
-    public int riskAt(int... position) // sum of pieces threatening the location, by using their patterns reversed
+    private static final Type[][] simple =  new Type[][]{new Type[]{BISHOP, ROOK},new Type[]{KNIGHT,KING}};
+    public int riskAt(int... position){return threats(position).stream().mapToInt(Piece::value).sum();}
+    public List<Piece> threats(int... position) // sum of pieces threatening the location, by using their patterns reversed
     {
-        int sum = 0;
-        for (Type type : simple) // pattern for black/white pieces are mostly identical, so only
+        List<Piece> pieces = new ArrayList<>();
+        for (Type type : simple[0]) // pattern for black/white pieces are mostly identical, so only
         {                        //  run each pattern once, collecting both corresponding black/white
-            for (int[] p : type.movesFrom(this,position).filter(p->at(p)==type||at(p)==type.invert()).toList())
+            for (int[] p : type.movesFrom(this,position).filter(p->at(p).type()==type||at(p).type()==QUEEN).toList())
             {
-                sum += at(p).value; // not just 'type's value, as type at p may be *black* piece
+                pieces.add(new Piece(at(p),this, p[0],p[1]));
+            }
+        }
+        for (Type type : simple[1]) // pattern for black/white pieces are mostly identical, so only
+        {                        //  run each pattern once, collecting both corresponding black/white
+            for (int[] p : type.movesFrom(this,position).filter(p->at(p).type()==type).toList())
+            {
+                pieces.add(new Piece(at(p),this, p[0],p[1]));
             }
         }
 
         for (int i : Type.mirror()) // own logic for pawns as they move differently when capturing
         {
-            if (at(position[0]+1,position[1]+i) ==       PAWN) sum +=       PAWN.value;
-            if (at(position[0]-1,position[1]+i) == BLACK_PAWN) sum += BLACK_PAWN.value;
+            if (at(position[0]+1,position[1]+i) ==       PAWN) new Piece(      PAWN,this, position[0]+1,position[1]+i);;
+            if (at(position[0]-1,position[1]+i) == BLACK_PAWN) new Piece(BLACK_PAWN,this, position[0]-1,position[1]+i);
         }
-        return sum;
+        return pieces;
     }
 
-    public Stream<int[]> movesFor(int... position){return at(position[0], position[1]).isTurn(flag(TURN)) ? at(position[0], position[1]).movesFrom(this, position) : Stream.empty();}
+    public Color turn(){return flag(TURN)=='w'?Color.WHITE:Color.BLACK;}
+    public int[] king(Color color)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if (at(i,j).type()==KING&&at(i,j).color==color) return new int[]{i,j};
+            }
+        }
+        return new int[]{-1,-1};
+    }
+    public boolean isCheck(Color color, int... position)
+    {
+        return threats(position).stream().anyMatch(piece->piece.color==color);
+    }
+
+    public Stream<int[]> movesFor(int... position){return at(position).isTurn(flag(TURN)) && (at(position).type()==KING || !isCheck(turn(), king(turn()))) ? at(position).movesFrom(this, position) : Stream.empty();}
     public int[] isLegalMove(String move) {return move.split(",").length == 2
                                                 ? isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim())
                                                 : null;}

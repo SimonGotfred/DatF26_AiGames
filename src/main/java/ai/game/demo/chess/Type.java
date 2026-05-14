@@ -347,7 +347,7 @@ public enum Type
 //        else                      return VACANT;
     }
 
-    public static Piece invert(Piece piece){return new Piece(invert(piece.icon()),piece.board,piece.position);}
+    public static Piece invert(Piece piece){return new Piece(invert(piece.type),piece.board,piece.position);}
 
     public  final char    icon;
     public  final String  sIcon;
@@ -382,9 +382,9 @@ public enum Type
 //        else                return VACANT;
     }
 
-    public char    type    (){return icon<KING.icon?invert(icon):icon;}
-    public boolean isType  (Type type){return isType(type.icon);}
-    public boolean isType  (char type){return type==type();}
+    public Type    type    (){return icon<KING.icon?invert(this):this;}
+    public boolean isType  (char type){return isType(from(type));}
+    public boolean isType  (Type type){return type==type();}
 
     public boolean isTurn  (char turn){return turn==(color==Color.WHITE?'w':'b');}
 

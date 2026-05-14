@@ -10,7 +10,7 @@ public class Piece extends State.Actionable<Board>
 {
     public final Board    board;
     public final Type      type;
-    public final boolean  color;
+    public final Color    color;
     public final int[] position;
 
     public char file(){return (char)(   position[0] +'a');} // letter notion
@@ -18,22 +18,22 @@ public class Piece extends State.Actionable<Board>
     public int x(){return position[0];}
     public int y(){return position[1];}
 
-    public Piece(char type, Board board, String pos) {this(type,board,(char)(pos.charAt(0)-'a'),(char)(pos.charAt(1)-'1'));}
-    public Piece(char type, Board board, int... pos)
+    public Piece(char type, Board board, String pos) {this(Type.from(type),board,(char)(pos.charAt(0)-'a'),(char)(pos.charAt(1)-'1'));}
+    public Piece(Type type, Board board, int... pos)
     {
-        this.board = board;
+        this.board    = board;
         this.position = pos;
-        this.type  = Type.from(type);
-        this.color = this.type.color==Color.BLACK;
+        this.type     = type;
+        this.color    = type.color;
     }
 
     public String name()  {return type.name();}
-    public char   icon()  {return this.color ? (char)(type.icon - 6) : type.icon;}
-    public String color() {return type.icon == ' ' ? "blank" : this.color ? "black" : "white";}
-    public int    value() {return color ? type.value : -type.value;}
+    public char   icon()  {return isBlack() ? (char)(type.icon - 6) : type.icon;}
+    public String color() {return type.icon == ' ' ? "blank" : isBlack() ? "black" : "white";}
+    public int    value() {return type.value;}
 
-    public boolean isWhite(){return !color;}
-    public boolean isBlack(){return  color;}
+    public boolean isWhite(){return color==Color.WHITE;}
+    public boolean isBlack(){return color==Color.BLACK;}
     public boolean allyOf(Piece piece) {return this.value() * piece.value() > 0;}
     public boolean  foeOf(Piece piece) {return this.value() * piece.value() < 0;}
 
