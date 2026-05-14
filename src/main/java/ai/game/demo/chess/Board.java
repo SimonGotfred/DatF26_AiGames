@@ -6,6 +6,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.game.demo.chess.Type.*;
@@ -58,10 +59,10 @@ public class Board extends State<Board> implements Comparable<Board>
             r++; c=0;
         }
         this.metadata=board.length>8?board[8]:initialFlags[0].toCharArray();
-        this.hashcode=toString().hashCode();
+        this.hashcode=nef().hashCode();
     }
     public Board(Type[][] board) {this(board,initialFlags[0]);}
-    public Board(Type[][] board,String meta) {this.board=board;this.metadata=meta.toCharArray();this.hashcode=toString().hashCode();}
+    public Board(Type[][] board,String meta) {this.board=board;this.metadata=meta.toCharArray();this.hashcode=nef().hashCode();}
     public Board(String[] board)
     {
         this.board = new Type[8][];
@@ -73,7 +74,7 @@ public class Board extends State<Board> implements Comparable<Board>
             throw new IllegalArgumentException("ChessBoard Bad Width");
         if (board[8].length()!=flags)
             throw new IllegalArgumentException("ChessBoard Bad MetaData");
-        this.hashcode = toString().hashCode();
+        this.hashcode = nef().hashCode();
     }
     public Board(String board)
     {this(Stream.of(board.substring(0,64).split("(?<=\\G........)"),
@@ -104,7 +105,7 @@ public class Board extends State<Board> implements Comparable<Board>
         //8,12 black right tower castling legality
     }
 
-    public Type[][] raw() {return Arrays.stream(this.board).limit(8).map(Type[]::clone).toArray(Type[][]::new);}
+    public char[][] raw() {return Arrays.stream(this.board).map(row->Arrays.stream(row).map(Type::toString).collect(Collectors.joining()).toCharArray()).toArray(char[][]::new);}
     public char flag(int index){return metadata[index];}
     
     public Piece    getPiece   (int...  pos) {return new Piece(at(pos).icon, this, pos);}
@@ -311,12 +312,14 @@ public class Board extends State<Board> implements Comparable<Board>
         return actions;
     }
 
+    public String nef(){return Arrays.stream(raw()).map(String::valueOf).collect(Collectors.joining())+String.valueOf(metadata);}
+
     public String toString() // simplified String to use for hashCode
     {
         StringJoiner joiner = new StringJoiner("\n");
 //        joiner.add(""+metadata[4]);
-//        Arrays.stream(board).limit(8).forEach(row -> joiner.add(String.valueOf(row)));
-        for (Type[] s : board) joiner.add(String.valueOf(s));
+        Arrays.stream(board).limit(8).forEach(row -> joiner.add(Arrays.stream(row).map(Type::toString).collect(Collectors.joining())));
+//        for (Type[] s : board) joiner.add(Arrays.stream(s).map(Type::toString).collect(Collectors.joining()));
         joiner.add(String.valueOf(metadata));
         return joiner.toString();
     }

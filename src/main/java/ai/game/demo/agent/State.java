@@ -5,6 +5,7 @@ import ai.game.demo.util.NodeMap;
 import java.util.*;
 import java.util.function.Function;
 
+@SuppressWarnings({"unchecked","rawtypes"})
 public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 {
     public static boolean debugFlag = false;
