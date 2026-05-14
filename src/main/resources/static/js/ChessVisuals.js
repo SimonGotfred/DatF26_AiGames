@@ -29,10 +29,12 @@ let isWaitingForAi = false;
 
 const alphabet = ["a","b","c","d","e","f","g","h"]
 
+let lastMoveMetaData = ""
+
 async function MakeBoard(){
 
-    const startState = await newGame()
-    console.log("startstate: " + startState)
+    const response = await newGame()
+    const  startState = splitResponse(response)
     startState.map((_row, rowIndex) => {
         const row = document.createElement("tr")
         table.appendChild(row)
@@ -46,7 +48,7 @@ async function MakeBoard(){
             if(cellIndex === 0){
                 const cornorText = document.createElement("p")
                 cell.appendChild(cornorText)
-                cornorText.innerText = 8-rowIndex.toString()
+                cornorText.innerText = 8 - rowIndex.toString()
                 cornorText.className = "CornorText TopLeft"
                 cornorTextList.push(cornorText)
             }
@@ -94,9 +96,21 @@ async function MakeBoard(){
     })
 
 }
+function splitResponse(response){
+    const newBoard = []
+    response.map((row, rowIndex) => {
+        if(rowIndex < 8)
+            newBoard.push(row.split(''))
+        else{
+            console.log("Meta Data:" + row + " Last Move Meta Data: " + lastMoveMetaData)
+            lastMoveMetaData = row
+        }
 
-function ChangeBoard(newBoard){
-
+    })
+    return newBoard
+}
+function ChangeBoard(response){
+    const  newBoard = splitResponse(response)
 
     let whiteKingExists = false;
     let blackKingExists = false;
@@ -189,7 +203,6 @@ async function pressCell(cell){
             [0,0], [1,1]
         ]*/
         LegalMoves = await getPossibleMoves(cellToCharArray(cell)) ?? null
-        console.log(LegalMoves)
         if(LegalMoves !== null){
             LegalMoves.map((legalMove) => {
                 board[legalMove[0]][legalMove[1]].className += " Dot"
@@ -213,7 +226,6 @@ async function pressCell(cell){
                     //chosenCell.piece.chessPiece = ""
                     //SetBlackOrWhite(chosenCell.piece)
 
-                    console.log("row " + legalMove[0] + "piece " + cell.piece.chessPiece)
                     if ((legalMove[0] === 0 || legalMove[0] === 7) && (cell.piece.chessPiece === "♙" || cell.piece.chessPiece === "♟")) {
                         //alert("you can now promote")
 
@@ -303,12 +315,28 @@ const waitForAiMove = async () => {
     ["♟","♟","♟","","♟","♟","♟","♟",],
     ["♜","♞","♝","♚","♛","♝","♞","♜"],]
 ChangeBoard(testState)*/
+let playerIsWhite = true;
+
+function changeSide(){
+    playerIsWhite = !playerIsWhite
+    const sideText = document.getElementById("sideText")
+    if(playerIsWhite){
+        sideText.innerText = "ㅤYou're White"
+    }
+    else {
+        sideText.innerText = "ㅤYou're Black"
+    }
+    waitForAiMove()
+}
+
 MakeBoard().then(() => {
     const RestartButton = document.getElementById("RestartButton")
     RestartButton.addEventListener("click", async () => {
         const response = await newGame()
         ChangeBoard(response)
     })
+    const changeSideButton = document.getElementById("changeSideButton")
+    changeSideButton.addEventListener("click", changeSide)
 })
 
 /*HighlightSquare(3,4)
