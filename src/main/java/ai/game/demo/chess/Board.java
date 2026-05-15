@@ -220,7 +220,7 @@ public class Board extends State<Board> implements Comparable<Board>
     }
     public boolean isCheck(Color color, int... position)
     {
-        return threats(position).stream().anyMatch(piece->piece.color==color);
+        return threats(position).stream().anyMatch(piece->piece.color!=color);
     }
 
     public Stream<int[]> movesFor(int... position){return at(position).isTurn(flag(TURN)) && (at(position).type()==KING || !isCheck(turn(), king(turn()))) ? at(position).movesFrom(this, position) : Stream.empty();}
