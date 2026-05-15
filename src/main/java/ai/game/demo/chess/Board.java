@@ -13,6 +13,21 @@ import static ai.game.demo.chess.Type.*;
 
 public class Board extends State<Board> implements Comparable<Board>
 {
+    public static Board test()
+    {
+        return new Board
+        (
+            "♖♘♗♕♔♗♘♖" +
+            "♙♙♙♙♙ㅤ♙♙" +
+            "ㅤㅤㅤㅤㅤㅤ♖ㅤ" +
+            "ㅤ♟ㅤㅤㅤㅤㅤㅤ" +
+            "ㅤㅤㅤ♙ㅤㅤㅤ♜" +
+            "ㅤ♞♝♛ㅤㅤ♚ㅤ" +
+            "♟ㅤ♟♟♟♟♟♟" +
+            "♜ㅤㅤㅤㅤㅤㅤ♜"
+        );
+    }
+
     private static int flags=0;
     private static final String[] initialFlags= new String[]{"a1a1wpxycccccc"}; // ! yes, there is a reason for this being an array
     public  static final int TO_X, TO_Y, FROM_X, FROM_Y, TURN, PROMOTION, PASSANT_X, PASSANT_Y,
@@ -41,9 +56,9 @@ public class Board extends State<Board> implements Comparable<Board>
     public Dto toDto() {return new Dto(board);}
 
     private final int hashcode;
-    private final Type[][] board;
-    private final char[] metadata;// = initialFlags[0].toCharArray();
-    private final Piece[] threats;
+    private final Type [][] board;
+    private final char [] metadata;
+    public  final int[][] checks;
 
     public Board(char[][] board)
     {
@@ -61,10 +76,10 @@ public class Board extends State<Board> implements Comparable<Board>
         }
         this.metadata=board.length>8?board[8]:initialFlags[0].toCharArray();
         this.hashcode=nef().hashCode();
-        this.threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).toArray(Piece[]::new);
+        this.checks  =checks();
     }
     public Board(Type[][] board) {this(board,initialFlags[0].toCharArray());}
-    public Board(Type[][] board,char[] meta) {this.board=board;this.metadata=meta;this.hashcode=nef().hashCode();this.threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).toArray(Piece[]::new);}
+    public Board(Type[][] board,char[] meta) {this.board=board;this.metadata=meta;this.hashcode=nef().hashCode();this.checks = checks();}
     public Board(String[] board)
     {
         this.board = new Type[8][];
@@ -77,7 +92,7 @@ public class Board extends State<Board> implements Comparable<Board>
         if (board[8].length()!=flags)
             throw new IllegalArgumentException("ChessBoard Bad MetaData");
         this.hashcode = nef().hashCode();
-        this.threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).toArray(Piece[]::new);
+        this.checks   = checks();
     }
     public Board(String board)
     {this(Stream.of(board.substring(0,64).split("(?<=\\G........)"),
@@ -108,7 +123,6 @@ public class Board extends State<Board> implements Comparable<Board>
         //8,12 black right tower castling legality
     }
 
-//    public char[][] raw() {return Arrays.stream(this.board).map(row->Arrays.stream(row).map(Type::toString).collect(Collectors.joining()).toCharArray()).toArray(char[][]::new);}
     public char[][] raw() {return Stream.of(nef().substring(0,64).split("(?<=\\G........)"), new String[]{String.valueOf(metadata)}).flatMap(Stream::of).map(String::toCharArray).toArray(char[][]::new);}
     public char flag(int index){return metadata[index];}
     
@@ -178,7 +192,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return inverted;
     }
 
-    private static final Type[][] simple =  new Type[][]{new Type[]{BISHOP, ROOK},new Type[]{KNIGHT,KING}};
+    private static final Type[][] simple =  new Type[][]{new Type[]{BISHOP, ROOK},new Type[]{KNIGHT}};
     public int riskAt(int... position){return threats(position).stream().mapToInt(Piece::value).sum();}
     public List<Piece> threats(int... position) // sum of pieces threatening the location, by using their patterns reversed
     {
@@ -197,11 +211,17 @@ public class Board extends State<Board> implements Comparable<Board>
                 pieces.add(new Piece(at(p),this, p[0],p[1]));
             }
         }
-
+        for (int i = -1; i < 2; i++)
+        {
+            for (int j = -1; j < 2; j++)
+            {
+                if(at(i,j).type()==KING&&!(i==0&&j==0)) pieces.add(new Piece(at(i,j),this, i,j));
+            }
+        }
         for (int i : Type.mirror()) // own logic for pawns as they move differently when capturing
         {
-            if (at(position[0]+1,position[1]+i) ==       PAWN) new Piece(      PAWN,this, position[0]+1,position[1]+i);;
-            if (at(position[0]-1,position[1]+i) == BLACK_PAWN) new Piece(BLACK_PAWN,this, position[0]-1,position[1]+i);
+            if (at(position[0]+1,position[1]+i) ==       PAWN) pieces.add(new Piece(      PAWN,this, position[0]+1,position[1]+i));
+            if (at(position[0]-1,position[1]+i) == BLACK_PAWN) pieces.add(new Piece(BLACK_PAWN,this, position[0]-1,position[1]+i));
         }
         return pieces;
     }
@@ -216,19 +236,34 @@ public class Board extends State<Board> implements Comparable<Board>
                 if (at(i,j).type()==KING&&at(i,j).color==color) return new int[]{i,j};
             }
         }
-        return new int[]{-1,-1};
-    }
-    public boolean isCheck(Color color, int... position)
-    {
-        return threats(position).stream().anyMatch(piece->piece.color!=color);
-    }
+        return notFound;
+    } private static final int[] notFound = new int[]{-10,-10};
+    public boolean isCheck(Color color, int... position){return at(position).color!=color && threats(position).stream().anyMatch(piece->piece.color!=color);}
+    public int[][] checks()
+    {                                                      // ! don't know why this filter seems to work inverted?
+        int[][] threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).map(Piece::getPosition).toArray(int[][]::new);
+        if(threats.length>1) return multipleThreats; // signal *must* move king
+        if(threats.length>0)
+        {
+            if(at(threats[0]).type()==KNIGHT) return threats; // knights can only be intercepted by capture
+            List<int[]> path = new ArrayList<>();
+            int[] king = king(turn());
+            int[] check = threats[0];
+            int i = check[0]==king[0]?0:check[0]>king[0]?-1:1;
+            int j = check[1]==king[1]?0:check[1]>king[1]?-1:1;
+            while(!(check[0]==king[0]&&check[1]==king[1])) path.add(new int[]{king[0]-=i,king[1]-=j});
+            return path.toArray(int[][]::new);
+        }
+        else return null; // null if no threats
+    } private static final int[][] multipleThreats = new int[0][];
 
-    public Stream<int[]> movesFor(int... position){return at(position).isTurn(flag(TURN)) && (at(position).type()==KING || !isCheck(turn(), king(turn()))) ? at(position).movesFrom(this, position) : Stream.empty();}
+    public Stream<int[]> movesFor(int... position){return at(position).isTurn(flag(TURN))
+                                                        ? at(position).movesFrom(this, position)
+                                                        : Stream.empty();}
     public int[] isLegalMove(String move) {return move.split(",").length == 2
                                                 ? isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim())
                                                 : null;}
-    public int[] isLegalMove(String from, String to) {return isLegalMove(normalize(from.toCharArray()),
-                                                                        normalize(to.toCharArray()));}
+    public int[] isLegalMove(String from, String to) {return isLegalMove(normalize(from.toCharArray()),normalize(to.toCharArray()));}
     public int[] isLegalMove(int[] from, int[] to)
     {
         if(at(from).color==at(to).color) return null;
@@ -283,7 +318,7 @@ public class Board extends State<Board> implements Comparable<Board>
 
     private boolean isPawn(char piece){return (piece=='♙'||piece=='♟');}
 
-    public boolean passantAt(int... passantPos){return(metadata[5]==passantPos[0]&&metadata[6]==passantPos[1]);}
+    public boolean passantAt(int... passantPos){return(metadata[PASSANT_X]==passantPos[0]&&metadata[PASSANT_Y]==passantPos[1]);}
 
     private void castling(Type[][] board,int[] move)
     {
