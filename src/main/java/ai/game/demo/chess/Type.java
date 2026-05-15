@@ -22,15 +22,13 @@ public enum Type
             if ((position[1] == 6 || position[1] == 1) && !board.pieceAt(position[0], position[1]+d+d))
                 moves.add(new int[]{position[0], position[1]+d+d});
         }
-
+        // diagonal moves, en passant included
         for (int i : mirror())
         {
             int[] checkedPos = new int[]{position[0]+i, position[1]+d};
-            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos[0],d<0?2:5))
+            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos))
                 moves.add(checkedPos);
         }
-
-        //en passant
 
 
         return moves.stream();
