@@ -1,11 +1,13 @@
 package ai.game.demo.chess;
 
 import ai.game.demo.agent.State;
+import lombok.Getter;
 
 import java.awt.*;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 
+@Getter
 public class Piece extends State.Actionable<Board>
 {
     public final Board    board;
