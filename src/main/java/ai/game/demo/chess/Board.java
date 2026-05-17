@@ -295,30 +295,38 @@ public class Board extends State<Board> implements Comparable<Board>
 
         if (at(from).type()==KING) castling(board,to); // apply castling rules
 
-        int yDistance = toY-fromY;
-        //basic en passant logic :/ check pawn
-        int[] passantTarget = new int[2];
+        //basic en passant logic :/
         if (board[toY][toX].isType(PAWN))
         {
-            //take en passant target
-            if (metadata[PASSANT_X] == toX && metadata[PASSANT_Y] == toY)
-            {
-                board[fromY][toX] = VACANT;
-            }else {
-                //en passant availability check
-                boolean enPassantAvailable = Math.abs(yDistance) == 2;
-                passantTarget[0] = enPassantAvailable ?  toX : 0;
-                passantTarget[1] = enPassantAvailable ? (toY - (yDistance / 2)) : 0;
-            }
+            int[] passantTarget = new int[2];
+            //take en passant target else set passantTarget
+            if (metadata[PASSANT_X] == toX && metadata[PASSANT_Y] == toY) board[fromY][toX] = VACANT;
+            else passantTarget = setPassant(from, to);
+            metadata[PASSANT_X] = (char) passantTarget[0];
+            metadata[PASSANT_Y] = (char) passantTarget[1];
         }
-        metadata[PASSANT_X] = (char) passantTarget[0];
-        metadata[PASSANT_Y] = (char) passantTarget[1];
+
+
+
         // todo: update metadata
 
         return new Board(board,metadata);
     }
 
-    private boolean isPawn(char piece){return (piece=='♙'||piece=='♟');}
+    public int[] setPassant(int[] from, int[] to){
+        int fromY = from[1];
+        int   toX =   to[0];
+        int   toY =   to[1];
+        int yDistance = toY-fromY;
+        int[] passantTarget = new int[2];
+
+        //en passant availability check
+        boolean enPassantAvailable = Math.abs(yDistance) == 2;
+        passantTarget[0] = enPassantAvailable ?  toX : 0;
+        passantTarget[1] = enPassantAvailable ? (toY - (yDistance / 2)) : 0;
+
+        return passantTarget;
+    }
 
     public boolean passantAt(int... passantPos){return(metadata[PASSANT_X]==passantPos[0]&&metadata[PASSANT_Y]==passantPos[1]);}
 
