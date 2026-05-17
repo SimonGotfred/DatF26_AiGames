@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.awt.*;
+import java.io.Console;
 import java.util.List;
 
 @CrossOrigin @RequestMapping("play")
@@ -58,13 +59,13 @@ public class RestController
 
     @PostMapping
     public ResponseEntity<char[][]> playerMove(HttpServletRequest request,
-                                               @RequestParam(required=false) Character promote,
                                                @RequestParam int[] from,
                                                @RequestParam int[] to)
     {
         Agent<Board> agent = getAgent(request);
         Board board = agent.getCurrentState();
         agent.updateState(board.move(from,board.isLegalMove(from,to)),!runAgent);
+
         return ResponseEntity.ok(agent.getCurrentState().raw());
     }
 

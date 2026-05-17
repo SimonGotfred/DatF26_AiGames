@@ -3,6 +3,7 @@ package ai.game.demo.chess;
 import ai.game.demo.agent.State;
 
 import java.awt.*;
+import java.io.Console;
 import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
@@ -277,6 +278,12 @@ public class Board extends State<Board> implements Comparable<Board>
         metadata[5] = (char) passantTarget[0];
         metadata[6] = (char) passantTarget[1];
         // todo: update metadata
+
+        //promotion
+        if(to.length > 2){
+            System.out.println("i am getting this: " + to[2]);
+            board[to[1]][to[0]] = Type.from((char) to[2]);
+        }
 
         return new Board(board,metadata);
     }

@@ -8,16 +8,30 @@ import java.util.stream.Stream;
 
 public enum Type
 {
+
     PAWN  ('♟', Color.WHITE, 100,
     (board,position) ->
     {
         List<int[]> moves = new ArrayList<>();
 
         int d = board.whiteAt(position) ? -1:1; // check *alleged* pawn color for move direction
+
+        //promotion pieces
+        char[] PromotionPieces = {'♛','♝','♞','♜'};
+        if(d == 1)
+            PromotionPieces = new char[]{'♕', '♗', '♘', '♖'};
+
         if (!board.pieceAt(position[0], position[1]+d))
         {
-            moves.add(new int[]{position[0], position[1]+d});
-
+            //promotion move
+            if(((position[1] == 6 && d == -1) || (position[1] == 1 && d == 1))){
+                for (char promotionPiece : PromotionPieces) {
+                    moves.add(new int[]{position[0], position[1] + d, (int) promotionPiece});
+                }
+            }
+            else {//normal move
+                moves.add(new int[]{position[0], position[1]+d});
+            }
             //double move
             if ((position[1] == 6 || position[1] == 1) && !board.pieceAt(position[0], position[1]+d+d))
                 moves.add(new int[]{position[0], position[1]+d+d});
@@ -26,11 +40,23 @@ public enum Type
         for (int i : mirror())
         {
             int[] checkedPos = new int[]{position[0]+i, position[1]+d};
-            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos[0],d<0?2:5))
-                moves.add(checkedPos);
+            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos[0],d<0?2:5)){
+                //promotion move
+                if(((position[1] == 6 && d == -1) || (position[1] == 1 && d == 1))){
+                    for (char promotionPiece : PromotionPieces) {
+                        moves.add(new int[]{checkedPos[0], checkedPos[1], (int) promotionPiece});
+                    }
+                }
+                else {//normal move
+                    moves.add(checkedPos);
+                }
+            }
+
         }
 
         //en passant
+
+
 
 
         return moves.stream();
@@ -239,6 +265,7 @@ public enum Type
 
     public static final String white = "♚♛♜♝♞♟";
     public static final String black = "♔♕♖♗♘♙";
+
     
     private static final int[] mirror = new int[]{-1,1};
     public  static int[] mirror(){return mirror;}

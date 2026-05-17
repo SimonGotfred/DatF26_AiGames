@@ -192,9 +192,9 @@ function cellToCharArray(cell){
 
 let LegalMoves = null
 const promotablePieces = ["♛","♝","♞","♜"]
+const promotablePiecesBlack = ["♕","♗","♘","♖"]
 
 async function pressCell(cell){
-
     if(chosenCell === null){
         chosenCell = cell
         HighlightSquare(cell)
@@ -203,6 +203,7 @@ async function pressCell(cell){
             [0,0], [1,1]
         ]*/
         LegalMoves = await getPossibleMoves(cellToCharArray(cell)) ?? null
+        console.log(LegalMoves)
         if(LegalMoves !== null){
             LegalMoves.map((legalMove) => {
                 board[legalMove[0]][legalMove[1]].className += " Dot"
@@ -221,12 +222,13 @@ async function pressCell(cell){
         if(LegalMoves !== null) {
             LegalMoves.map(async (legalMove) => {
                 if (board[legalMove[0]][legalMove[1]] === cell) {
-                    //cell.piece.chessPiece = chosenCell.piece.chessPiece
+                    cell.piece.chessPiece = chosenCell.piece.chessPiece
                     //SetBlackOrWhite(cell.piece)
                     //chosenCell.piece.chessPiece = ""
                     //SetBlackOrWhite(chosenCell.piece)
 
                     if ((legalMove[0] === 0 || legalMove[0] === 7) && (cell.piece.chessPiece === "♙" || cell.piece.chessPiece === "♟")) {
+                        console.log("promote")
                         //alert("you can now promote")
 
                         //make them choose piece
@@ -239,13 +241,16 @@ async function pressCell(cell){
                         choosePiecePopUpContent.className = "popUp-content"
                         choosePiecePopUp.appendChild(choosePiecePopUpContent)
 
-
-                        for (let i = 0; i < promotablePieces.length; i++) {
+                        let piecesToChooseFrom = promotablePieces
+                        if(chosenCell.piece.src.includes("Black")){
+                            piecesToChooseFrom = promotablePiecesBlack
+                        }
+                        for (let i = 0; i < piecesToChooseFrom.length; i++) {
                             const choosablePiece = document.createElement("div")
                             choosePiecePopUpContent.appendChild(choosablePiece)
-                            choosablePiece.innerText = promotablePieces[i]
+                            choosablePiece.innerText = piecesToChooseFrom[i]
                             choosablePiece.className = "popUpPiece"
-                            choosablePiece.addEventListener("click", () => choosePromotionPiece(cell, promotablePieces[i], choosePiecePopUp))
+                            choosablePiece.addEventListener("click",  () => choosePromotionPiece(cell, piecesToChooseFrom[i], choosePiecePopUp))
                         }
                     } else {
                         const response = await makeMove(cellToCharArray(chosenCell), cellToCharArray(cell))
@@ -253,22 +258,24 @@ async function pressCell(cell){
                         const PlayAi = document.getElementById("PlayAi")
                         if(PlayAi.checked)
                             waitForAiMove()
+
+                        RemoveHiglight(chosenCell)
                     }
 
 
                 }
             })
         }
-        RemoveHiglight(chosenCell)
+
     }
 
 }
 
-function choosePromotionPiece(cell, pieceType, popUp){
+async function choosePromotionPiece(cell, pieceType, popUp){
 
-    if(cell.piece.className.includes("BlackPiece")){
+    /*if(cell.piece.className.includes("BlackPiece")){
         pieceType = String.fromCharCode(pieceType.charCodeAt(0) - 6)
-    }
+    }*/
     cell.piece.chessPiece = pieceType
     SetBlackOrWhite(cell.piece)
 
@@ -276,6 +283,9 @@ function choosePromotionPiece(cell, pieceType, popUp){
     console.log("chose to promote to " + pieceType)
     //replace it with the piece and send with makeMove
         //makeMove(cellToCharArray(chosenCell), cellToCharArray(cell))//.then(waitForAiMove)
+    const response = await makeMove(cellToCharArray(chosenCell), cellToCharArray(cell), pieceType)
+    ChangeBoard(response)
+    RemoveHiglight(chosenCell)
 }
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
