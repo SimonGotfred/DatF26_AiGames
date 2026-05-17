@@ -293,7 +293,7 @@ public class Board extends State<Board> implements Comparable<Board>
         metadata[FROM_X] = (char)from[0]; metadata[FROM_Y] = (char)from[1];  // update metadata 'moved from'
         metadata[TURN] = metadata[TURN] == 'w' ? 'b' : 'w';  // update identity of active turn
 
-        castling(board,to); // apply castling rules
+        if (at(from).type()==KING) castling(board,to); // apply castling rules
 
         int yDistance = toY-fromY;
         //basic en passant logic :/ check pawn
