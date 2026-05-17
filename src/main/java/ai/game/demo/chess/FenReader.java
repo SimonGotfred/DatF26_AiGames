@@ -19,7 +19,7 @@ public class FenReader {
             result[i] = buildRow(rowSplit[i]);
         }
 
-        result[7] = (buildMeta(meta));
+        result[7] = buildMeta(meta);
 
         for (String rawr : result) {
             System.out.println(rawr);
@@ -74,12 +74,28 @@ public class FenReader {
     private String[] transCastling(String[] meta, String input) {
         String[] result = new String[]{"c", "c", "c", "c", "c", "c"};
 
+        switch (input) {
+            case "KQkq" -> result = new String[]{"c", "c", "c", "c", "c", "c"};
+            case "KQk" -> result = new String[]{"c", "c", "c", "c", "c", " "};
+            case "KQq" -> result = new String[]{"c", "c", "c", "c", " ", "c"};
+            case "Qqk" -> result = new String[]{"c", " ", "c", "c", "c", "c"};
+            case "Kqk" -> result = new String[]{"c", "c", " ", "c", "c", "c"};
+            case "KQ" -> result = new String[]{"c", "c", "c", " ", " ", " "};
+            case "Kq" -> result = new String[]{"c", "c", " ", "c", " ", "c"};
+            case "Kk" -> result = new String[]{"c", "c", " ", "c", "c", " "};
+            case "Qk" -> result = new String[]{"c", " ", "c", "c", "c", " "};
+            case "Qq" -> result = new String[]{"c", " ", "c", "c", " ", "c"};
+            case "kq" -> result = new String[]{" ", " ", " ", "c", "c", "c"};
+            case "K" -> result = new String[]{"c", " ", "c", " ", " ", " "};
+            case "Q" -> result = new String[]{"c", "c", " ", " ", " ", " "};
+            case "k" -> result = new String[]{" ", " ", " ", "c", " ", "c"};
+            case "q" -> result = new String[]{" ", " ", " ", "c", "c", " "};
+            default ->  throw new IllegalStateException("Unexpected value: " + input);
+            // todo: might need mirroring depending on formatting
+        }
 
-        if (input.contains("KQ"))
-
-        for (int i = 0; i < result.length; i++) {
-            meta[i + 4] = result[i];
-        } // translating castling logic
+        // translating castling logic
+        System.arraycopy(result, 0, meta, 4, result.length);
         return meta;
     }
 
