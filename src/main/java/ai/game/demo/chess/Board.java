@@ -317,7 +317,7 @@ public class Board extends State<Board> implements Comparable<Board>
         // todo: update metadata
 
         //promotion
-        if(to.length > 2){
+        if(to.length > 2 && to[2] > 2){
             System.out.println("i am getting this: " + to[2]);
             board[to[1]][to[0]] = Type.from((char) to[2]);
         }

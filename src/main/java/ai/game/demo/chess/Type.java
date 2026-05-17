@@ -39,7 +39,7 @@ public enum Type
         for (int i : mirror())
         {
             int[] checkedPos = new int[]{position[0]+i, position[1]+d};
-            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos[0],d<0?2:5)){
+            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos)){
                 //promotion move
                 if(((position[1] == 6 && d == -1) || (position[1] == 1 && d == 1))){
                     for (char promotionPiece : PromotionPieces) {
