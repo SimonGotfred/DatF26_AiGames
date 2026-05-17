@@ -17,14 +17,14 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         return new Board
         (
-            "♖♘♗♕♔♗♘♖" +
+            "♖♘♗♕ㅤ♗♘♖" +
             "♙♙♙♙♙ㅤ♙♙" +
             "ㅤㅤㅤㅤㅤㅤ♖ㅤ" +
             "ㅤ♟ㅤㅤㅤㅤㅤㅤ" +
-            "ㅤㅤㅤ♙ㅤㅤㅤ♜" +
-            "ㅤ♞♝♛ㅤㅤ♚ㅤ" +
+            "ㅤㅤㅤ♙ㅤ♔ㅤ♜" +
+            "ㅤ♞♝♛ㅤㅤㅤㅤ" +
             "♟ㅤ♟♟♟♟♟♟" +
-            "♜ㅤㅤㅤㅤㅤㅤ♜"
+            "♜ㅤㅤㅤ♚ㅤㅤ♜"
         );
     }
 
@@ -175,6 +175,8 @@ public class Board extends State<Board> implements Comparable<Board>
         return buffer;
     }
 
+    public boolean isLost(){return isCheck(turn(),king(turn()));}// todo
+
     public static char[][] invert(char[][] board) // ! not functional
     {
         char[][] inverted = new char[8][8];
@@ -199,14 +201,14 @@ public class Board extends State<Board> implements Comparable<Board>
         List<Piece> pieces = new ArrayList<>();
         for (Type type : simple[0]) // pattern for black/white pieces are mostly identical, so only
         {                        //  run each pattern once, collecting both corresponding black/white
-            for (int[] p : type.movesFrom(this,position).filter(p->at(p).type()==type||at(p).type()==QUEEN).toList())
+            for (int[] p : type.movesUnchecked(this,position).filter(p->at(p).type()==type||at(p).type()==QUEEN).toList())
             {
                 pieces.add(new Piece(at(p),this, p[0],p[1]));
             }
         }
         for (Type type : simple[1]) // pattern for black/white pieces are mostly identical, so only
         {                        //  run each pattern once, collecting both corresponding black/white
-            for (int[] p : type.movesFrom(this,position).filter(p->at(p).type()==type).toList())
+            for (int[] p : type.movesUnchecked(this,position).filter(p->at(p).type()==type).toList())
             {
                 pieces.add(new Piece(at(p),this, p[0],p[1]));
             }
@@ -238,7 +240,7 @@ public class Board extends State<Board> implements Comparable<Board>
         }
         return notFound;
     } private static final int[] notFound = new int[]{-10,-10};
-    public boolean isCheck(Color color, int... position){return at(position).color!=color && threats(position).stream().anyMatch(piece->piece.color!=color);}
+    public boolean isCheck(Color color, int... position){return threats(position).stream().anyMatch(piece->piece.color!=color);}
     public int[][] checks()
     {                                                      // ! don't know why this filter seems to work inverted?
         int[][] threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).map(Piece::getPosition).toArray(int[][]::new);
@@ -299,7 +301,7 @@ public class Board extends State<Board> implements Comparable<Board>
         if (board[toY][toX].isType(PAWN))
         {
             //take en passant target
-            if (metadata[5] == toX && metadata[6] == toY)
+            if (metadata[PASSANT_X] == toX && metadata[PASSANT_Y] == toY)
             {
                 board[fromY][toX] = VACANT;
             }else {
@@ -309,8 +311,8 @@ public class Board extends State<Board> implements Comparable<Board>
                 passantTarget[1] = enPassantAvailable ? (toY - (yDistance / 2)) : 0;
             }
         }
-        metadata[5] = (char) passantTarget[0];
-        metadata[6] = (char) passantTarget[1];
+        metadata[PASSANT_X] = (char) passantTarget[0];
+        metadata[PASSANT_Y] = (char) passantTarget[1];
         // todo: update metadata
 
         return new Board(board,metadata);

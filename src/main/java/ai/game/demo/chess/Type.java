@@ -26,7 +26,7 @@ public enum Type
         for (int i : mirror())
         {
             int[] checkedPos = new int[]{position[0]+i, position[1]+d};
-            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos[0],d<0?2:5))
+            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos))
                 moves.add(checkedPos);
         }
 
@@ -400,7 +400,7 @@ public enum Type
         if(board.checks==null||this.type()==KING) return movesUnchecked(board,position); // if more than one piece threatens the king, the king itself *must* be moved to avoid capture
         return board.checks.length<1?Stream.empty():movesUnchecked(board,position).filter(move-> Arrays.stream(board.checks).anyMatch(pos->Arrays.equals(pos,move)));
     }
-    private Stream<int[]> movesUnchecked(Board board, int[] position)
+    public Stream<int[]> movesUnchecked(Board board, int[] position)
     {
         return pattern.apply(board,position).filter(p ->
                                                     p[0] <  8 && p[1] <  8
