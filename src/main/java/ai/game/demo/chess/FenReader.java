@@ -10,8 +10,8 @@ import java.util.stream.Stream;
 public class FenReader {
 
     public String[] read(String FEN) {
-        FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        String[] result = new String[8];
+        FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1";
+        String[] result = new String[9];
         String[] rowSplit = FEN.split("/");
         String[] meta = rowSplit[7].split(" ");
         rowSplit[7] = meta[0];
@@ -19,7 +19,7 @@ public class FenReader {
             result[i] = buildRow(rowSplit[i]);
         }
 
-        result[7] = buildMeta(meta);
+        result[8] = buildMeta(meta);
 
         for (String rawr : result) {
             System.out.println(rawr);
@@ -63,7 +63,7 @@ public class FenReader {
         contents[1] = meta[1]; //turn
         contents[3] = !meta[3].equals("-") ? meta[3] : "a1"; //passantTarget
 
-        String[] finalized = transCastling(contents, meta[2]); // translating castling logic
+        String[] finalized = transCastling(contents, meta[2]); // translating castling data
 
         for (String crt : finalized) {
             result.append(crt);
@@ -72,8 +72,7 @@ public class FenReader {
     }
 
     private String[] transCastling(String[] meta, String input) {
-        String[] result = new String[]{"c", "c", "c", "c", "c", "c"};
-
+        String[] result;
         switch (input) {
             case "KQkq" -> result = new String[]{"c", "c", "c", "c", "c", "c"};
             case "KQk" -> result = new String[]{"c", "c", "c", "c", "c", " "};
@@ -90,10 +89,9 @@ public class FenReader {
             case "Q" -> result = new String[]{"c", "c", " ", " ", " ", " "};
             case "k" -> result = new String[]{" ", " ", " ", "c", " ", "c"};
             case "q" -> result = new String[]{" ", " ", " ", "c", "c", " "};
-            default ->  throw new IllegalStateException("Unexpected value: " + input);
+            default ->  result = new String[]{" ", " ", " ", " ", " ", " "};
             // todo: might need mirroring depending on formatting
         }
-
         // translating castling logic
         System.arraycopy(result, 0, meta, 4, result.length);
         return meta;
