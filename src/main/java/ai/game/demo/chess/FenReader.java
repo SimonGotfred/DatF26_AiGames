@@ -18,6 +18,7 @@ public class FenReader {
         for (int i = 0; i < rowSplit.length; i++) {
             result[i] = buildRow(rowSplit[i]);
         }
+
         result[7] = (buildMeta(meta));
 
         for (String rawr : result) {
@@ -58,29 +59,27 @@ public class FenReader {
 
     public String buildMeta(String[] meta) {
         StringBuilder result = new StringBuilder();
-        String[] contents = new String[]{"a1a1", "w", "p", "passantTarget", "W","W","W","B","B","B" };
+        String[] contents = new String[]{"a1a1", "w", "p", "passantTarget", "W", "W", "W", "B", "B", "B"};
         contents[1] = meta[1]; //turn
-        contents[3] = !meta[3].equals("-")?  meta[3] : "a1"; //passantTarget
+        contents[3] = !meta[3].equals("-") ? meta[3] : "a1"; //passantTarget
 
-        String[] finalized = transCastling(contents,meta[2]); // translating castling logic
+        String[] finalized = transCastling(contents, meta[2]); // translating castling logic
 
-        for (String crt : finalized )
-        {
+        for (String crt : finalized) {
             result.append(crt);
         }
         return result.toString();
     }
-    private String[] transCastling(String[] meta,  String input)
-    {
+
+    private String[] transCastling(String[] meta, String input) {
         String[] result = new String[]{"c", "c", "c", "c", "c", "c"};
 
-        for (int i = 0; i < result.length; i++ )
-        {
-            meta[i+4] = result[i];
+
+        if (input.contains("KQ"))
+
+        for (int i = 0; i < result.length; i++) {
+            meta[i + 4] = result[i];
         } // translating castling logic
-
-        if(input.contains("K"));
-
         return meta;
     }
 
