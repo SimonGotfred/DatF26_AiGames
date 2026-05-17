@@ -305,6 +305,11 @@ public class Board extends State<Board> implements Comparable<Board>
             metadata[PASSANT_X] = (char) passantTarget[0];
             metadata[PASSANT_Y] = (char) passantTarget[1];
         }
+        else
+        {
+            metadata[PASSANT_X] = 'p';
+            metadata[PASSANT_Y] = 'p';
+        }
 
 
 
