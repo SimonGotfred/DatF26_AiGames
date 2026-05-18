@@ -51,6 +51,8 @@ public class _main
 //        board = new Board();
 //        Agent<Board> agent = new Agent<>(board);
 //        play(agent);
+        FenReader reader = new FenReader();
+        board = new Board(reader.read("rnbqkbnr/pp1ppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1"));
         play(board);
 
 //        for (Field field : Board.class.getDeclaredFields())

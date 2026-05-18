@@ -11,7 +11,7 @@ public class DemoApplication
     public static void main(String[] args)
     {
         FenReader fenReader = new FenReader();
-        fenReader.read("fen");
+        fenReader.read("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1");
         SpringApplication.run(DemoApplication.class, args);
 
     }

@@ -1,16 +1,10 @@
 package ai.game.demo.chess;
 
-import java.awt.*;
-import java.util.*;
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 
 public class FenReader {
 
-    public String[] read(String FEN) {
-        FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1";
+    public String read(String FEN) {
         String[] result = new String[9];
         String[] rowSplit = FEN.split("/");
         String[] meta = rowSplit[7].split(" ");
@@ -20,12 +14,12 @@ public class FenReader {
         }
 
         result[8] = buildMeta(meta);
-
+        StringBuilder nef = new StringBuilder();
         for (String rawr : result) {
-            System.out.println(rawr);
+            nef.append(rawr);
         }
-
-        return result;
+        System.out.println(nef);
+        return nef.toString();
     }
 
     private String buildRow(String s) {
@@ -75,20 +69,20 @@ public class FenReader {
         String[] result;
         switch (input) {
             case "KQkq" -> result = new String[]{"c", "c", "c", "c", "c", "c"};
-            case "KQk" -> result = new String[]{"c", "c", "c", "c", "c", " "};
-            case "KQq" -> result = new String[]{"c", "c", "c", "c", " ", "c"};
-            case "Qqk" -> result = new String[]{"c", " ", "c", "c", "c", "c"};
-            case "Kqk" -> result = new String[]{"c", "c", " ", "c", "c", "c"};
+            case "KQk" -> result = new String[]{"c", "c", "c", "c", " ", "c"};
+            case "KQq" -> result = new String[]{"c", "c", "c", "c", "c", " "};
+            case "Qqk" -> result = new String[]{"c", "c", " ", "c", "c", "c"};
+            case "Kqk" -> result = new String[]{"c", " ", "c", "c", "c", "c"};
             case "KQ" -> result = new String[]{"c", "c", "c", " ", " ", " "};
-            case "Kq" -> result = new String[]{"c", "c", " ", "c", " ", "c"};
-            case "Kk" -> result = new String[]{"c", "c", " ", "c", "c", " "};
-            case "Qk" -> result = new String[]{"c", " ", "c", "c", "c", " "};
-            case "Qq" -> result = new String[]{"c", " ", "c", "c", " ", "c"};
+            case "Kq" -> result = new String[]{"c", " ", "c", "c", "c", " "};
+            case "Kk" -> result = new String[]{"c", " ", "c", "c", " ", "c"};
+            case "Qk" -> result = new String[]{"c", "c", " ", "c", " ", "c"};
+            case "Qq" -> result = new String[]{"c", "c", " ", "c", "c", " "};
             case "kq" -> result = new String[]{" ", " ", " ", "c", "c", "c"};
-            case "K" -> result = new String[]{"c", " ", "c", " ", " ", " "};
-            case "Q" -> result = new String[]{"c", "c", " ", " ", " ", " "};
-            case "k" -> result = new String[]{" ", " ", " ", "c", " ", "c"};
-            case "q" -> result = new String[]{" ", " ", " ", "c", "c", " "};
+            case "K" -> result = new String[]{"c", "c", " ", " ", " ", " "};
+            case "Q" -> result = new String[]{"c", " ", "c", " ", " ", " "};
+            case "k" -> result = new String[]{" ", " ", " ", "c", "c", " "};
+            case "q" -> result = new String[]{" ", " ", " ", "c", " ", "c"};
             default ->  result = new String[]{" ", " ", " ", " ", " ", " "};
             // todo: might need mirroring depending on formatting
         }
