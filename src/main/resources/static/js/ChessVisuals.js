@@ -220,14 +220,14 @@ async function pressCell(cell){
         //check if you can take piece to there, else do nothing or unhighlight
 
         if(LegalMoves !== null) {
-            LegalMoves.map(async (legalMove) => {
-                if (board[legalMove[0]][legalMove[1]] === cell) {
+            for (let i = 0; i < LegalMoves.length; i++){
+                if (board[LegalMoves[i][0]][LegalMoves[i][1]] === cell) {
                     cell.piece.chessPiece = chosenCell.piece.chessPiece
                     //SetBlackOrWhite(cell.piece)
                     //chosenCell.piece.chessPiece = ""
                     //SetBlackOrWhite(chosenCell.piece)
 
-                    if ((legalMove[0] === 0 || legalMove[0] === 7) && (cell.piece.chessPiece === "♙" || cell.piece.chessPiece === "♟")) {
+                    if ((LegalMoves[i][0] === 0 || LegalMoves[i][0] === 7) && (cell.piece.chessPiece === "♙" || cell.piece.chessPiece === "♟")) {
                         console.log("promote")
                         //alert("you can now promote")
 
@@ -262,9 +262,12 @@ async function pressCell(cell){
                         RemoveHiglight(chosenCell)
                     }
 
-
+                    return
                 }
-            })
+            }
+            /*LegalMoves.map(async (legalMove) => {
+
+            })*/
         }
 
     }
