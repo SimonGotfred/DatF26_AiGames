@@ -271,7 +271,7 @@ public class Board extends State<Board> implements Comparable<Board>
         if(at(from).color==at(to).color) return null;
         Type piece = at(from);
         return movesFor(from).filter(m -> at(m).color != piece.color)
-                             .filter(m -> (at(from).type()==KING&&(m[0]==to[0]&&m[1]==to[1]))||Arrays.equals(m,to))
+                             .filter(m -> (at(from).type()==PAWN&&Arrays.equals(m,to))||(m[0]==to[0]&&m[1]==to[1]))
                              .findAny().orElse(null);
     }
 
@@ -313,7 +313,6 @@ public class Board extends State<Board> implements Comparable<Board>
 
         //promotion
         if(to.length > 2 && to[2] > 2){
-            System.out.println("i am getting this: " + ((char)to[2]));
             board[to[1]][to[0]] = Type.from((char) to[2]);
         }
 
