@@ -302,15 +302,7 @@ const waitForAiMove = async () => {
     waitForAiPopUp.remove()
 };
 
-async function fenBoard() {
 
-    const string = document.getElementById("Fen").value
-    const response = await setFromFen(string)
-    ChangeBoard(response)
-}
-
-const fenButton = document.getElementById("readFen")
-fenButton.addEventListener("click", fenBoard)
 
 
 /*const testState = [
@@ -349,5 +341,14 @@ MakeBoard().then(() => {
     changeSideButton.addEventListener("click", changeSide)
 })
 
+async function fenBoard() {
+
+    const string = document.getElementById("Fen").value
+    const response = await setFromFen(string)
+    ChangeBoard(response)
+}
+
+const fenButton = document.getElementById("readFen")
+fenButton.addEventListener("click", fenBoard)
 /*HighlightSquare(3,4)
 HighlightSquare(4,6)*/
