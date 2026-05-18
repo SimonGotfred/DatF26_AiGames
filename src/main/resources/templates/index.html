@@ -5,19 +5,24 @@
     <title>Chess</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/chess.css}">
-    <link rel="icon" type="image/x-icon" href="/images/favicon.webp" >
+    <link rel="icon" type="image/x-icon" href="/images/favicon.webp">
 </head>
 <body>
-    <h1>Welcome to Chess!</h1>
-    <div style="display: flex">
-        <p>Play Vs Ai:</p>
-        <input type="checkbox" id="PlayAi" checked="checked">
-        <p>ㅤWait Time(seconds):</p>
-        <input type="number" id="AiTime" value="15" class="AiWaitTime">
-        <p id="sideText">ㅤYou're White</p>
-        <button id="changeSideButton" class="ChangeSide">Change Side</button>
-    </div>
-    <button id="RestartButton">Restart Game</button>
+<h1>Welcome to Chess!</h1>
+<div style="display: flex; align-items: center; flex-wrap: wrap;">
+    <p>Play Vs Ai:</p>
+    <input type="checkbox" id="PlayAi" checked="checked">
+    <p>ㅤWait Time(seconds):</p>
+    <input type="number" id="AiTime" value="15" class="AiWaitTime">
+    <p id="sideText">ㅤYou're White</p>
+    <button id="changeSideButton" class="ChangeSide">Change Side</button>
+
+    <p>use fen</p>
+    <input type="text" id="Fen" value="rnbqkbnr/pp1ppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" class="fen">
+    <button id="readFen" class="ChangeSide">play with this board</button>
+
+</div>
+<button id="RestartButton">Restart Game</button>
 </body>
 <script type="module" th:src="@{/js/ChessFrontend.js}"></script>
 <script type="module" th:src="@{/js/ChessVisuals.js}"></script>

@@ -37,25 +37,25 @@ body{
     margin-left: auto;
     margin-right: auto;
 }
-.CornorText{
+.cornerText{
     position: absolute;
     font-size: 25px;
     font-family: "Segoe UI";
     font-weight: 600;
     background-color: #00000000;
 }
-.CornorText.TopLeft{
+.cornerText.TopLeft{
     margin-top: 2px;
     margin-left: 5px;
 }
-.CornorText.BottomRight{
+.cornerText.BottomRight{
     margin-top: 70px;
     margin-left: 83px;
 }
-.CornorText.WhiteSpace{
+.cornerText.WhiteSpace{
     color: #739552;
 }
-.CornorText.BlackSpace{
+.cornerText.BlackSpace{
     color: beige;
 }
 
@@ -110,10 +110,15 @@ body{
 .AiWaitTime{
     height: 10px;
     width: 40px;
-    margin-top: 22px;
 }
 .ChangeSide{
     height: 30px;
-    margin-top: 14px;
     margin-left: 5px;
+    margin-right: 5px;
+}
+.fen{
+    width: 400px;
+    height: 30px;
+    margin-left: 5px;
+
 }

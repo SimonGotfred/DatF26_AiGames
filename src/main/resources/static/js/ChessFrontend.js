@@ -31,3 +31,11 @@ export async function getAiMove(){
     return json
 }
 
+export async function setFromFen(payload)
+{
+    console.log(payload)
+    const response = await postBackend("play/fen", payload)
+    return await response.json()
+}
+
+
