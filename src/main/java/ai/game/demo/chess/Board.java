@@ -31,8 +31,8 @@ public class Board extends State<Board> implements Comparable<Board>
     private static int flags=0;
     private static final String[] initialFlags= new String[]{"a1a1wpxycccccc"}; // ! yes, there is a reason for this being an array
     public  static final int TO_X, TO_Y, FROM_X, FROM_Y, TURN, PROMOTION, PASSANT_X, PASSANT_Y,
-                             BLACK_KING, BLACK_LEFT_ROOK, BLACK_RIGHT_ROOK,
-                             WHITE_KING, WHITE_LEFT_ROOK, WHITE_RIGHT_ROOK;
+            CASTLE_BLACK, CASTLE_BLACK_LEFT, CASTLE_BLACK_RIGHT,
+            CASTLE_WHITE, CASTLE_WHITE_LEFT, CASTLE_WHITE_RIGHT;
 
     static // set flag indexes
     {
@@ -44,12 +44,12 @@ public class Board extends State<Board> implements Comparable<Board>
         PROMOTION=flags++;
         PASSANT_X=flags++;
         PASSANT_Y=flags++;
-        BLACK_KING=flags++;
-        BLACK_LEFT_ROOK=flags++;
-        BLACK_RIGHT_ROOK=flags++;
-        WHITE_KING=flags++;
-        WHITE_LEFT_ROOK=flags++;
-        WHITE_RIGHT_ROOK=flags++;
+        CASTLE_BLACK =flags++;
+        CASTLE_BLACK_LEFT =flags++;
+        CASTLE_BLACK_RIGHT =flags++;
+        CASTLE_WHITE =flags++;
+        CASTLE_WHITE_LEFT =flags++;
+        CASTLE_WHITE_RIGHT =flags++;
     }
 
     public record Dto(Type[][] board){};
@@ -242,7 +242,7 @@ public class Board extends State<Board> implements Comparable<Board>
     } private static final int[] notFound = new int[]{-10,-10};
     public boolean isCheck(Color color, int... position){return threats(position).stream().anyMatch(piece->piece.color!=color);}
     public int[][] checks()
-    {                                                      // ! don't know why this filter seems to work inverted?
+    {
         int[][] threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).map(Piece::getPosition).toArray(int[][]::new);
         if(threats.length>1) return multipleThreats; // signal *must* move king
         if(threats.length>0)
@@ -343,21 +343,21 @@ public class Board extends State<Board> implements Comparable<Board>
         {
             if      (move[2]<0){board[move[1]][move[0]+1]= board[move[1]][0];board[move[1]][0]= VACANT;} // left
             else if (move[2]>0){board[move[1]][move[0]-1]= board[move[1]][7];board[move[1]][7]= VACANT;}// right
-            metadata[move[1]>1?WHITE_KING:BLACK_KING]=' '; // erase king castling-flag
+            metadata[move[1]>1? CASTLE_WHITE : CASTLE_BLACK]=' '; // erase king castling-flag
         }
 
         // check if expected rook is present. the alternative would be to check *both* to or from for
         // if they match coordinates, to account for capture of unmoved rook, ie double the checks.
         // possibility of captured rook also means *both* white and black must be checked each turn
-        if(metadata[BLACK_KING]!=' ')
+        if(metadata[CASTLE_BLACK]!=' ')
         {
-            if (board[0][0] != BLACK_ROOK) metadata[ BLACK_LEFT_ROOK] = ' ';
-            if (board[0][7] != BLACK_ROOK) metadata[BLACK_RIGHT_ROOK] = ' ';
+            if (board[0][0] != BLACK_ROOK) metadata[CASTLE_BLACK_LEFT] = ' ';
+            if (board[0][7] != BLACK_ROOK) metadata[CASTLE_BLACK_RIGHT] = ' ';
         }
-        if(metadata[WHITE_KING]!=' ')
+        if(metadata[CASTLE_WHITE]!=' ')
         {
-            if (board[7][0] != ROOK) metadata[ WHITE_LEFT_ROOK] = ' ';
-            if (board[7][7] != ROOK) metadata[WHITE_RIGHT_ROOK] = ' ';
+            if (board[7][0] != ROOK) metadata[CASTLE_WHITE_LEFT] = ' ';
+            if (board[7][7] != ROOK) metadata[CASTLE_WHITE_RIGHT] = ' ';
         }
     }
 

@@ -222,7 +222,7 @@ public enum Type
         moves.remove(4); // remove own position
 
         Color turn = board.turn();
-        int castle = board.at(position).isWhite() ? Board.WHITE_KING:Board.BLACK_KING;
+        int castle = board.at(position).isWhite() ? Board.CASTLE_WHITE :Board.CASTLE_BLACK;
         if (board.flag(castle++)=='c')
         {
             if (board.flag(castle++)=='c'
