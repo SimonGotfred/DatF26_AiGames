@@ -227,7 +227,7 @@ async function pressCell(cell){
                     //chosenCell.piece.chessPiece = ""
                     //SetBlackOrWhite(chosenCell.piece)
 
-                    if ((LegalMoves[i][0] === 0 || LegalMoves[i][0] === 7) && (cell.piece.chessPiece === "♙" || cell.piece.chessPiece === "♟")) {
+                    if ((LegalMoves[i][0] === 0 && cell.piece.chessPiece === "♟") || (cell.piece.chessPiece === "♙" && LegalMoves[i][0] === 7 )) {
                         console.log("promote")
                         //alert("you can now promote")
 
@@ -289,6 +289,8 @@ async function choosePromotionPiece(cell, pieceType, popUp){
     const response = await makeMove(cellToCharArray(chosenCell), cellToCharArray(cell), pieceType)
     ChangeBoard(response)
     RemoveHiglight(chosenCell)
+    if(PlayAi.checked)
+        waitForAiMove()
 }
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
