@@ -271,7 +271,7 @@ public class Board extends State<Board> implements Comparable<Board>
         if(at(from).color==at(to).color) return null;
         Type piece = at(from);
         return movesFor(from).filter(m -> at(m).color != piece.color)
-                             .filter(m -> (at(m).type()==KING&&(m[0]==to[0]&&m[1]==to[1]))||Arrays.equals(m,to))
+                             .filter(m -> (at(from).type()==KING&&(m[0]==to[0]&&m[1]==to[1]))||Arrays.equals(m,to))
                              .findAny().orElse(null);
     }
 
