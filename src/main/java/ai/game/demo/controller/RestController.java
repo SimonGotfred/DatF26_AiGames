@@ -8,13 +8,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.awt.*;
-import java.io.Console;
 import java.util.List;
 
 @CrossOrigin @RequestMapping("play")
 @org.springframework.web.bind.annotation.RestController
 public class RestController
 {
+    @SuppressWarnings("unchecked")
     private Agent<Board> getAgent(HttpServletRequest request) {return (Agent<Board>) request.getSession().getAttribute("Agent");}
     final static boolean runAgent = true;
 

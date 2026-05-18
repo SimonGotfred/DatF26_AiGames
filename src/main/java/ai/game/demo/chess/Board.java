@@ -3,7 +3,6 @@ package ai.game.demo.chess;
 import ai.game.demo.agent.State;
 
 import java.awt.*;
-import java.io.Console;
 import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
@@ -18,10 +17,10 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         return new Board
         (
-            "♖♘♗♕ㅤ♗♘♖" +
-            "♙♙♙♙♙ㅤ♙♙" +
-            "ㅤㅤㅤㅤㅤㅤ♖ㅤ" +
-            "ㅤ♟ㅤㅤㅤㅤㅤㅤ" +
+            "♖♘ㅤㅤㅤ♗♘♖" +
+            "♙♙♟♙♙ㅤ♙♙" +
+            "ㅤㅤㅤ♕ㅤㅤ♖ㅤ" +
+            "ㅤ♟♗ㅤㅤㅤㅤㅤ" +
             "ㅤㅤㅤ♙ㅤ♔ㅤ♜" +
             "ㅤ♞♝♛ㅤㅤㅤㅤ" +
             "♟ㅤ♟♟♟♟♟♟" +
@@ -272,7 +271,7 @@ public class Board extends State<Board> implements Comparable<Board>
         if(at(from).color==at(to).color) return null;
         Type piece = at(from);
         return movesFor(from).filter(m -> at(m).color != piece.color)
-                             .filter(m -> m[0]==to[0]&&m[1]==to[1])
+                             .filter(m -> (at(m).type()==KING&&(m[0]==to[0]&&m[1]==to[1]))||Arrays.equals(m,to))
                              .findAny().orElse(null);
     }
 
@@ -294,7 +293,7 @@ public class Board extends State<Board> implements Comparable<Board>
         metadata[FROM_X] = (char)from[0]; metadata[FROM_Y] = (char)from[1];  // update metadata 'moved from'
         metadata[TURN] = metadata[TURN] == 'w' ? 'b' : 'w';  // update identity of active turn
 
-        if (at(from).type()==KING) castling(board,to); // apply castling rules
+        if (at(from).type()==KING) castling(board,metadata,to); // apply castling rules
 
         //basic en passant logic :/
         if (board[toY][toX].isType(PAWN))
@@ -312,13 +311,9 @@ public class Board extends State<Board> implements Comparable<Board>
             metadata[PASSANT_Y] = 'p';
         }
 
-
-
-        // todo: update metadata
-
         //promotion
         if(to.length > 2 && to[2] > 2){
-            System.out.println("i am getting this: " + to[2]);
+            System.out.println("i am getting this: " + ((char)to[2]));
             board[to[1]][to[0]] = Type.from((char) to[2]);
         }
 
@@ -342,7 +337,7 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public boolean passantAt(int... passantPos){return(metadata[PASSANT_X]==passantPos[0]&&metadata[PASSANT_Y]==passantPos[1]);}
 
-    private void castling(Type[][] board,int[] move)
+    private void castling(Type[][] board,char[] metadata,int[] move)
     {
         if(move.length>2) // castling
         {
@@ -350,15 +345,19 @@ public class Board extends State<Board> implements Comparable<Board>
             else if (move[2]>0){board[move[1]][move[0]-1]= board[move[1]][7];board[move[1]][7]= VACANT;}// right
             metadata[move[1]>1?WHITE_KING:BLACK_KING]=' '; // erase king castling-flag
         }
+
+        // check if expected rook is present. the alternative would be to check *both* to or from for
+        // if they match coordinates, to account for capture of unmoved rook, ie double the checks.
+        // possibility of captured rook also means *both* white and black must be checked each turn
         if(metadata[BLACK_KING]!=' ')
         {
-            if (board[0][0] != BLACK_ROOK) metadata[ BLACK_LEFT_ROOK] = ' '; // check if expected piece is present.
-            if (board[0][7] != BLACK_ROOK) metadata[BLACK_RIGHT_ROOK] = ' '; // the alternative would be to check
+            if (board[0][0] != BLACK_ROOK) metadata[ BLACK_LEFT_ROOK] = ' ';
+            if (board[0][7] != BLACK_ROOK) metadata[BLACK_RIGHT_ROOK] = ' ';
         }
         if(metadata[WHITE_KING]!=' ')
         {
-            if (board[7][0] != ROOK) metadata[ WHITE_LEFT_ROOK] = ' '; // if *either* to or from each if they
-            if (board[7][7] != ROOK) metadata[WHITE_RIGHT_ROOK] = ' '; // match coordinates, ie double the checks
+            if (board[7][0] != ROOK) metadata[ WHITE_LEFT_ROOK] = ' ';
+            if (board[7][7] != ROOK) metadata[WHITE_RIGHT_ROOK] = ' ';
         }
     }
 

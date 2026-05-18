@@ -16,37 +16,42 @@ public enum Type
         int d = board.whiteAt(position) ? -1:1; // check *alleged* pawn color for move direction
 
         //promotion pieces
-        char[] PromotionPieces = {'♛','♝','♞','♜'};
-        if(d == 1)
-            PromotionPieces = new char[]{'♕', '♗', '♘', '♖'};
+        char[] PromotionPieces = d<0 ? promotionWhites() : promotionBlacks();
 
         if (!board.pieceAt(position[0], position[1]+d))
         {
             //promotion move
-            if(((position[1] == 6 && d == -1) || (position[1] == 1 && d == 1))){
-                for (char promotionPiece : PromotionPieces) {
+            if(((position[1] == 1 && d == -1) || (position[1] == 6 && d == 1)))
+            {
+                for (char promotionPiece : PromotionPieces)
+                {
                     moves.add(new int[]{position[0], position[1] + d, (int) promotionPiece});
                 }
             }
-            else {//normal move
+            else //normal move
+            {
                 moves.add(new int[]{position[0], position[1]+d});
+                //double move
+                if ((position[1] == 6 || position[1] == 1) && !board.pieceAt(position[0], position[1]+d+d))
+                    moves.add(new int[]{position[0], position[1]+d+d});
             }
-            //double move
-            if ((position[1] == 6 || position[1] == 1) && !board.pieceAt(position[0], position[1]+d+d))
-                moves.add(new int[]{position[0], position[1]+d+d});
         }
         // diagonal moves, en passant included
         for (int i : mirror())
         {
             int[] checkedPos = new int[]{position[0]+i, position[1]+d};
-            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos)){
+            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos))
+            {
                 //promotion move
-                if(((position[1] == 6 && d == -1) || (position[1] == 1 && d == 1))){
-                    for (char promotionPiece : PromotionPieces) {
+                if(((position[1] == 1 && d == -1) || (position[1] == 6 && d == 1)))
+                {
+                    for (char promotionPiece : PromotionPieces)
+                    {
                         moves.add(new int[]{checkedPos[0], checkedPos[1], (int) promotionPiece});
                     }
                 }
-                else {//normal move
+                else //normal move
+                {
                     moves.add(checkedPos);
                 }
             }
@@ -266,6 +271,10 @@ public enum Type
     public  static int[] mirror(){return mirror;}
     private static final int[] mirror2 = new int[]{-2,2};
     public  static int[] mirror2(){return mirror2;}
+    private static final char[] promotionWhites = new char[]{'♛','♝','♞','♜'};
+    private static final char[] promotionBlacks = new char[]{'♕','♗','♘','♖'};
+    public static char[] promotionWhites(){return promotionWhites;}
+    public static char[] promotionBlacks(){return promotionBlacks;}
 
     public static boolean isPiece(char c) {return c >= '♔' && c <= '♟';}
     public static boolean isWhite(char c) {return c >= '♚' && c <= '♟';}

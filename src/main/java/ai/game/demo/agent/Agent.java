@@ -2,6 +2,7 @@ package ai.game.demo.agent;
 
 import ai.game.demo.util.NodeMap;
 import ai.game.demo.util.PausableThread;
+
 import lombok.Getter;
 import lombok.SneakyThrows;
 
@@ -78,7 +79,6 @@ public class Agent<T extends State<T>> extends PausableThread
         if (stopping()) return;
         if (backlog.isEmpty()) {System.out.println("\033[31;1;4m Backlog Exhausted \033[0m");Stop();return;}
 
-//        printBacklog();
         iterativeDeepening();
     }
 
