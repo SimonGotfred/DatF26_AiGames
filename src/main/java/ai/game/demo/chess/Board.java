@@ -134,7 +134,7 @@ public class Board extends State<Board> implements Comparable<Board>
     public Type     at         (int...  pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
     public Type     at         (String  pos) {return at(normalize(pos.toCharArray()));}
 
-    public boolean maximize(){return metadata[4]=='w';}
+    public boolean maximize(){return metadata[TURN]=='w';}
     public Board   doWhite(int depth){return this.minMax(depth).furthestAncestor();}
     public Board   doBlack(int depth){return this.minMax(depth).furthestAncestor();}
     public Board   doWhite(){return this.minMax().furthestAncestor();}
@@ -383,7 +383,7 @@ public class Board extends State<Board> implements Comparable<Board>
                         actions.add(new State.Action<>(this)
                         {
                             @Override public Board apply(Board board){return board.move(pos,move);}
-                            @Override public int evaluateFitness()   {return board[move[0]][move[1]].value+board[pos[0]][pos[1]].valueOf(move)+state.riskAt(move);}
+                            @Override public int evaluateFitness()   {return board[move[1]][move[0]].value+board[pos[1]][pos[0]].valueOf(move)+state.riskAt(move);}
                         });
                     }
                 }
