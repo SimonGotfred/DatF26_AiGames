@@ -226,13 +226,13 @@ public enum Type
         if (board.flag(castle++)=='c')
         {
             if (board.flag(castle++)=='c'
-                    && !board.isCheck(turn,position[0]-1,position[1])
-                    && !board.isCheck(turn,position[0]-2,position[1])
-                    && !board.isCheck(turn,position[0]-3,position[1]))
+                    && board.at(position[0]-1,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]-1,position[1])
+                    && board.at(position[0]-2,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]-2,position[1])
+                    && board.at(position[0]-3,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]-3,position[1]))
                 moves.add(new int[]{position[0]-2,position[1],-1});
             if (board.flag(castle  )=='c'
-                    && !board.isCheck(turn,position[0]+1,position[1])
-                    && !board.isCheck(turn,position[0]+2,position[1]))
+                    && board.at(position[0]+1,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]+1,position[1])
+                    && board.at(position[0]+2,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]+2,position[1]))
                 moves.add(new int[]{position[0]+2,position[1], 1});
         }
 
