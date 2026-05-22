@@ -175,7 +175,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return buffer;
     }
 
-    public boolean isLost(){return isCheck(turn(),king(turn()));}// todo
+    public boolean isCheck(Color color){return isCheck(color,king(color));}// todo
 
     public static char[][] invert(char[][] board) // ! not functional
     {
