@@ -342,7 +342,8 @@ public class Board extends State<Board> implements Comparable<Board>
         {
             if      (move[2]<0){board[move[1]][move[0]+1]= board[move[1]][0];board[move[1]][0]= VACANT;} // left
             else if (move[2]>0){board[move[1]][move[0]-1]= board[move[1]][7];board[move[1]][7]= VACANT;}// right
-            metadata[move[1]>1? CASTLE_WHITE : CASTLE_BLACK]=' '; // erase king castling-flag
+            int king = move[1]>1? CASTLE_WHITE : CASTLE_BLACK;
+            metadata[king]=' '; // erase king castling-flag
         }
 
         // check if expected rook is present. the alternative would be to check *both* to or from for
