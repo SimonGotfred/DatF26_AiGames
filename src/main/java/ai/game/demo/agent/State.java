@@ -2,6 +2,7 @@ package ai.game.demo.agent;
 
 import ai.game.demo.util.NodeMap;
 
+import java.awt.*;
 import java.util.*;
 import java.util.function.Function;
 
@@ -100,6 +101,8 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         {
             for (Action<T> action : actionable.actions().reversed())
             {
+                T t = action.apply().minMax(ab,depth);
+                if (t.isCheck(Color.BLACK)) {children.remove(t); continue;}
                 eval = eval.min(action.apply().minMax(ab,depth)); // 'apply' fetches *already existing* State, if duplicate
                 ab[0] = ab[0].min(eval);
                 if (ab[0].fitness()>=ab[1].fitness()) return eval;
@@ -116,7 +119,9 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         {
             for (Action<T> action : actionable.actions())
             {
-                eval = eval.max(action.apply().minMax(ab,depth)); // 'apply' fetches *already existing* State, if duplicate
+                T t = action.apply().minMax(ab,depth);
+                if (t.isCheck(Color.WHITE)) {children.remove(t); continue;}
+                eval = eval.max(t); // 'apply' fetches *already existing* State, if duplicate
                 ab[1] = ab[1].max(eval);
                 if (ab[0].fitness()>=ab[1].fitness()) return eval;
             }
