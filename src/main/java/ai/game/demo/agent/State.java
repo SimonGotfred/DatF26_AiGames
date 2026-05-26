@@ -137,6 +137,10 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 
     public final T         max(T other) {return fitness()>other.fitness() ? (T)this : other;}
     public final T         min(T other) {return fitness()<other.fitness() ? (T)this : other;}
-    public final int compareTo(T other) {return this.fitness()==other.fitness()?super.compareTo(other):other.fitness()-this.fitness();}
+    public final int compareTo(T other) {return this.fitness()==other.fitness()
+            ? super.compareTo(other)
+            : other.fitness()-this.fitness();}
     // returns from supers method (comparing hashes) if equal fitness, because TreeSet otherwise will consider the States 'equal'
+
+    public boolean isCheck(Color color){return false;}
 }
