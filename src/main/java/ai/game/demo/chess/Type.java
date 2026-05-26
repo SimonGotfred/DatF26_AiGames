@@ -71,7 +71,7 @@ public enum Type
         {  5, -5,-10,  0,  0,-10, -5,  5}, // 6
         {  5, 10, 10,-20,-20, 10, 10,  5}, // 7
         {  0,  0,  0,  0,  0,  0,  0,  0}  // 8
-    }), // todo: promotion & en passant
+    }),
 
     KNIGHT('♞', Color.WHITE, 320,
     (board,position) ->

@@ -125,7 +125,7 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public char[][] raw() {return Stream.of(nef().substring(0,64).split("(?<=\\G........)"), new String[]{String.valueOf(metadata)}).flatMap(Stream::of).map(String::toCharArray).toArray(char[][]::new);}
     public char flag(int index){return metadata[index];}
-    
+
     public Piece    getPiece   (int...  pos) {return new Piece(at(pos), this, pos);}
     public boolean  whiteAt    (int...  pos) {return at(pos).isWhite(   );}
     public boolean  blackAt    (int...  pos) {return at(pos).isBlack(   );}
