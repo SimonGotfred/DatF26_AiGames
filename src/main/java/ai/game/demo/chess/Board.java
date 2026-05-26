@@ -328,8 +328,8 @@ public class Board extends State<Board> implements Comparable<Board>
 
         //en passant availability check
         boolean enPassantAvailable = Math.abs(yDistance) == 2;
-        passantTarget[0] = enPassantAvailable ?  toX : 0;
-        passantTarget[1] = enPassantAvailable ? (toY - (yDistance / 2)) : 0;
+        passantTarget[0] = enPassantAvailable ?  toX : 'p';
+        passantTarget[1] = enPassantAvailable ? (toY - (yDistance / 2)) : 'p';
 
         return passantTarget;
     }
