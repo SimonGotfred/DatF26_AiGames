@@ -2,6 +2,7 @@ package ai.game.demo.agent;
 
 import ai.game.demo.util.NodeMap;
 import ai.game.demo.util.PausableThread;
+
 import lombok.Getter;
 import lombok.SneakyThrows;
 
@@ -40,18 +41,36 @@ public class Agent<T extends State<T>> extends PausableThread
         currentState = NodeMap.get(state);
         backlog.add(Set.of(currentState).iterator());
         alphaBeta = ai.game.demo.agent.State.newAlphaBeta(currentState);
+        try {System.out.println((store.getUsableSpace()>>30));}
+        catch (IOException e) {}
     }
 
     public T updateState(T state){return updateState(state,false);}
     public T updateState(T state, boolean pause)
     {
-        currentState = currentState.addChild(state); // get potentially equal state from memory since
-                                                    //  it could probably already have been evaluated
-                                                   //   then cull unreachable states from memory
-        pause(); awaitPause();
-        backlog.clear(); backlog.add(Set.of(currentState).iterator()); // todo: more fluid handling of purging backlog
-        alphaBeta = ai.game.demo.agent.State.newAlphaBeta(currentState);
-        new Thread(()->{currentState.makeRoot();if(!pause)unpause();}).start(); // set a Thread to cull unreachable States
+        try
+        {
+            currentState = currentState.addChild(state); // get potentially equal state from memory since
+            //  it could probably already have been evaluated
+            //   then cull unreachable states from memory
+            pause();
+            awaitPause();
+            backlog.clear();
+            backlog.add(Set.of(currentState).iterator()); // todo: more fluid handling of purging backlog
+            alphaBeta = ai.game.demo.agent.State.newAlphaBeta(currentState);
+            new Thread(() -> {
+                try
+                {
+                    currentState.makeRoot();
+                    if (!pause) unpause();
+                }
+                catch (OutOfMemoryError ignored)
+                {
+                    System.out.println("\033[31;1;4m OutOfMemory in Cull \033[0m");
+                }
+            }).start(); // set a Thread to cull unreachable States
+            return currentState;
+        }catch (OutOfMemoryError ignored){System.out.println("\033[31;1;4m OutOfMemory in Update \033[0m");}
         return currentState;
     }
 
@@ -78,7 +97,6 @@ public class Agent<T extends State<T>> extends PausableThread
         if (stopping()) return;
         if (backlog.isEmpty()) {System.out.println("\033[31;1;4m Backlog Exhausted \033[0m");Stop();return;}
 
-//        printBacklog();
         iterativeDeepening();
     }
 
@@ -87,16 +105,30 @@ public class Agent<T extends State<T>> extends PausableThread
     {
         if (backlog.getFirst().hasNext()) // if there are unrealized children of State being processed
         {
-            T state = backlog.getFirst().next(); // get next State in layer.
-            if (state.depth() != depth) {depth = state.depth(); System.out.println("depth: " + depth);}
-            state.minMax(alphaBeta);            // realize with children *limited by Alpha/Beta*. note: a given child may already exist and even be realized through another parent State.
-            backlog.add(state.iterator());     // que list of children for processing. note: may be empty
-            if(w>5)
+            try
             {
-                backlog.removeFirst();
-                w = 0;
+                T state = backlog.getFirst().next(); // get next State in layer.
+                if (state.depth() != depth)
+                {
+                    depth = state.depth();
+                    System.out.println("depth: " + depth);
+                }
+                state.minMax(alphaBeta);            // realize with children *limited by Alpha/Beta*. note: a given child may already exist and even be realized through another parent State.
+                backlog.add(state.iterator());     // que list of children for processing. note: may be empty
+                if(w>25)
+                {
+                    backlog.removeFirst();
+                    w = 0;
+                }
+                else w++;
             }
-            else w++;
+            catch (OutOfMemoryError ignored)
+            {
+                System.out.println("\033[31;1;4m OutOfMemory in Loop \033[0m");
+
+                try {System.out.println((store.getUsableSpace()>>30));}
+                catch (IOException e) {}
+            }
         }                                     // note: all iterators of States at a given depth follow immediately after each other and considers priority with regard to minMax
         else backlog.removeFirst(); // when all immediate children of State being processed has been realized, pop State from que.
     }
