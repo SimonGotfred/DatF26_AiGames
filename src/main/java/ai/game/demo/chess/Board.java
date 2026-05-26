@@ -17,10 +17,10 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         return new Board
         (
-            "♖♘♗♕ㅤ♗♘♖" +
-            "♙♙♙♙♙ㅤ♙♙" +
-            "ㅤㅤㅤㅤㅤㅤ♖ㅤ" +
-            "ㅤ♟ㅤㅤㅤㅤㅤㅤ" +
+            "♖♘ㅤㅤㅤ♗♘♖" +
+            "♙♙♟♙♙ㅤ♙♙" +
+            "ㅤㅤㅤ♕ㅤㅤ♖ㅤ" +
+            "ㅤ♟♗ㅤㅤㅤㅤㅤ" +
             "ㅤㅤㅤ♙ㅤ♔ㅤ♜" +
             "ㅤ♞♝♛ㅤㅤㅤㅤ" +
             "♟ㅤ♟♟♟♟♟♟" +
@@ -31,8 +31,8 @@ public class Board extends State<Board> implements Comparable<Board>
     private static int flags=0;
     private static final String[] initialFlags= new String[]{"a1a1wpxycccccc"}; // ! yes, there is a reason for this being an array
     public  static final int TO_X, TO_Y, FROM_X, FROM_Y, TURN, PROMOTION, PASSANT_X, PASSANT_Y,
-                             BLACK_KING, BLACK_LEFT_ROOK, BLACK_RIGHT_ROOK,
-                             WHITE_KING, WHITE_LEFT_ROOK, WHITE_RIGHT_ROOK;
+            CASTLE_BLACK, CASTLE_BLACK_LEFT, CASTLE_BLACK_RIGHT,
+            CASTLE_WHITE, CASTLE_WHITE_LEFT, CASTLE_WHITE_RIGHT;
 
     static // set flag indexes
     {
@@ -44,12 +44,12 @@ public class Board extends State<Board> implements Comparable<Board>
         PROMOTION=flags++;
         PASSANT_X=flags++;
         PASSANT_Y=flags++;
-        BLACK_KING=flags++;
-        BLACK_LEFT_ROOK=flags++;
-        BLACK_RIGHT_ROOK=flags++;
-        WHITE_KING=flags++;
-        WHITE_LEFT_ROOK=flags++;
-        WHITE_RIGHT_ROOK=flags++;
+        CASTLE_BLACK =flags++;
+        CASTLE_BLACK_LEFT =flags++;
+        CASTLE_BLACK_RIGHT =flags++;
+        CASTLE_WHITE =flags++;
+        CASTLE_WHITE_LEFT =flags++;
+        CASTLE_WHITE_RIGHT =flags++;
     }
 
     public record Dto(Type[][] board){};
@@ -134,7 +134,7 @@ public class Board extends State<Board> implements Comparable<Board>
     public Type     at         (int...  pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
     public Type     at         (String  pos) {return at(normalize(pos.toCharArray()));}
 
-    public boolean maximize(){return metadata[4]=='w';}
+    public boolean maximize(){return metadata[TURN]=='w';}
     public Board   doWhite(int depth){return this.minMax(depth).furthestAncestor();}
     public Board   doBlack(int depth){return this.minMax(depth).furthestAncestor();}
     public Board   doWhite(){return this.minMax().furthestAncestor();}
@@ -175,7 +175,7 @@ public class Board extends State<Board> implements Comparable<Board>
         return buffer;
     }
 
-    public boolean isLost(){return isCheck(turn(),king(turn()));}// todo
+    public boolean isCheck(Color color){return isCheck(color,king(color));}// todo
 
     public static char[][] invert(char[][] board) // ! not functional
     {
@@ -242,7 +242,7 @@ public class Board extends State<Board> implements Comparable<Board>
     } private static final int[] notFound = new int[]{-10,-10};
     public boolean isCheck(Color color, int... position){return threats(position).stream().anyMatch(piece->piece.color!=color);}
     public int[][] checks()
-    {                                                      // ! don't know why this filter seems to work inverted?
+    {
         int[][] threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).map(Piece::getPosition).toArray(int[][]::new);
         if(threats.length>1) return multipleThreats; // signal *must* move king
         if(threats.length>0)
@@ -271,7 +271,7 @@ public class Board extends State<Board> implements Comparable<Board>
         if(at(from).color==at(to).color) return null;
         Type piece = at(from);
         return movesFor(from).filter(m -> at(m).color != piece.color)
-                             .filter(m -> m[0]==to[0]&&m[1]==to[1])
+                             .filter(m -> (at(from).type()==PAWN&&Arrays.equals(m,to))||(m[0]==to[0]&&m[1]==to[1]))
                              .findAny().orElse(null);
     }
 
@@ -293,7 +293,7 @@ public class Board extends State<Board> implements Comparable<Board>
         metadata[FROM_X] = (char)from[0]; metadata[FROM_Y] = (char)from[1];  // update metadata 'moved from'
         metadata[TURN] = metadata[TURN] == 'w' ? 'b' : 'w';  // update identity of active turn
 
-        if (at(from).type()==KING) castling(board,to); // apply castling rules
+        if (at(from).type()==KING) castling(board,metadata,to); // apply castling rules
 
         //basic en passant logic :/
         if (board[toY][toX].isType(PAWN))
@@ -311,9 +311,10 @@ public class Board extends State<Board> implements Comparable<Board>
             metadata[PASSANT_Y] = 'p';
         }
 
-
-
-        // todo: update metadata
+        //promotion
+        if(to.length > 2 && to[2] > 2){
+            board[to[1]][to[0]] = Type.from((char) to[2]);
+        }
 
         return new Board(board,metadata);
     }
@@ -335,23 +336,28 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public boolean passantAt(int... passantPos){return(metadata[PASSANT_X]==passantPos[0]&&metadata[PASSANT_Y]==passantPos[1]);}
 
-    private void castling(Type[][] board,int[] move)
+    private void castling(Type[][] board,char[] metadata,int[] move)
     {
         if(move.length>2) // castling
         {
             if      (move[2]<0){board[move[1]][move[0]+1]= board[move[1]][0];board[move[1]][0]= VACANT;} // left
             else if (move[2]>0){board[move[1]][move[0]-1]= board[move[1]][7];board[move[1]][7]= VACANT;}// right
-            metadata[move[1]>1?WHITE_KING:BLACK_KING]=' '; // erase king castling-flag
+            int king = move[1]>1? CASTLE_WHITE : CASTLE_BLACK;
+            metadata[king]=' '; // erase king castling-flag
         }
-        if(metadata[BLACK_KING]!=' ')
+
+        // check if expected rook is present. the alternative would be to check *both* to or from for
+        // if they match coordinates, to account for capture of unmoved rook, ie double the checks.
+        // possibility of captured rook also means *both* white and black must be checked each turn
+        if(metadata[CASTLE_BLACK]!=' ')
         {
-            if (board[0][0] != BLACK_ROOK) metadata[ BLACK_LEFT_ROOK] = ' '; // check if expected piece is present.
-            if (board[0][7] != BLACK_ROOK) metadata[BLACK_RIGHT_ROOK] = ' '; // the alternative would be to check
+            if (board[0][0] != BLACK_ROOK) metadata[CASTLE_BLACK_LEFT] = ' ';
+            if (board[0][7] != BLACK_ROOK) metadata[CASTLE_BLACK_RIGHT] = ' ';
         }
-        if(metadata[WHITE_KING]!=' ')
+        if(metadata[CASTLE_WHITE]!=' ')
         {
-            if (board[7][0] != ROOK) metadata[ WHITE_LEFT_ROOK] = ' '; // if *either* to or from each if they
-            if (board[7][7] != ROOK) metadata[WHITE_RIGHT_ROOK] = ' '; // match coordinates, ie double the checks
+            if (board[7][0] != ROOK) metadata[CASTLE_WHITE_LEFT] = ' ';
+            if (board[7][7] != ROOK) metadata[CASTLE_WHITE_RIGHT] = ' ';
         }
     }
 
@@ -377,7 +383,7 @@ public class Board extends State<Board> implements Comparable<Board>
                         actions.add(new State.Action<>(this)
                         {
                             @Override public Board apply(Board board){return board.move(pos,move);}
-                            @Override public int evaluateFitness()   {return board[move[0]][move[1]].value+board[pos[0]][pos[1]].valueOf(move)+state.riskAt(move);}
+                            @Override public int evaluateFitness()   {return board[move[1]][move[0]].value+board[pos[1]][pos[0]].valueOf(move)+state.riskAt(move);}
                         });
                     }
                 }

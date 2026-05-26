@@ -14,20 +14,48 @@ public enum Type
         List<int[]> moves = new ArrayList<>();
 
         int d = board.whiteAt(position) ? -1:1; // check *alleged* pawn color for move direction
+
+        //promotion pieces
+        char[] PromotionPieces = d<0 ? promotionWhites() : promotionBlacks();
+
         if (!board.pieceAt(position[0], position[1]+d))
         {
-            moves.add(new int[]{position[0], position[1]+d});
-
-            //double move
-            if ((position[1] == 6 || position[1] == 1) && !board.pieceAt(position[0], position[1]+d+d))
-                moves.add(new int[]{position[0], position[1]+d+d});
+            //promotion move
+            if(((position[1] == 1 && d == -1) || (position[1] == 6 && d == 1)))
+            {
+                for (char promotionPiece : PromotionPieces)
+                {
+                    moves.add(new int[]{position[0], position[1] + d, (int) promotionPiece});
+                }
+            }
+            else //normal move
+            {
+                moves.add(new int[]{position[0], position[1]+d});
+                //double move
+                if ((position[1] == 6 || position[1] == 1) && !board.pieceAt(position[0], position[1]+d+d))
+                    moves.add(new int[]{position[0], position[1]+d+d});
+            }
         }
         // diagonal moves, en passant included
         for (int i : mirror())
         {
             int[] checkedPos = new int[]{position[0]+i, position[1]+d};
             if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos))
-                moves.add(checkedPos);
+            {
+                //promotion move
+                if(((position[1] == 1 && d == -1) || (position[1] == 6 && d == 1)))
+                {
+                    for (char promotionPiece : PromotionPieces)
+                    {
+                        moves.add(new int[]{checkedPos[0], checkedPos[1], (int) promotionPiece});
+                    }
+                }
+                else //normal move
+                {
+                    moves.add(checkedPos);
+                }
+            }
+
         }
 
 
@@ -194,17 +222,17 @@ public enum Type
         moves.remove(4); // remove own position
 
         Color turn = board.turn();
-        int castle = board.at(position).isWhite() ? Board.WHITE_KING:Board.BLACK_KING;
+        int castle = board.at(position).isWhite() ? Board.CASTLE_WHITE :Board.CASTLE_BLACK;
         if (board.flag(castle++)=='c')
         {
             if (board.flag(castle++)=='c'
-                    && !board.isCheck(turn,position[0]-1,position[1])
-                    && !board.isCheck(turn,position[0]-2,position[1])
-                    && !board.isCheck(turn,position[0]-3,position[1]))
+                    && board.at(position[0]-1,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]-1,position[1])
+                    && board.at(position[0]-2,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]-2,position[1])
+                    && board.at(position[0]-3,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]-3,position[1]))
                 moves.add(new int[]{position[0]-2,position[1],-1});
             if (board.flag(castle  )=='c'
-                    && !board.isCheck(turn,position[0]+1,position[1])
-                    && !board.isCheck(turn,position[0]+2,position[1]))
+                    && board.at(position[0]+1,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]+1,position[1])
+                    && board.at(position[0]+2,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]+2,position[1]))
                 moves.add(new int[]{position[0]+2,position[1], 1});
         }
 
@@ -243,6 +271,10 @@ public enum Type
     public  static int[] mirror(){return mirror;}
     private static final int[] mirror2 = new int[]{-2,2};
     public  static int[] mirror2(){return mirror2;}
+    private static final char[] promotionWhites = new char[]{'♛','♝','♞','♜'};
+    private static final char[] promotionBlacks = new char[]{'♕','♗','♘','♖'};
+    public static char[] promotionWhites(){return promotionWhites;}
+    public static char[] promotionBlacks(){return promotionBlacks;}
 
     public static boolean isPiece(char c) {return c >= '♔' && c <= '♟';}
     public static boolean isWhite(char c) {return c >= '♚' && c <= '♟';}

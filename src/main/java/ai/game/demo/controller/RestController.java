@@ -14,6 +14,7 @@ import java.util.List;
 @org.springframework.web.bind.annotation.RestController
 public class RestController
 {
+    @SuppressWarnings("unchecked")
     private Agent<Board> getAgent(HttpServletRequest request) {return (Agent<Board>) request.getSession().getAttribute("Agent");}
     final static boolean runAgent = true;
 
@@ -58,13 +59,13 @@ public class RestController
 
     @PostMapping
     public ResponseEntity<char[][]> playerMove(HttpServletRequest request,
-                                               @RequestParam(required=false) Character promote,
                                                @RequestParam int[] from,
                                                @RequestParam int[] to)
     {
         Agent<Board> agent = getAgent(request);
         Board board = agent.getCurrentState();
         agent.updateState(board.move(from,board.isLegalMove(from,to)),!runAgent);
+
         return ResponseEntity.ok(agent.getCurrentState().raw());
     }
 
