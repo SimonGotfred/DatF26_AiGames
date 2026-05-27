@@ -32,7 +32,7 @@ public class RestController
                 agent.Stop();
                 session.removeAttribute("Agent");
             } else {
-                return ResponseEntity.ok(agent.updateState(agent.getCurrentState().move(from, to), true).raw());
+                return ResponseEntity.ok(agent.updateState(agent.getCurrentState().move(from, to), !runAgent).raw());
             }
         }
         Board board = new Board();
