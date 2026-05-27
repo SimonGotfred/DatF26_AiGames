@@ -31,8 +31,8 @@ public class Board extends State<Board> implements Comparable<Board>
     private static int flags=0;
     private static final String[] initialFlags= new String[]{"a1a1wpxycccccc"}; // ! yes, there is a reason for this being an array
     public  static final int TO_X, TO_Y, FROM_X, FROM_Y, TURN, PROMOTION, PASSANT_X, PASSANT_Y,
-                             BLACK_KING, BLACK_LEFT_ROOK, BLACK_RIGHT_ROOK,
-                             WHITE_KING, WHITE_LEFT_ROOK, WHITE_RIGHT_ROOK;
+                             CASTLE_BLACK, CASTLE_BLACK_LEFT, CASTLE_BLACK_RIGHT,
+                             CASTLE_WHITE, CASTLE_WHITE_LEFT, CASTLE_WHITE_RIGHT;
 
     static // set flag indexes
     {
