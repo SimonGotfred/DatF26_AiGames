@@ -30,11 +30,8 @@ public class Agent<T extends State<T>> extends PausableThread
     private T[] alphaBeta;
     public  int maxDepth = 7;
 
-    private Agent(Class<T> c)
-    {
-        map = NodeMap.of(c);
-    }
-    public Agent(T state)
+    private Agent(Class<T> c) {map = NodeMap.of(c);}
+    public  Agent(T state)
     {
         this((Class<T>)state.getClass());
         currentState = NodeMap.get(state);
@@ -43,7 +40,7 @@ public class Agent<T extends State<T>> extends PausableThread
     }
 
     public T updateState(T state){return updateState(state,false);}
-    public T updateState(T state, boolean pause)
+    public T updateState(T state, boolean pause) // 'pause' tells whether to start processing again after update
     {
         currentState = currentState.addChild(state); // get potentially equal state from memory since
                                                     //  it could probably already have been evaluated
@@ -61,10 +58,11 @@ public class Agent<T extends State<T>> extends PausableThread
     public T act(boolean pause)
     {
         if (stopping()) return currentState;
-        while(paused()){} pause(); awaitPause();
-        ai.game.demo.agent.State.debugFlag = true;
-        updateState(currentState.minMax().furthestAncestor(),pause);
-        ai.game.demo.agent.State.debugFlag = false;
+        while(paused()){} // todo: stable way of not clashing with culling-thread
+        pause(); awaitPause();
+//        ai.game.demo.agent.State.debugFlag = true;
+        updateState(currentState.minMax().furthestAncestor(),pause); // minMax will path to the deepest processed depth
+//        ai.game.demo.agent.State.debugFlag = false;
         return currentState;
     }
 
@@ -76,10 +74,9 @@ public class Agent<T extends State<T>> extends PausableThread
         while(noMemory()) if (pausing()) return; onSpinWait();
         if (memFlag) {System.out.println("\033[33;3m Memory Released - running \033[0m");memFlag=false;}
         if (stopping()) return;
-        if (backlog.isEmpty()) {System.out.println("\033[31;1;4m Backlog Exhausted \033[0m");Stop();return;}
+        if (backlog.isEmpty()) {System.out.println("\033[31;1;4m Backlog Exhausted \033[0m");Stop();return;} // stop agent if all iterations have been processed
 
-//        printBacklog();
-        iterativeDeepening();
+        iterativeDeepening(); // process states using iterative deepening
     }
 
     private int w = 0, depth = 0;
@@ -88,17 +85,17 @@ public class Agent<T extends State<T>> extends PausableThread
         if (backlog.getFirst().hasNext()) // if there are unrealized children of State being processed
         {
             T state = backlog.getFirst().next(); // get next State in layer.
-            if (state.depth() != depth) {depth = state.depth(); System.out.println("depth: " + depth);}
+            if (state.depth() != depth) {depth = state.depth(); System.out.println("depth: " + depth);} // print current depth being processed
             state.minMax(alphaBeta);            // realize with children *limited by Alpha/Beta*. note: a given child may already exist and even be realized through another parent State.
             backlog.add(state.iterator());     // que list of children for processing. note: may be empty
-            if(w>5)
-            {
-                backlog.removeFirst();
-                w = 0;
-            }
-            else w++;
+//            if(w>50) // limit amount of children processed per state (children should be ordered by fitness)
+//            {
+//                backlog.removeFirst();
+//                w = 0;
+//            }
+//            else w++;
         }                                     // note: all iterators of States at a given depth follow immediately after each other and considers priority with regard to minMax
-        else backlog.removeFirst(); // when all immediate children of State being processed has been realized, pop State from que.
+        else {backlog.removeFirst();w=0;} // when all immediate children of State being processed has been realized, pop State from que.
     }
 
     private void depthFirst()

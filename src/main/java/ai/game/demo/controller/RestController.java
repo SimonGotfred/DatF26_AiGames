@@ -51,8 +51,6 @@ public class RestController
         Color color = board.at(position).color;
 
         List<Object> moves = List.of(board.movesFor(position).filter(m -> board.at(m).color!=color).toArray());
-//        moves.replaceAll(move -> Board.letterize(move).toCharArray());
-//        moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
         return ResponseEntity.ok(moves);
     }
 

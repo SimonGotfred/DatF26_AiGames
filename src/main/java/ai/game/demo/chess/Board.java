@@ -177,7 +177,7 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public boolean isLost(){return isCheck(turn(),king(turn()));}// todo
 
-    public static char[][] invert(char[][] board) // ! not functional
+    public static char[][] invert(char[][] board) // ! deprecated
     {
         char[][] inverted = new char[8][8];
         int i = 8, j;
@@ -195,8 +195,8 @@ public class Board extends State<Board> implements Comparable<Board>
     }
 
     private static final Type[][] simple =  new Type[][]{new Type[]{BISHOP, ROOK},new Type[]{KNIGHT}};
-    public int riskAt(int... position){return threats(position).stream().mapToInt(Piece::value).sum();}
-    public List<Piece> threats(int... position) // sum of pieces threatening the location, by using their patterns reversed
+    public int riskAt(int... position){return threats(position).stream().mapToInt(Piece::value).sum();} // returns sum of potential trade-chain at given location
+    public List<Piece> threats(int... position) // list of pieces threatening the location, by using their patterns reversed
     {
         List<Piece> pieces = new ArrayList<>();
         for (Type type : simple[0]) // pattern for black/white pieces are mostly identical, so only
@@ -229,7 +229,8 @@ public class Board extends State<Board> implements Comparable<Board>
     }
 
     public Color turn(){return flag(TURN)=='w'?Color.WHITE:Color.BLACK;}
-    public int[] king(Color color)
+    public int[] king(){return king(turn());}
+    public int[] king(Color color) // returns the position of the king by given color
     {
         for (int i = 0; i < 8; i++)
         {
@@ -240,28 +241,32 @@ public class Board extends State<Board> implements Comparable<Board>
         }
         return notFound;
     } private static final int[] notFound = new int[]{-10,-10};
+
     public boolean isCheck(Color color, int... position){return threats(position).stream().anyMatch(piece->piece.color!=color);}
-    public int[][] checks()
-    {                                                      // ! don't know why this filter seems to work inverted?
-        int[][] threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).map(Piece::getPosition).toArray(int[][]::new);
+    public int[][] checks() // returns an array of coordinates that can be moved to, to intercept a threat to the king of the current turn
+    {
+        int[][] threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).map(Piece::getPosition).toArray(int[][]::new); // gather coordinates of pieces threatening the king
         if(threats.length>1) return multipleThreats; // signal *must* move king
         if(threats.length>0)
         {
             if(at(threats[0]).type()==KNIGHT) return threats; // knights can only be intercepted by capture
             List<int[]> path = new ArrayList<>();
             int[] king = king(turn());
-            int[] check = threats[0];
-            int i = check[0]==king[0]?0:check[0]>king[0]?-1:1;
-            int j = check[1]==king[1]?0:check[1]>king[1]?-1:1;
-            while(!(check[0]==king[0]&&check[1]==king[1])) path.add(new int[]{king[0]-=i,king[1]-=j});
+            int[] threat = threats[0];
+            int i = threat[0]==king[0]?0:threat[0]>king[0]?-1:1;
+            int j = threat[1]==king[1]?0:threat[1]>king[1]?-1:1;
+            while(!(threat[0]==king[0]&&threat[1]==king[1])) path.add(new int[]{king[0]-=i,king[1]-=j}); // "draw" line from threat to king, collecting passed coordinates
             return path.toArray(int[][]::new);
         }
-        else return null; // null if no threats
+        else return null; // returns null if no threats to make logic easier
     } private static final int[][] multipleThreats = new int[0][];
 
+    // return stream of legal moves the piece at given coordinates can make
     public Stream<int[]> movesFor(int... position){return at(position).isTurn(flag(TURN))
                                                         ? at(position).movesFrom(this, position)
                                                         : Stream.empty();}
+
+    // check if given move (e.g. a2,b3) is legal
     public int[] isLegalMove(String move) {return move.split(",").length == 2
                                                 ? isLegalMove(move.split(",")[0].trim(), move.split(",")[1].trim())
                                                 : null;}
@@ -269,9 +274,7 @@ public class Board extends State<Board> implements Comparable<Board>
     public int[] isLegalMove(int[] from, int[] to)
     {
         if(at(from).color==at(to).color) return null;
-        Type piece = at(from);
-        return movesFor(from).filter(m -> at(m).color != piece.color)
-                             .filter(m -> m[0]==to[0]&&m[1]==to[1])
+        return movesFor(from).filter(m -> m[0]==to[0]&&m[1]==to[1])
                              .findAny().orElse(null);
     }
 

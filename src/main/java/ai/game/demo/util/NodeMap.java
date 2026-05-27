@@ -43,7 +43,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
         protected final LinkedHashSet<T> parents  = new LinkedHashSet<>();
         protected final TreeSet<T> children = new TreeSet<>();
 
-        public int depth()
+        public int depth() // calculate depth from highest parent
         {
             try {return parents.isEmpty() ? 0 : 1 + parents.getFirst().depth();}
             catch (StackOverflowError ignored)
@@ -51,18 +51,6 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
                 System.out.println("\033[31;1;4m StackOverflow in Depth \033[0m");
                 return 0;
             }
-        }
-        public T  remove()
-        {
-            T t = NodeMap.delete((T)this);
-            for (Node<?> parent : parents) {parent.children.remove(this);}
-            for (Node<?> child : children) { child.parents .remove(this);}
-            return t;
-        }
-        public void clear()
-        {
-            parents.clear();
-            children.clear();
         }
 
         public int countChildren(){return children.size();}
@@ -76,7 +64,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
         protected boolean removeChild (T child) {return children.remove( child);}
         protected boolean removeParent(T parent){return parents .remove(parent);}
         public    boolean addParent   (T parent){return parents .add   (parent);}
-        public T addChild(T child)
+        public    T       addChild    (T child)
         {
             child = add(child);  // substitute for potentially *equal* node already in map
             if (legacy().contains(child)) return child; // avoid infinite loops
@@ -85,17 +73,33 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             return child;        // return child that is *verifiably* in map
         }
 
-        public  void makeRoot() {for(Node<T> node : parents) node.cull(this); parents.clear();}
-        private void cull(Node<?> newRoot)
+        public void clear()
         {
-            if (this==newRoot) return;
+            parents.clear();
+            children.clear();
+        }
+
+        public T remove() // remove self from *all* relations - should leave self for garbage collection
+        {
+            T t = NodeMap.delete((T)this);
+            for (Node<?> parent : parents) {parent.children.remove(this);}
+            for (Node<?> child : children) { child.parents .remove(this);}
+            clear();
+            return t;
+        }
+
+        public  void makeRoot() {for(Node<T> node : parents) node.cull(this); parents.clear();} // culls nodes that are unreachable without backtracking
+        private void cull(Node<?> newRoot) // remove self if unreachable through any parent
+        {
+            if (this==newRoot) return; // do not alter the node set as new root
             if (parents.isEmpty())
             {
                 try
                 {
                     NodeMap.delete((T) this);
                     for (Node<?> child : children) {child.parents.remove(this);}
-                    for (Node<?> child : children) {if(NodeMap.contains((T)child))child.cull(newRoot);}
+                    for (Node<?> child : children) {child.cull(newRoot);}
+                    clear();
                 }
                 catch (StackOverflowError ignored)
                 {
@@ -105,7 +109,8 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
         }
 
         public TreeSet<T> siblings() {return parents.isEmpty() ? new TreeSet<>() : parents.getFirst().children;}
-        public T furthestAncestor()
+
+        public T furthestAncestor() // gets the first child of root, that leads to this node.
         {
             try
             {
@@ -117,7 +122,8 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
                 return (T)this;
             }
         }
-        public LinkedHashSet<T> legacy()
+
+        public LinkedHashSet<T> legacy() // returns a path of nodes, connecting this to root
         {
             try
             {
@@ -132,8 +138,8 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             }
         }
 
-        public String toObsidian(){return toString();}
-        public void output() // todo: belongs in other class
+        public String toObsidian(){return toString();} // default method returning string formatted for the program obsidian
+        public void output() // method writing object to file for use in obsidian todo: belongs in other class
         {
             StringBuilder s = new StringBuilder(this.toObsidian());
 
@@ -161,10 +167,10 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
         public             int     compareTo(T that){return this.hashCode()-that.hashCode();}
         public       final boolean equals   (Object that) // override to avoid duplicate nodes in set
         {
-            return this==that
-                    || that!=null
-                    && getClass() != that.getClass()
-                    && this.hashCode()==that.hashCode();
+            return that==this
+                || that!=null
+                && that.getClass()==this.getClass()
+                && that.hashCode()==this.hashCode();
         }
     }
 }

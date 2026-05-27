@@ -395,16 +395,19 @@ public enum Type
     public int     valueOf (int... position){try{return valuePos[position[0]][position[1]];}catch(IndexOutOfBoundsException ignored){return 0;}}
     public Stream<int[]> movesFrom(Board board, int[] position) // note: includes both moves onto white *and* black pieces regardless of Type
     {
-        if(board.checks==null||this.type()==KING) return movesUnchecked(board,position); // if more than one piece threatens the king, the king itself *must* be moved to avoid capture
-        return board.checks.length<1?Stream.empty():movesUnchecked(board,position).filter(move-> Arrays.stream(board.checks).anyMatch(pos->Arrays.equals(pos,move)));
+        if(board.checks==null||this.type()==KING) return movesUnchecked(board,position); // the KINGs pattern handles checks itself
+        return board.checks.length<1
+             ? Stream.empty() // if more than one piece threatens the king, the king *itself* must be moved to avoid capture
+             : movesUnchecked(board,position).filter(move-> Arrays.stream(board.checks).anyMatch(pos->Arrays.equals(pos,move))); // if KING in check, filter moves to those that intercept
     }
     public Stream<int[]> movesUnchecked(Board board, int[] position)
     {
         return pattern.apply(board,position).filter(p ->
                                                     p[0] <  8 && p[1] <  8
-                                                 && p[0] > -1 && p[1] > -1); // filter out moves outside of board
+                                                 && p[0] > -1 && p[1] > -1) // filter out moves outside of board
+                                            .filter(m -> board.at(m).color != color); // filter out allied pieces
     }
 
     @Override public String toString() {return sIcon;}
-    public String Name(){return color.toString() + ' ' + name().replaceFirst("BLACK_","");}
+    public String Name(){return color.toString() + ' ' + type().name();}
 }
