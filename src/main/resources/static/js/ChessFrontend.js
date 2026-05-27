@@ -17,7 +17,8 @@ export async function getPossibleMoves(position){
     return fixedArray
 }
 export async function makeMove(fromPosition, toPosition, promote){
-    const response = await postBackend("play?" + (promote ? `promote=${promote}&` : "") + `from=${fromPosition[1]},${fromPosition[0]}&to=${toPosition[1]},${toPosition[0]}`)
+    console.log("promoting to: " + promote)
+    const response = await postBackend("play?" +`from=${fromPosition[1]},${fromPosition[0]}` + `&to=${toPosition[1]},${toPosition[0]}` +(promote ? `,${promote.charCodeAt(0)}` : ""))
     //const json = await response.json()
 
     const json = await response.json()
@@ -30,4 +31,12 @@ export async function getAiMove(){
     console.log("ai move response: ", json)
     return json
 }
+
+export async function setFromFen(payload)
+{
+    console.log("payload: " + payload)
+    const response = await postBackend("play/fen", {"fen": payload})
+    return await response.json()
+}
+
 
