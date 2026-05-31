@@ -23,6 +23,8 @@ public class Agent<T extends State<T>> extends PausableThread
     }
 
     private final NodeMap<T> map; // for debugging
+    public final ai.game.demo.util.Timer timer = new ai.game.demo.util.Timer();
+    public final ai.game.demo.util.Timer timer2 = new ai.game.demo.util.Timer();
 
     @Getter private T currentState;
     private final ArrayList<Iterator<T>> backlog = new ArrayList<>();
@@ -79,23 +81,31 @@ public class Agent<T extends State<T>> extends PausableThread
         iterativeDeepening(); // process states using iterative deepening
     }
 
-    private int w = 0, depth = 0;
+    private int w = 0, depth = -1;
     private void iterativeDeepening()
     {
         if (backlog.getFirst().hasNext()) // if there are unrealized children of State being processed
         {
             T state = backlog.getFirst().next(); // get next State in layer.
-            if (state.depth() != depth) {depth = state.depth(); System.out.println("depth: " + depth);} // print current depth being processed
+            if (state.depth() != depth) {depth = state.depth(); System.out.print("\n"+timer.peek().toMillis()+
+                                                                                 " \tdepth: " + depth + " " +
+                    "\tQueued: "+ backlog.size() + " |");timer.start();} //
+            // print
+            // current depth being processed
+            timer2.start();
             state.minMax(alphaBeta);            // realize with children *limited by Alpha/Beta*. note: a given child may already exist and even be realized through another parent State.
+//            System.out.print(" \t"+timer2.peek().toMillis());
             backlog.add(state.iterator());     // que list of children for processing. note: may be empty
-//            if(w>50) // limit amount of children processed per state (children should be ordered by fitness)
+//            if(w>5) // limit amount of children processed per state (children should be ordered by fitness)
 //            {
 //                backlog.removeFirst();
 //                w = 0;
 //            }
 //            else w++;
         }                                     // note: all iterators of States at a given depth follow immediately after each other and considers priority with regard to minMax
-        else {backlog.removeFirst();w=0;} // when all immediate children of State being processed has been realized, pop State from que.
+        else {
+            backlog.removeFirst();
+            w=0;} // when all immediate children of State being processed has been realized, pop State from que.
     }
 
     private void depthFirst()
