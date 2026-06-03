@@ -28,6 +28,8 @@ public class Board extends State<Board> implements Comparable<Board>
         );
     }
 
+    public static final int[][] map = new int[8*8*2][];
+
     private static int flags=0;
     private static final String[] initialFlags= new String[]{"a1a1wpxycccccc"}; // ! yes, there is a reason for this being an array
     public  static final int TO_X, TO_Y, FROM_X, FROM_Y, TURN, PROMOTION, PASSANT_X, PASSANT_Y,
@@ -50,6 +52,16 @@ public class Board extends State<Board> implements Comparable<Board>
         CASTLE_WHITE =flags++;
         CASTLE_WHITE_LEFT =flags++;
         CASTLE_WHITE_RIGHT =flags++;
+
+        int i = 0;
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                map[i++]=new int[]{col,row};
+            }
+            i+=8;
+        }
     }
 
     public record Dto(Type[][] board){};
@@ -131,6 +143,7 @@ public class Board extends State<Board> implements Comparable<Board>
     public boolean  blackAt    (int...  pos) {return at(pos).isBlack(   );}
     public boolean  pieceAt    (int...  pos) {return at(pos).isPiece(   );}
     public int      valueAt    (int...  pos) {return at(pos).valueOf(pos);}
+    public Type     at         (int     pos) {try{return at(map[pos]);}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
     public Type     at         (int...  pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
     public Type     at         (String  pos) {return at(normalize(pos.toCharArray()));}
 

@@ -11,14 +11,14 @@ public enum Type
     PAWN  ('♟', Color.WHITE, 100,
     (board,position) ->
     {
-        List<int[]> moves = new ArrayList<>();
+        List<Integer> moves = new ArrayList<>();
 
         int d = board.whiteAt(position) ? -1:1; // check *alleged* pawn color for move direction
 
         //promotion pieces
         char[] PromotionPieces = d<0 ? promotionWhites() : promotionBlacks();
 
-        if (!board.pieceAt(position[0], position[1]+d))
+        if (!board.pieceAt(position+))
         {
             //promotion move
             if(((position[1] == 1 && d == -1) || (position[1] == 6 && d == 1)))
@@ -276,6 +276,10 @@ public enum Type
     public static char[] promotionWhites(){return promotionWhites;}
     public static char[] promotionBlacks(){return promotionBlacks;}
 
+    static int[] straight = new int[]{0x01,0x10};
+    static int[] diagonal = new int[]{0x11,0x0F};
+    static int[] knight   = new int[]{0x01,0x10,0x11,0x0F};
+
     public static boolean isPiece(char c) {return c >= '♔' && c <= '♟';}
     public static boolean isWhite(char c) {return c >= '♚' && c <= '♟';}
     public static boolean isBlack(char c) {return c >= '♔' && c <= '♙';}
@@ -386,9 +390,9 @@ public enum Type
     public  final int     value;
     private final int[][] valueAt;
     private final int[][] valuePos;
-    private final BiFunction<Board, int[],Stream<int[]>> pattern;
+    private final BiFunction<Board, Integer,Stream<Integer>> pattern;
 
-    Type(char icon, Color color, int value, BiFunction<Board, int[], Stream<int[]>> pattern, int[][] valuePos)
+    Type(char icon, Color color, int value, BiFunction<Board, Integer, Stream<Integer>> pattern, int[][] valuePos)
     {
         this.icon     = icon;
         this.sIcon    = ""+icon;
@@ -423,20 +427,22 @@ public enum Type
     public boolean isBlack (){return color == Color.BLACK;}
     public boolean isPiece (){return this  != VACANT;}
     public boolean isVacant(){return this  == VACANT;}
+
+    public int     valueAt (int    position){return valueAt(Board.map[position]);}
     public int     valueAt (int... position){try{return valueAt [position[0]][position[1]];}catch(IndexOutOfBoundsException ignored){return 0;}}
+    public int     valueOf (int    position){return valueOf(Board.map[position]);}
     public int     valueOf (int... position){try{return valuePos[position[0]][position[1]];}catch(IndexOutOfBoundsException ignored){return 0;}}
-    public Stream<int[]> movesFrom(Board board, int[] position) // note: includes both moves onto white *and* black pieces regardless of Type
+    public Stream<Integer> movesFrom(Board board, int position) // note: includes both moves onto white *and* black pieces
+    // regardless of Type
     {
         if(board.checks==null||this.type()==KING) return movesUnchecked(board,position); // the KINGs pattern handles checks itself
         return board.checks.length<1
              ? Stream.empty() // if more than one piece threatens the king, the king *itself* must be moved to avoid capture
              : movesUnchecked(board,position).filter(move-> Arrays.stream(board.checks).anyMatch(pos->Arrays.equals(pos,move))); // if KING in check, filter moves to those that intercept
     }
-    public Stream<int[]> movesUnchecked(Board board, int[] position)
+    public Stream<Integer> movesUnchecked(Board board, int position)
     {
-        return pattern.apply(board,position).filter(p ->
-                                                    p[0] <  8 && p[1] <  8
-                                                 && p[0] > -1 && p[1] > -1) // filter out moves outside of board
+        return pattern.apply(board,position).filter(p -> (p & 0x88)==0) // filter out moves outside of board
                                             .filter(m -> board.at(m).color != color); // filter out allied pieces
     }
 
