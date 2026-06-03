@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.game.demo.chess.Type.*;
+import static ai.game.demo.util.Direction.*;
+import static java.awt.Color.WHITE;
+import static java.awt.Color.BLACK;
 
 public class Board extends State<Board> implements Comparable<Board>
 {
@@ -28,24 +31,27 @@ public class Board extends State<Board> implements Comparable<Board>
         );
     }
 
+    public static final int[] fields;
     public static final int[][] map = new int[8*8*2][];
+
+    private static Type get(Type[][] board, int   pos) {return get(board,map[pos&255]);}
+    private static Type get(Type[][] board, int[] pos) {return board[pos[1]][pos[0]];}
+    private static void set(Type[][] board, int   pos, Type piece) {set(board,map[pos&255],piece);}
+    private static void set(Type[][] board, int[] pos, Type piece) {board[pos[1]][pos[0]]=piece;}
 
     private static int flags=0;
     private static final String[] initialFlags= new String[]{"a1a1wpxycccccc"}; // ! yes, there is a reason for this being an array
-    public  static final int TO_X, TO_Y, FROM_X, FROM_Y, TURN, PROMOTION, PASSANT_X, PASSANT_Y,
+    public  static final int TO, FROM, TURN, PROMOTION, PASSANT,
                              CASTLE_BLACK, CASTLE_BLACK_LEFT, CASTLE_BLACK_RIGHT,
                              CASTLE_WHITE, CASTLE_WHITE_LEFT, CASTLE_WHITE_RIGHT;
 
     static // set flag indexes
     {
-        TO_X=flags++;
-        TO_Y=flags++;
-        FROM_X=flags++;
-        FROM_Y=flags++;
+        TO=flags++;
+        FROM=flags++;
         TURN=flags++;
         PROMOTION=flags++;
-        PASSANT_X=flags++;
-        PASSANT_Y=flags++;
+        PASSANT=flags++;
         CASTLE_BLACK =flags++;
         CASTLE_BLACK_LEFT =flags++;
         CASTLE_BLACK_RIGHT =flags++;
@@ -53,15 +59,19 @@ public class Board extends State<Board> implements Comparable<Board>
         CASTLE_WHITE_LEFT =flags++;
         CASTLE_WHITE_RIGHT =flags++;
 
+        List<Integer> temp = new ArrayList<>();
+
         int i = 0;
         for (int row = 0; row < 8; row++)
         {
             for (int col = 0; col < 8; col++)
             {
+                temp.add(i);
                 map[i++]=new int[]{col,row};
             }
             i+=8;
         }
+        fields = temp.stream().mapToInt(value -> value).toArray();
     }
 
     public record Dto(Type[][] board){};
@@ -70,7 +80,7 @@ public class Board extends State<Board> implements Comparable<Board>
     private final int hashcode;
     private final Type [][] board;
     private final char [] metadata;
-    public  final int[][] checks;
+    public  final int[] checks;
 
     public Board(char[][] board)
     {
@@ -188,7 +198,8 @@ public class Board extends State<Board> implements Comparable<Board>
         return buffer;
     }
 
-    public boolean isCheck(Color color){return isCheck(color,king(color));}// todo
+    public boolean isCheck(){return isCheck(turn());}
+    public boolean isCheck(Color color){return isCheck(color,king(color));}
 
     public static char[][] invert(char[][] board) // ! deprecated
     {
@@ -208,22 +219,22 @@ public class Board extends State<Board> implements Comparable<Board>
     }
 
     private static final Type[][] simple =  new Type[][]{new Type[]{BISHOP, ROOK},new Type[]{KNIGHT}};
-    public int riskAt(int... position){return threats(position).stream().mapToInt(Piece::value).sum();} // returns sum of potential trade-chain at given location
-    public List<Piece> threats(int... position) // list of pieces threatening the location, by using their patterns reversed
+    public int riskAt(int position){return threats(position).stream().mapToInt(Piece::value).sum();} // returns sum of potential trade-chain at given location
+    public List<Piece> threats(int position) // list of pieces threatening the location, by using their patterns reversed
     {
         List<Piece> pieces = new ArrayList<>();
         for (Type type : simple[0]) // pattern for black/white pieces are mostly identical, so only
         {                        //  run each pattern once, collecting both corresponding black/white
-            for (int[] p : type.movesUnchecked(this,position).filter(p->at(p).type()==type||at(p).type()==QUEEN).toList())
+            for (int p : type.movesUnchecked(this,position).filter(p->at(p).type()==type||at(p).type()==QUEEN).toList())
             {
-                pieces.add(new Piece(at(p),this, p[0],p[1]));
+                pieces.add(new Piece(at(p),this, p));
             }
         }
         for (Type type : simple[1]) // pattern for black/white pieces are mostly identical, so only
         {                        //  run each pattern once, collecting both corresponding black/white
-            for (int[] p : type.movesUnchecked(this,position).filter(p->at(p).type()==type).toList())
+            for (int p : type.movesUnchecked(this,position).filter(p->at(p).type()==type).toList())
             {
-                pieces.add(new Piece(at(p),this, p[0],p[1]));
+                pieces.add(new Piece(at(p),this, p));
             }
         }
         for (int i = -1; i < 2; i++)
@@ -233,49 +244,52 @@ public class Board extends State<Board> implements Comparable<Board>
                 if(at(i,j).type()==KING&&!(i==0&&j==0)) pieces.add(new Piece(at(i,j),this, i,j));
             }
         }
-        for (int i : Type.mirror()) // own logic for pawns as they move differently when capturing
+        for (int i : Type.w_mirror()) // own logic for pawns as they move differently when capturing
         {
-            if (at(position[0]+1,position[1]+i) ==       PAWN) pieces.add(new Piece(      PAWN,this, position[0]+1,position[1]+i));
-            if (at(position[0]-1,position[1]+i) == BLACK_PAWN) pieces.add(new Piece(BLACK_PAWN,this, position[0]-1,position[1]+i));
+            if (at(position+i) == BLACK_PAWN) pieces.add(new Piece(BLACK_PAWN,this, position+i));
+            if (at(position+i) == BLACK_PAWN) pieces.add(new Piece(BLACK_PAWN,this, position+i));
+        }
+        for (int i : Type.b_mirror())
+        {
+            if (at(position+i) == PAWN) pieces.add(new Piece(PAWN,this, position+i));
+            if (at(position+i) == PAWN) pieces.add(new Piece(PAWN,this, position+i));
         }
         return pieces;
     }
 
-    public Color turn(){return flag(TURN)=='w'?Color.WHITE:Color.BLACK;}
-    public int[] king(){return king(turn());}
-    public int[] king(Color color) // returns the position of the king by given color
+    public Color turn(){return flag(TURN)=='w'?WHITE:BLACK;}
+    public int king(){return king(turn());}
+    public int king(Color color) // returns the position of the king by given color
     {
-        for (int i = 0; i < 8; i++)
+        for (int field : fields)
         {
-            for (int j = 0; j < 8; j++)
-            {
-                if (at(i,j).type()==KING&&at(i,j).color==color) return new int[]{i,j};
-            }
+            if (at(field).type()==KING&&at(field).color==color) return field;
         }
-        return notFound;
+        return -1;
     } private static final int[] notFound = new int[]{-10,-10};
 
-    public boolean isCheck(Color color, int... position){return threats(position).stream().anyMatch(piece->piece.color!=color);}
-    public int[][] checks() // returns an array of coordinates that can be moved to, to intercept a threat to the king of the current turn
+    public boolean isCheck(Color color, int position){return threats(position).stream().anyMatch(piece->piece.color!=color);}
+    public int[] checks() // returns an array of coordinates that can be moved to, to intercept a threat to the king of the current turn
     {
-        int[][] threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).map(Piece::getPosition).toArray(int[][]::new); // gather coordinates of pieces threatening the king
+        int[] threats = threats(king(turn())).stream().filter(piece -> piece.color!=turn()).mapToInt(Piece::getPosition).toArray(); // gather coordinates of pieces threatening the king
         if(threats.length>1) return multipleThreats; // signal *must* move king
         if(threats.length>0)
         {
             if(at(threats[0]).type()==KNIGHT) return threats; // knights can only be intercepted by capture
-            List<int[]> path = new ArrayList<>();
-            int[] king = king(turn());
-            int[] threat = threats[0];
-            int i = threat[0]==king[0]?0:threat[0]>king[0]?-1:1;
-            int j = threat[1]==king[1]?0:threat[1]>king[1]?-1:1;
-            while(!(threat[0]==king[0]&&threat[1]==king[1])) path.add(new int[]{king[0]-=i,king[1]-=j}); // "draw" line from threat to king, collecting passed coordinates
-            return path.toArray(int[][]::new);
+            List<Integer> path = new ArrayList<>();
+            int king = king(turn());
+            int threat = threats[0];
+            int i = map[threat][0]==map[king][0]?0:map[threat][0]> map[king][0]?SOUTH.x88:NORTH.x88;
+            int j = map[threat][1]==map[king][1]?0:map[threat][1]> map[king][1]?WEST.x88:EAST.x88;
+            while(!(map[threat][0]==map[king][0]&& map[threat][1]==map[king][1])) path.add(king+=i+j); // "draw" line from threat to king, collecting passed coordinates
+            return path.stream().mapToInt(value -> value).toArray();
         }
         else return null; // returns null if no threats to make logic easier
-    } private static final int[][] multipleThreats = new int[0][];
+    } private static final int[] multipleThreats = new int[0];
 
     // return stream of legal moves the piece at given coordinates can make
-    public Stream<int[]> movesFor(int... position){return at(position).isTurn(flag(TURN))
+    public Stream<Integer> movesFor(int... position){return movesFor(position[0]+(position[1]<<4));}
+    public Stream<Integer> movesFor(int position){return at(position).isTurn(flag(TURN))
                                                         ? at(position).movesFrom(this, position)
                                                         : Stream.empty();}
 
@@ -288,80 +302,87 @@ public class Board extends State<Board> implements Comparable<Board>
     {
         if(at(from).color==at(to).color) return null;
         Type piece = at(from);
-        return movesFor(from).filter(m -> at(m).color != piece.color)
-                             .filter(m -> (at(from).type()==PAWN&&Arrays.equals(m,to))||(m[0]==to[0]&&m[1]==to[1]))
-                             .findAny().orElse(null);
+        return map[movesFor(from).filter(m -> at(m).color != piece.color)
+                             .filter(m -> Arrays.equals(map[m],to))
+                             .findAny().orElse(-1)];
     }
 
     public Board move(String move) {return move(move.split(",")[0].trim(), move.split(",")[1].trim());}
     public Board move(String from, String to) {return move(normalize(from.toCharArray()),isLegalMove(from+','+to));}
-    public Board move(int[] from, int[] to)
+    public Board move(int[] from, int[] to){return move((from[1]+(from[0]<<4)),(to[1]+(to[0]<<4)));}
+    public Board move(int from, int to)
     {
         Type[][] board = Arrays.stream(this.board).map(Type[]::clone).toArray(Type[][]::new);
-        int fromX = from[0];
-        int fromY = from[1];
-        int   toX =   to[0];
-        int   toY =   to[1];
+//        int fromX = from[0];
+//        int fromY = from[1];
+//        int   toX =   to[0];
+//        int   toY =   to[1];
 
-        board[to[1]][to[0]] = board[from[1]][from[0]]; // put moved piece to target location
-        board[from[1]][from[0]] = VACANT;        //  erase moved piece from previous location
+        set(board,to,get(board,from)); // put moved piece to target location
+        set(board,to,VACANT);;        //  erase moved piece from previous location
 
         char[] metadata = this.metadata.clone();
-        metadata[  TO_X] = (char)to  [0]; metadata[  TO_Y] = (char)to  [1];  // update metadata 'moved to'
-        metadata[FROM_X] = (char)from[0]; metadata[FROM_Y] = (char)from[1];  // update metadata 'moved from'
+        metadata[  TO] = (char)to;  // update metadata 'moved to'
+        metadata[FROM] = (char)from;  // update metadata 'moved from'
         metadata[TURN] = metadata[TURN] == 'w' ? 'b' : 'w';  // update identity of active turn
 
-        if (at(from).type()==KING) castling(board,metadata,to); // apply castling rules
+        castling(board,metadata,from,to); // apply castling rules
 
         //basic en passant logic :/
-        if (board[toY][toX].isType(PAWN))
+        if (at(from).isType(PAWN))
         {
-            int[] passantTarget = new int[2];
+            int passantTarget = -1;
             //take en passant target else set passantTarget
-            if (metadata[PASSANT_X] == toX && metadata[PASSANT_Y] == toY) board[fromY][toX] = VACANT;
+            if (metadata[PASSANT] == to) board[from>>4][to&7] = VACANT;
             else passantTarget = setPassant(from, to);
-            metadata[PASSANT_X] = (char) passantTarget[0];
-            metadata[PASSANT_Y] = (char) passantTarget[1];
+            metadata[PASSANT] = (char)passantTarget;
         }
         else
         {
-            metadata[PASSANT_X] = 'p';
-            metadata[PASSANT_Y] = 'p';
+            metadata[PASSANT] = 'p';
         }
 
         //promotion
-        if(to.length > 2 && to[2] > 2){
-            board[to[1]][to[0]] = Type.from((char) to[2]);
+        if(to>>8!=0)
+        {
+            set(board,to,(turn()==WHITE?Type.values()[to>>8]:Type.values()[to>>8].invert()));
         }
 
         return new Board(board,metadata);
     }
 
-    public int[] setPassant(int[] from, int[] to){
-        int fromY = from[1];
-        int   toX =   to[0];
-        int   toY =   to[1];
-        int yDistance = toY-fromY;
-        int[] passantTarget = new int[2];
-
+    public int setPassant(int from, int to)
+    {
         //en passant availability check
-        boolean enPassantAvailable = Math.abs(yDistance) == 2;
-        passantTarget[0] = enPassantAvailable ?  toX : 'p';
-        passantTarget[1] = enPassantAvailable ? (toY - (yDistance / 2)) : 'p';
+        if (Math.abs((from>>4)-(to>>4)) == 2)
+        {
+            return from + (turn()==WHITE ? SOUTH.x88 : NORTH.x88);
+        }
 
-        return passantTarget;
+        return 'p';
     }
 
-    public boolean passantAt(int... passantPos){return(metadata[PASSANT_X]==passantPos[0]&&metadata[PASSANT_Y]==passantPos[1]);}
+    public boolean passantAt(int passantPos) {return metadata[PASSANT]==passantPos;}
 
-    private void castling(Type[][] board,char[] metadata,int[] move)
+    private void castling(Type[][] board,char[] metadata, int from, int move)
     {
-        if(move.length>2) // castling
+        if (at(from).type()==KING)
         {
-            if      (move[2]<0){board[move[1]][move[0]+1]= board[move[1]][0];board[move[1]][0]= VACANT;} // left
-            else if (move[2]>0){board[move[1]][move[0]-1]= board[move[1]][7];board[move[1]][7]= VACANT;}// right
-            int king = move[1]>1? CASTLE_WHITE : CASTLE_BLACK;
-            metadata[king]=' '; // erase king castling-flag
+            int king = turn() == WHITE ? CASTLE_WHITE : CASTLE_BLACK;
+            if (metadata[king] != ' ') // castling
+            {
+                if ((move & 7) == 2)
+                {
+                    board[move >> 4][(move & 7) + 1] = board[move >> 4][0];
+                    board[move >> 4][0] = VACANT;
+                } // left
+                else if ((move & 7) == 6)
+                {
+                    board[move >> 4][(move & 7) - 1] = board[move >> 4][7];
+                    board[move >> 4][7] = VACANT;
+                }// right
+                metadata[king] = ' '; // erase king castling-flag
+            }
         }
 
         // check if expected rook is present. the alternative would be to check *both* to or from for
@@ -369,12 +390,12 @@ public class Board extends State<Board> implements Comparable<Board>
         // possibility of captured rook also means *both* white and black must be checked each turn
         if(metadata[CASTLE_BLACK]!=' ')
         {
-            if (board[0][0] != BLACK_ROOK) metadata[CASTLE_BLACK_LEFT] = ' ';
+            if (board[0][0] != BLACK_ROOK) metadata[CASTLE_BLACK_LEFT ] = ' ';
             if (board[0][7] != BLACK_ROOK) metadata[CASTLE_BLACK_RIGHT] = ' ';
         }
         if(metadata[CASTLE_WHITE]!=' ')
         {
-            if (board[7][0] != ROOK) metadata[CASTLE_WHITE_LEFT] = ' ';
+            if (board[7][0] != ROOK) metadata[CASTLE_WHITE_LEFT ] = ' ';
             if (board[7][7] != ROOK) metadata[CASTLE_WHITE_RIGHT] = ' ';
         }
     }
@@ -387,23 +408,19 @@ public class Board extends State<Board> implements Comparable<Board>
     @Override
     public TreeSet<Action<Board>> getActions(boolean isBlackTurn)
     {
-        Color color = isBlackTurn ? Color.BLACK : Color.WHITE;
+        Color color = isBlackTurn ? BLACK : WHITE;
         TreeSet<Action<Board>> actions = new TreeSet<>();
-        for (int row=0; row<8; row++)
+        for (int position : fields)
         {
-            for (int col=0; col<8; col++)
+            if(at(position).color == color)
             {
-                if(board[row][col].color == color)
+                for (int move : at(position).movesFrom(this, position).toList())
                 {
-                    int[] pos = new int[]{row, col};
-                    for (int[] move : board[row][col].movesFrom(this, pos).toList())
+                    actions.add(new State.Action<>(this)
                     {
-                        actions.add(new State.Action<>(this)
-                        {
-                            @Override public Board apply(Board board){return board.move(pos,move);}
-                            @Override public int evaluateFitness()   {return board[move[1]][move[0]].value+board[pos[1]][pos[0]].valueOf(move)+state.riskAt(move);}
-                        });
-                    }
+                        @Override public Board apply(Board board){return board.move(position,move);}
+                        @Override public int evaluateFitness()   {return at(position).value+at(position).valueOf(move)+state.riskAt(move);}
+                    });
                 }
             }
         }

@@ -1,10 +1,14 @@
 package ai.game.demo.chess;
 
+import ai.game.demo.util.Direction;
+
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
+
+import static ai.game.demo.util.Direction.*;
 
 public enum Type
 {
@@ -13,51 +17,55 @@ public enum Type
     {
         List<Integer> moves = new ArrayList<>();
 
-        int d = board.whiteAt(position) ? -1:1; // check *alleged* pawn color for move direction
-
         //promotion pieces
-        char[] PromotionPieces = d<0 ? promotionWhites() : promotionBlacks();
+        char[] PromotionPieces = promotionWhites();
 
-        if (!board.pieceAt(position+))
+        int move = position+SOUTH.x88;
+        if (!board.pieceAt(move))
         {
             //promotion move
-            if(((position[1] == 1 && d == -1) || (position[1] == 6 && d == 1)))
+            if(position < 0x20)
             {
-                for (char promotionPiece : PromotionPieces)
+                for (int i = 1; i<5;i++)
                 {
-                    moves.add(new int[]{position[0], position[1] + d, (int) promotionPiece});
+                    moves.add(move+(i<<8));
                 }
             }
             else //normal move
             {
-                moves.add(new int[]{position[0], position[1]+d});
+                moves.add(move);
                 //double move
-                if ((position[1] == 6 || position[1] == 1) && !board.pieceAt(position[0], position[1]+d+d))
-                    moves.add(new int[]{position[0], position[1]+d+d});
+                if (position>=0x60)
+                {
+                    move += SOUTH.x88;
+                    if (!board.pieceAt(move)) moves.add(move);
+                }
             }
         }
         // diagonal moves, en passant included
-        for (int i : mirror())
+        for (int dir : w_mirror())
         {
-            int[] checkedPos = new int[]{position[0]+i, position[1]+d};
-            if (board.at(checkedPos).icon!='ㅤ' || board.passantAt(checkedPos))
+            move = position+dir;
+            if (board.pieceAt(move))
             {
                 //promotion move
-                if(((position[1] == 1 && d == -1) || (position[1] == 6 && d == 1)))
+                if(position < 0x20)
                 {
-                    for (char promotionPiece : PromotionPieces)
+                    for (int i = 1; i<5;i++)
                     {
-                        moves.add(new int[]{checkedPos[0], checkedPos[1], (int) promotionPiece});
+                        moves.add(move+(i<<8));
                     }
                 }
                 else //normal move
                 {
-                    moves.add(checkedPos);
+                    moves.add(move);
                 }
             }
-
+            else if (board.passantAt(move))
+            {
+                moves.add(move);
+            }
         }
-
 
         return moves.stream();
     },
@@ -76,15 +84,12 @@ public enum Type
     KNIGHT('♞', Color.WHITE, 320,
     (board,position) ->
     {
-        List<int[]> moves = new ArrayList<>();
+        List<Integer> moves = new ArrayList<>();
 
-        for (int i : mirror())
+        for (int i : knight())
         {
-            for (int j : mirror2())
-            {
-                moves.add(new int[]{position[0] + i, position[1] + j});
-                moves.add(new int[]{position[0] + j, position[1] + i});
-            }
+            moves.add(position+i);
+            moves.add(position-i);
         }
 
         return moves.stream();
@@ -104,29 +109,29 @@ public enum Type
     BISHOP('♝', Color.WHITE, 330,
     (board,position) ->
     {
-        List<int[]> moves = new ArrayList<>();
+        List<Integer> moves = new ArrayList<>();
 
         for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{position[0]+i , position[1]+i});
+            moves.add(position+ N_EAST.x88*i);
             if (board.pieceAt(moves.getLast())) break;
         }
 
         for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{position[0]-i , position[1]-i});
+            moves.add(position+ S_EAST.x88*i);
             if (board.pieceAt(moves.getLast())) break;
         }
 
         for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{position[0]+i , position[1]-i});
+            moves.add(position+ N_WEST.x88*i);
             if (board.pieceAt(moves.getLast())) break;
         }
 
         for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{position[0]-i , position[1]+i});
+            moves.add(position+ S_WEST.x88*i);
             if (board.pieceAt(moves.getLast())) break;
         }
 
@@ -147,29 +152,29 @@ public enum Type
     ROOK  ('♜', Color.WHITE, 500,
     (board,position) ->
     {
-        List<int[]> moves = new ArrayList<>();
+        List<Integer> moves = new ArrayList<>();
 
-        for (int i = position[0]+1; i < 8; i++)
+        for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{i , position[1]});
+            moves.add(position+NORTH.x88*i);
             if (board.pieceAt(moves.getLast())) break;
         }
 
-        for (int i = position[0]-1; i > -1; i--)
+        for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{i, position[1]});
+            moves.add(position+SOUTH.x88*i);
             if (board.pieceAt(moves.getLast())) break;
         }
 
-        for (int i = position[1]+1; i < 8; i++)
+        for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{position[0], i});
+            moves.add(position+EAST.x88*i);
             if (board.pieceAt(moves.getLast())) break;
         }
 
-        for (int i = position[1]-1; i > -1; i--)
+        for (int i = 1; i < 8; i++)
         {
-            moves.add(new int[]{position[0], i});
+            moves.add(position+WEST.x88*i);
             if (board.pieceAt(moves.getLast())) break;
         }
 
@@ -189,12 +194,9 @@ public enum Type
 
     QUEEN ('♛', Color.WHITE, 900,
     (board,position) ->
-    {
-        List<int[]> moves = new ArrayList<>();
-        moves.addAll(BISHOP.movesFrom(board,position).toList());
-        moves.addAll(ROOK.movesFrom(board,position).toList());
-        return moves.stream();
-    },
+            Stream.concat(
+                    BISHOP.movesFrom(board,position),
+                    ROOK.movesFrom(board,position)),
     new int[][] // boardWorth
     {
         {-20,-10,-10, -5, -5,-10,-10,-20}, // 1
@@ -210,30 +212,26 @@ public enum Type
     KING  ('♚', Color.WHITE, 20000,
     (board,position) ->
     {
-        List<int[]> moves = new ArrayList<>();
+        List<Integer> moves = new ArrayList<>();
 
-        for (int i = -1; i < 2; i++)
+        for (Direction dir : Direction.values())
         {
-            for (int j = -1; j < 2; j++)
-            {
-                moves.add(new int[]{position[0] + i, position[1] + j,0});
-            }
+            moves.add(position+dir.x88);
         }
-        moves.remove(4); // remove own position
 
         Color turn = board.turn();
         int castle = board.at(position).isWhite() ? Board.CASTLE_WHITE :Board.CASTLE_BLACK;
         if (board.flag(castle++)=='c')
         {
             if (board.flag(castle++)=='c'
-                    && board.at(position[0]-1,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]-1,position[1])
-                    && board.at(position[0]-2,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]-2,position[1])
-                    && board.at(position[0]-3,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]-3,position[1]))
-                moves.add(new int[]{position[0]-2,position[1],-1});
+                    && board.at(position-1).icon=='ㅤ' && !board.isCheck(turn,position-1)
+                    && board.at(position-2).icon=='ㅤ' && !board.isCheck(turn,position-2)
+                    && board.at(position-3).icon=='ㅤ' && !board.isCheck(turn,position-3))
+                moves.add(position-2);
             if (board.flag(castle  )=='c'
-                    && board.at(position[0]+1,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]+1,position[1])
-                    && board.at(position[0]+2,position[1]).icon=='ㅤ' && !board.isCheck(turn,position[0]+2,position[1]))
-                moves.add(new int[]{position[0]+2,position[1], 1});
+                    && board.at(position+1).icon=='ㅤ' && !board.isCheck(turn,position+1)
+                    && board.at(position+2).icon=='ㅤ' && !board.isCheck(turn,position+2))
+                moves.add(position+2);
         }
 
         return moves.stream().filter(pos->!board.isCheck(turn,pos));
@@ -250,7 +248,63 @@ public enum Type
         { 20, 30, 10,  0,  0, 10, 20, 30}  // 8
     }),
 
-    BLACK_PAWN  ('♙', Color.BLACK, -100, PAWN.pattern, PAWN.valuePos),
+    BLACK_PAWN  ('♙', Color.BLACK, -100,
+    (board,position) ->
+    {
+        List<Integer> moves = new ArrayList<>();
+
+        //promotion pieces
+        char[] PromotionPieces = promotionBlacks();
+
+        int move = position+SOUTH.x88;
+        if (!board.pieceAt(move))
+        {
+            //promotion move
+            if(position>=0x60)
+            {
+                for (int i = 1; i<5;i++)
+                {
+                    moves.add(move+(i<<8));
+                }
+            }
+            else //normal move
+            {
+                moves.add(move);
+                //double move
+                if (position < 0x20)
+                {
+                    move += SOUTH.x88;
+                    if (!board.pieceAt(move)) moves.add(move);
+                }
+            }
+        }
+        // diagonal moves, en passant included
+        for (int dir : b_mirror())
+        {
+            move = position+dir;
+            if (board.pieceAt(move))
+            {
+                //promotion move
+                if(position>=0x60)
+                {
+                    for (int i = 1; i<5;i++)
+                    {
+                        moves.add(move+(i<<8));
+                    }
+                }
+                else //normal move
+                {
+                    moves.add(move);
+                }
+            }
+            else if (board.passantAt(move))
+            {
+                moves.add(move);
+            }
+        }
+
+        return moves.stream();
+    }, PAWN.valuePos),
 
     BLACK_KNIGHT('♘', Color.BLACK, -320, KNIGHT.pattern, KNIGHT.valuePos),
 
@@ -267,18 +321,17 @@ public enum Type
     public static final String white = "♚♛♜♝♞♟";
     public static final String black = "♔♕♖♗♘♙";
     
-    private static final int[] mirror = new int[]{-1,1};
-    public  static int[] mirror(){return mirror;}
-    private static final int[] mirror2 = new int[]{-2,2};
-    public  static int[] mirror2(){return mirror2;}
+    private static final int[] w_mirror = new int[]{S_WEST.x88, S_EAST.x88};
+    public  static int[] w_mirror(){return w_mirror;}
+    private static final int[] b_mirror = new int[]{N_WEST.x88, N_EAST.x88};
+    public  static int[] b_mirror(){return b_mirror;}
     private static final char[] promotionWhites = new char[]{'♛','♝','♞','♜'};
     private static final char[] promotionBlacks = new char[]{'♕','♗','♘','♖'};
     public static char[] promotionWhites(){return promotionWhites;}
     public static char[] promotionBlacks(){return promotionBlacks;}
 
-    static int[] straight = new int[]{0x01,0x10};
-    static int[] diagonal = new int[]{0x11,0x0F};
-    static int[] knight   = new int[]{0x01,0x10,0x11,0x0F};
+    static final int[] knight = new int[]{0x21, 0x1F, 0x12, 0x0E};
+    static int[] knight(){return knight;}
 
     public static boolean isPiece(char c) {return c >= '♔' && c <= '♟';}
     public static boolean isWhite(char c) {return c >= '♚' && c <= '♟';}
@@ -409,13 +462,7 @@ public enum Type
         this.valueAt  = Arrays.stream(this.valuePos).map(i->Arrays.stream(i).map(v->v+value).toArray()).toArray(int[][]::new);
     }
 
-    public Type invert()
-    {
-        return invert(this);
-//        if      (isWhite()) return values()[ordinal()+6];
-//        else if (isBlack()) return values()[ordinal()-6];
-//        else                return VACANT;
-    }
+    public Type invert() {return invert(this);}
 
     public Type    type    (){return icon<KING.icon?invert(this):this;}
     public boolean isType  (char type){return isType(from(type));}
@@ -438,11 +485,11 @@ public enum Type
         if(board.checks==null||this.type()==KING) return movesUnchecked(board,position); // the KINGs pattern handles checks itself
         return board.checks.length<1
              ? Stream.empty() // if more than one piece threatens the king, the king *itself* must be moved to avoid capture
-             : movesUnchecked(board,position).filter(move-> Arrays.stream(board.checks).anyMatch(pos->Arrays.equals(pos,move))); // if KING in check, filter moves to those that intercept
+             : movesUnchecked(board,position).filter(move-> Arrays.stream(board.checks).anyMatch(pos->pos==move)); // if KING in check, filter moves to those that intercept
     }
     public Stream<Integer> movesUnchecked(Board board, int position)
     {
-        return pattern.apply(board,position).filter(p -> (p & 0x88)==0) // filter out moves outside of board
+        return pattern.apply(board,position).filter(p -> (p & 0x88)==0||type()==PAWN) // filter out moves outside of board
                                             .filter(m -> board.at(m).color != color); // filter out allied pieces
     }
 

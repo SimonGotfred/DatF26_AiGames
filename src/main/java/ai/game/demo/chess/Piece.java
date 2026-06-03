@@ -13,15 +13,21 @@ public class Piece extends State.Actionable<Board>
     public final Board    board;
     public final Type      type;
     public final Color    color;
-    public final int[] position;
+    public final int   position;
 
-    public char file(){return (char)(   position[0] +'a');} // letter notion
-    public char rank(){return (char)((7-position[1])+'1');} // number notion
-    public int x(){return position[0];}
-    public int y(){return position[1];}
+    public char file(){return (char)(   position()[0] +'a');} // letter notion
+    public char rank(){return (char)((7-position()[1])+'1');} // number notion
+    public int  x(){return position()[0];}
+    public int  y(){return position()[1];}
+
+    public int[] position(){return new int[]{position&7,position>>4};}
 
     public Piece(char type, Board board, String pos) {this(Type.from(type),board,(char)(pos.charAt(0)-'a'),(char)(pos.charAt(1)-'1'));}
     public Piece(Type type, Board board, int... pos)
+    {
+        this(type,board,(pos[1]+(pos[0]<<4)));
+    }
+    public Piece(Type type, Board board, int pos)
     {
         this.board    = board;
         this.position = pos;
@@ -39,8 +45,7 @@ public class Piece extends State.Actionable<Board>
     public boolean allyOf(Piece piece) {return this.value() * piece.value() > 0;}
     public boolean  foeOf(Piece piece) {return this.value() * piece.value() < 0;}
 
-    public String position()      {return ""+file()+rank();}
-    public Stream<int[]> moves() {return this.type.movesFrom(board,position).filter(pos -> type.color!=board.at(pos).color);}
+    public Stream<Integer> moves() {return this.type.movesFrom(board,position).filter(pos -> type.color!=board.at(pos).color);}
 
     public int compareTo(Piece other) {return this.value() - other.value();}
     public String toString() {return color() + type.icon + position();}
@@ -49,7 +54,7 @@ public class Piece extends State.Actionable<Board>
     public TreeSet<State.Action<Board>> actions()
     {
         TreeSet<State.Action<Board>> actions = new TreeSet<>();
-        for (int[] move : moves().toList())
+        for (Integer move : moves().toList())
         {
             actions.add(new State.Action<>(board)
             {
