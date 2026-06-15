@@ -17,10 +17,7 @@ public class Piece extends State.Actionable<Board>
 
     public char file(){return (char)(   position[0] +'a');} // letter notion
     public char rank(){return (char)((7-position[1])+'1');} // number notion
-    public int x(){return position[0];}
-    public int y(){return position[1];}
 
-    public Piece(char type, Board board, String pos) {this(Type.from(type),board,(char)(pos.charAt(0)-'a'),(char)(pos.charAt(1)-'1'));}
     public Piece(Type type, Board board, int... pos)
     {
         this.board    = board;
@@ -30,19 +27,14 @@ public class Piece extends State.Actionable<Board>
     }
 
     public String name()  {return type.name();}
-    public char   icon()  {return isBlack() ? (char)(type.icon - 6) : type.icon;}
     public String color() {return type.icon == ' ' ? "blank" : isBlack() ? "black" : "white";}
     public int    value() {return type.value;}
 
-    public boolean isWhite(){return color==Color.WHITE;}
     public boolean isBlack(){return color==Color.BLACK;}
-    public boolean allyOf(Piece piece) {return this.value() * piece.value() > 0;}
-    public boolean  foeOf(Piece piece) {return this.value() * piece.value() < 0;}
 
     public String position()      {return ""+file()+rank();}
     public Stream<int[]> moves() {return this.type.movesFrom(board,position).filter(pos -> type.color!=board.at(pos).color);}
 
-    public int compareTo(Piece other) {return this.value() - other.value();}
     public String toString() {return color() + type.icon + position();}
 
     @Override

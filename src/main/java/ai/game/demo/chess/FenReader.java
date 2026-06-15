@@ -84,16 +84,9 @@ public class FenReader {
             case "k" -> result = new String[]{" ", " ", " ", "c", "c", " "};
             case "q" -> result = new String[]{" ", " ", " ", "c", " ", "c"};
             default ->  result = new String[]{" ", " ", " ", " ", " ", " "};
-            // todo: might need mirroring depending on formatting
         }
         // translating castling logic
         System.arraycopy(result, 0, meta, 4, result.length);
         return meta;
-    }
-
-    public String write(String[] ChessArray) {
-        String result = "fuwah";
-
-        return result;
     }
 }

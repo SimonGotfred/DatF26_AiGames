@@ -13,7 +13,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 
     public  static final State<?> MIN_STATE = artificialState(Integer.MIN_VALUE);
     public  static final State<?> MAX_STATE = artificialState(Integer.MAX_VALUE);
-    public  static <T extends State<T>> T[] newAlphaBeta(T t){return (T[])new State[]{MIN_STATE, MAX_STATE};}
+    public  static <T extends State<T>> T[] newAlphaBeta(){return (T[])new State[]{MIN_STATE, MAX_STATE};}
     private static State<?> artificialState(int fitness)
     {
         return new State(fitness)
@@ -21,7 +21,6 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
             @Override protected int hashIdentifier()  {return fitness;}
             @Override protected int evaluateFitness() {return fitness;}
             @Override public LinkedHashSet<Actionable<?>> getActionables(boolean minMax) {return new LinkedHashSet<>();}
-            @Override public TreeSet<Actionable<?>> getActions(boolean minMax) {return new TreeSet<>();}
         };
     }
 
@@ -47,16 +46,10 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     }
 
     private Integer fitness;
-//    public  final Iterator<T> iterator;
-//    public  final LinkedHashSet <Action<T>> actions = new LinkedHashSet<>();
-//    public  final Iterator<Action<T>> actionIterator = actions.iterator();
 
     public  State(){}
     private State(int fitness){this.fitness = fitness;}
-//    protected State(){this.iterator = children.iterator();} // children.descendingIterator()
 
-//    protected boolean alternator()          {return depth()%2 == 0;} // useful for determining whether min-/max-ing
-//    protected int     alternator(int cycles){return depth()%cycles;}
 
     public Iterator<T> iterator() {return maximize() ? children.iterator() : children.descendingIterator();}
 
@@ -66,15 +59,10 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
     public    final    int fitness(){return fitness == null ? fitness = evaluateFitness() : fitness;}
 
     // own fitness is ignored in preference of best/worst fitness the state *could* lead to
-    public final int min   (){return children.isEmpty() ? fitness() : children.getFirst().min();}
-    public final int max   (){return children.isEmpty() ? fitness() : children.getLast ().max();}
-//    public final int minMax(){return children.isEmpty() ? fitness() : alternator()
-//                                   ? children.getFirst().minMax()
-//                                   : children.getLast() .minMax()   ;}
 
     public boolean maximize()               {return true;}
     public boolean minimize()               {return !maximize();}
-    public final T minMax(int depth)        {return minMax(newAlphaBeta((T)this), depth);}
+    public final T minMax(int depth)        {return minMax(newAlphaBeta(), depth);}
     public final T minMax()                 {return minMax(null,0);} // 'ab=null' works out here as 'ab' is not used if depth < 1
     public final T minMax(T[] ab)           {return minMax(ab,1);}
     public final T minMax(T[] ab, int depth){return minMax(ab,depth,minimize());}
@@ -93,7 +81,6 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         }
     }
 
-    private T min(T[]ab){return min(ab,0);}
     private T min(T[]ab,int depth)
     {
         T eval = (T)MAX_STATE;
@@ -111,7 +98,6 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         return eval;
     }
 
-    private T max(T[]ab){return max(ab,0);}
     private T max(T[]ab,int depth)
     {
         T eval = (T)MIN_STATE;
@@ -129,11 +115,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         return eval;
     }
 
-    public T apply(Action<T>  action){return action.apply((T)this);}
     public abstract Collection<Actionable<T>> getActionables(boolean minMax);
-    public final    Collection<Actionable<T>> getActionables(){return getActionables(minimize());}
-    public abstract TreeSet<Action<T>> getActions(boolean minMax);
-    public final    TreeSet<Action<T>> getActions(){return getActions(minimize());}
 
     public final T         max(T other) {return fitness()>other.fitness() ? (T)this : other;}
     public final T         min(T other) {return fitness()<other.fitness() ? (T)this : other;}
