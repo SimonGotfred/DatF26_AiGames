@@ -28,15 +28,10 @@ public class Agent<T extends State<T>> extends PausableThread {
     @Getter
     private T currentState;
     private final ArrayList<Iterator<T>> backlog = new ArrayList<>();
-    private final ArrayList<T> memory = new ArrayList<>();
     private T[] alphaBeta;
-    public int maxDepth = 7;
 
-    private Agent(Class<T> c) {
-    }
 
     public Agent(T state) {
-        this((Class<T>) state.getClass());
         currentState = NodeMap.get(state);
         backlog.add(Set.of(currentState).iterator());
         alphaBeta = ai.game.demo.agent.State.newAlphaBeta();
@@ -154,21 +149,4 @@ public class Agent<T extends State<T>> extends PausableThread {
             backlog.removeFirst(); // when all immediate children of State being processed has been realized, pop State from que.
     }
 
-    private void depthFirst() {
-        if (backlog.size() < maxDepth && backlog.getLast().hasNext()) {
-            T state = backlog.getLast().next().minMax(); // find most suitable child for State being processed
-            state.minMax(alphaBeta);                    // realize child with its own children
-            backlog.add(state.iterator());             // set child to be processed
-            if (alphaBeta[0].fitness() >= alphaBeta[1].fitness()) backlog.removeLast();
-        } else backlog.removeLast();
-    }
-
-    private void printBacklog() {
-        System.out.println(Arrays.toString(backlog.toArray())
-                .replace(" java.util.LinkedHashMap$LinkedKeyIterator", "")
-                .replace("java.util.ImmutableCollections$Set12$1", "")
-                .replace(",", "-")
-                .replace("[", "")
-                .replace("]", ""));
-    }
 }
