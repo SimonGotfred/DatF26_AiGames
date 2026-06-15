@@ -64,7 +64,7 @@ public class FenReader {
         }
         return result.toString();
     }
-
+    //this whole thing is a sin
     private String[] transCastling(String[] meta, String input) {
         String[] result;
         switch (input) {
