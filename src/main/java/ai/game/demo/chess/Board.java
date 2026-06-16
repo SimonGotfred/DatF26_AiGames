@@ -96,7 +96,6 @@ public class Board extends State<Board> implements Comparable<Board>
     public boolean  whiteAt    (int...  pos) {return at(pos).isWhite(   );}
     public boolean  pieceAt    (int...  pos) {return at(pos).isPiece(   );}
     public Type     at         (int...  pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
-    public Type     at         (String  pos) {return at(normalize(pos.toCharArray()));}
 
     public boolean maximize(){return metadata[TURN]=='w';}
 
@@ -319,13 +318,6 @@ public class Board extends State<Board> implements Comparable<Board>
 
     /// below methods primarily used to format data for/from readability ///
 
-    public static void announceCapture(Type taker, Type taken)
-    {
-        System.out.println("\033[33;3m" + taker.color + ' ' + taker.name()
-                                   + " \tcaptures " + taken.color + ' '
-                                   + taken.name() + "\033[0m");
-    }
-
     public static int[]  normalize(char[] pos)
     {
         return new int[]
@@ -344,38 +336,10 @@ public class Board extends State<Board> implements Comparable<Board>
 
     public String letterize(int[] from, int[] to){return ("-> "+at(to)+" "+letterize(from)+" to "+letterize(to));}
 
-    public String toObsidian() // aligns nicely in Obsidian
-    {
-        StringJoiner joiner = new StringJoiner("");
-        String square = "░";
-        String space  = "     ";
-
-        joiner.add("```\n");
-
-        for (int i = 0; i < 8; i++)
-        {
-            joiner.add((8-i)+" ");
-            for (int j = 0; j < board[i].length; j++)
-            {
-                if ((i+j) % 2 != 0) square = "░░";
-                else                square = "    ";
-
-                if (board[i][j].isPiece()) joiner.add(space + board[i][j] + space);
-                else joiner.add(square);
-            }
-            joiner.add(" "+i+"\n");
-        }
-
-        joiner.add("\n```");
-
-        return joiner.toString();
-    }
-
     public String toConsole() // aligns nicely in console
     {
         StringJoiner joiner = new StringJoiner("");
         String square = "░";
-
 
         for (int i = 0; i < 8; i++)
         {

@@ -41,10 +41,6 @@ public class Agent<T extends State<T>> extends PausableThread {
         }
     }
 
-    public T updateState(T state) {
-        return updateState(state, false);
-    }
-
     public T updateState(T state, boolean pause) {
         try {
             currentState = currentState.addChild(state); // get potentially equal state from memory since
@@ -73,10 +69,6 @@ public class Agent<T extends State<T>> extends PausableThread {
     public void start(boolean start) {
         if (start) start();
         else Stop();
-    }
-
-    public T act() {
-        return act(false);
     }
 
     public T act(boolean pause) {
@@ -145,8 +137,7 @@ public class Agent<T extends State<T>> extends PausableThread {
                 }
             }
         }                                     // note: all iterators of States at a given depth follow immediately after each other and considers priority with regard to minMax
-        else
-            backlog.removeFirst(); // when all immediate children of State being processed has been realized, pop State from que.
+        else backlog.removeFirst(); // when all immediate children of State being processed has been realized, pop State from que.
     }
 
 }

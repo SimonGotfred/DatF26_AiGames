@@ -264,9 +264,7 @@ public enum Type
 
     VACANT('ㅤ', new Color(0,0,0,0),0,(board,position) -> Stream.empty(),new int[][]{});
 
-    public static final String white = "♚♛♜♝♞♟";
-    public static final String black = "♔♕♖♗♘♙";
-    
+
     private static final int[] mirror = new int[]{-1,1};
     public  static int[] mirror(){return mirror;}
     private static final int[] mirror2 = new int[]{-2,2};
@@ -276,7 +274,6 @@ public enum Type
     public static char[] promotionWhites(){return promotionWhites;}
     public static char[] promotionBlacks(){return promotionBlacks;}
 
-    public static boolean isPiece(char c) {return c >= '♔' && c <= '♟';}
     public static boolean isWhite(char c) {return c >= '♚' && c <= '♟';}
     public static boolean isBlack(char c) {return c >= '♔' && c <= '♙';}
 
@@ -301,16 +298,7 @@ public enum Type
         };
     }
 
-    public static Color color(char c)
-    {
-        return c < '♔' || c > '♟' ? VACANT.color : c < '♚' ? Color.BLACK : Color.WHITE;
-//        return switch (c)
-//        {
-//            case '♚','♛','♜','♝','♞','♟' -> Color.WHITE;
-//            case '♔','♕','♖','♗','♘','♙' -> Color.BLACK;
-//            default -> VACANT.color;
-//        };
-    }
+
 
     public static int value(char c)
     {
@@ -332,28 +320,6 @@ public enum Type
         };
     }
 
-    public static char invert(char piece)
-    {
-        return switch (piece)
-        {
-            case '♟' -> '♙';
-            case '♞' -> '♘';
-            case '♝' -> '♗';
-            case '♜' -> '♖';
-            case '♛' -> '♕';
-            case '♚' -> '♔';
-            case '♙' -> '♟';
-            case '♘' -> '♞';
-            case '♗' -> '♝';
-            case '♖' -> '♜';
-            case '♕' -> '♛';
-            case '♔' -> '♚';
-            default  -> 'ㅤ';
-        };
-//        if      (Type.isWhite(piece)) return (char)(piece-6);
-//        else if (Type.isBlack(piece)) return (char)(piece+6);
-//        else                          return VACANT.icon;
-    }
 
     public static Type invert(Type piece)
     {
@@ -373,12 +339,8 @@ public enum Type
             case BLACK_KING   ->       KING  ;
             default -> VACANT;
         };
-//        if      (piece.isWhite()) return values()[piece.ordinal()+6];
-//        else if (piece.isBlack()) return values()[piece.ordinal()-6];
-//        else                      return VACANT;
     }
 
-    public static Piece invert(Piece piece){return new Piece(invert(piece.type),piece.board,piece.position);}
 
     public  final char    icon;
     public  final String  sIcon;
@@ -399,30 +361,18 @@ public enum Type
                         ? valuePos
                         // "simple" stream for rotating 2dim array (and inverting the values therein)
                         : Arrays.stream(valuePos).map(i -> Arrays.stream(i).map(v -> -v).toArray())
-//                                .boxed()                                                             // box ints for reversible List  |  keen minds know chessboards
-//                                .toList().reversed().stream().mapToInt(Integer::intValue).toArray()) // reverse columns (and unbox)   |  are *mirrored* between sides
                                 .toList().reversed().toArray(int[][]::new);                            // reverse rows
         this.valueAt  = Arrays.stream(this.valuePos).map(i->Arrays.stream(i).map(v->v+value).toArray()).toArray(int[][]::new);
     }
 
-    public Type invert()
-    {
-        return invert(this);
-//        if      (isWhite()) return values()[ordinal()+6];
-//        else if (isBlack()) return values()[ordinal()-6];
-//        else                return VACANT;
-    }
 
     public Type    type    (){return icon<KING.icon?invert(this):this;}
-    public boolean isType  (char type){return isType(from(type));}
     public boolean isType  (Type type){return type==type();}
 
     public boolean isTurn  (char turn){return turn==(color==Color.WHITE?'w':'b');}
 
     public boolean isWhite (){return color == Color.WHITE;}
-    public boolean isBlack (){return color == Color.BLACK;}
     public boolean isPiece (){return this  != VACANT;}
-    public boolean isVacant(){return this  == VACANT;}
     public int     valueAt (int... position){try{return valueAt [position[0]][position[1]];}catch(IndexOutOfBoundsException ignored){return 0;}}
     public int     valueOf (int... position){try{return valuePos[position[0]][position[1]];}catch(IndexOutOfBoundsException ignored){return 0;}}
     public Stream<int[]> movesFrom(Board board, int[] position) // note: includes both moves onto white *and* black pieces regardless of Type
@@ -438,5 +388,4 @@ public enum Type
     }
 
     @Override public String toString() {return sIcon;}
-    public String Name(){return color.toString() + ' ' + name().replaceFirst("BLACK_","");}
 }
