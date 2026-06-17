@@ -19,7 +19,7 @@ public class RestController
 {
     @SuppressWarnings("unchecked")
     private Agent<Board> getAgent(HttpServletRequest request) {return (Agent<Board>) request.getSession().getAttribute("Agent");}
-    final static boolean runAgent = true;
+    final static boolean runAgent = false;
 
     @PutMapping
     public ResponseEntity<char[][]> newGame(HttpServletRequest request,
@@ -49,8 +49,9 @@ public class RestController
         Board board = getAgent(request).getCurrentState();
         Color color = board.at(position).color;
 
-        List<Object> moves = List.of(board.movesFor(position).filter(m -> board.at(m).color != color).toArray());
-//        moves.replaceAll(move -> Board.letterize(move).toCharArray());
+        List<Object> moves = new java.util.ArrayList<>(
+                List.of(board.movesFor(position).filter(m -> board.at(m).color != color).toArray()));
+        moves.replaceAll(move -> Board.map[((int) move) & 0xFF]);
 //        moves.replaceAll(move -> new int[]{(int) ((char[])move)[0], (int) ((char[])move)[1]});
         return ResponseEntity.ok(moves);
     }

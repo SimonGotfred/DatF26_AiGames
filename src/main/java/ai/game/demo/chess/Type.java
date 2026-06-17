@@ -157,25 +157,25 @@ public enum Type
         for (int i = 1; i < 8; i++)
         {
             moves.add(position+NORTH.x88*i);
-            if (board.pieceAt(moves.getLast())) break;
+            if ((moves.getLast() & 0x88)!=0x00 || board.pieceAt(moves.getLast())) break;
         }
 
         for (int i = 1; i < 8; i++)
         {
             moves.add(position+SOUTH.x88*i);
-            if (board.pieceAt(moves.getLast())) break;
+            if ((moves.getLast() & 0x88)!=0x00 || board.pieceAt(moves.getLast())) break;
         }
 
         for (int i = 1; i < 8; i++)
         {
             moves.add(position+EAST.x88*i);
-            if (board.pieceAt(moves.getLast())) break;
+            if ((moves.getLast() & 0x88)!=0x00 || board.pieceAt(moves.getLast())) break;
         }
 
         for (int i = 1; i < 8; i++)
         {
             moves.add(position+WEST.x88*i);
-            if (board.pieceAt(moves.getLast())) break;
+            if ((moves.getLast() & 0x88)!=0x00 || board.pieceAt(moves.getLast())) break;
         }
 
         return moves.stream();
@@ -256,7 +256,7 @@ public enum Type
         //promotion pieces
         char[] PromotionPieces = promotionBlacks();
 
-        int move = position+SOUTH.x88;
+        int move = position+NORTH.x88;
         if (!board.pieceAt(move))
         {
             //promotion move
@@ -273,7 +273,7 @@ public enum Type
                 //double move
                 if (position < 0x20)
                 {
-                    move += SOUTH.x88;
+                    move += NORTH.x88;
                     if (!board.pieceAt(move)) moves.add(move);
                 }
             }
@@ -489,7 +489,8 @@ public enum Type
     }
     public Stream<Integer> movesUnchecked(Board board, int position)
     {
-        return pattern.apply(board,position).filter(p -> (p & 0x88)==0||type()==PAWN) // filter out moves outside of board
+        return pattern.apply(board,position).filter(p -> (p & 0x88)==0x00||type()==PAWN) // filter out moves outside of
+                      // board
                                             .filter(m -> board.at(m).color != color); // filter out allied pieces
     }
 

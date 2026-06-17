@@ -17,7 +17,9 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class _main
 {
@@ -33,6 +35,19 @@ public class _main
     public static void main(String[] args) throws IOException, InterruptedException, IllegalAccessException
     {
         System.out.println("usable space: "+(store.getUsableSpace()>>30)+" GB");
+
+        int c=0,x = 255;//0xFF;
+
+        for (int i = 1; i != 0; i = i << 1)
+        {
+            if ((x & i) != 0) Printer.Print("1");
+            else Printer.Print("0");
+            c++;
+        }
+
+        Printer.Println();
+        Printer.Println(c);
+        Printer.Println();
 
         Board board = new Board
         (
@@ -149,10 +164,10 @@ public class _main
 
     private static int truncate(int limit)
     {
-        while (NodeMap.size(Board.class) > limit)
-        {
-            NodeMap.of(Board.class).pollFirstEntry().getValue().remove();
-        }
+        int size = NodeMap.size(Board.class)-limit;
+        List<Integer> list = new ArrayList<>();
+        NodeMap.of(Board.class).forEach((i,b)->{if(list.size()<size)list.add(i);});
+        list.forEach(i->NodeMap.of(Board.class).remove(i));
         System.out.println("Truncated to " + NodeMap.size(Board.class));
         return NodeMap.size(Board.class);
     }

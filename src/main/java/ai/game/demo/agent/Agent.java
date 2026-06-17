@@ -2,6 +2,7 @@ package ai.game.demo.agent;
 
 import ai.game.demo.util.NodeMap;
 import ai.game.demo.util.PausableThread;
+import ai.game.demo.util.Printer;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
@@ -23,8 +24,8 @@ public class Agent<T extends State<T>> extends PausableThread
     }
 
     private final NodeMap<T> map; // for debugging
-    public final ai.game.demo.util.Timer timer = new ai.game.demo.util.Timer();
-    public final ai.game.demo.util.Timer timer2 = new ai.game.demo.util.Timer();
+    public final ai.game.demo.util.Timer depth_timer = new ai.game.demo.util.Timer();
+    public final ai.game.demo.util.Timer minMax_timer = new ai.game.demo.util.Timer();
 
     @Getter private T currentState;
     private final ArrayList<Iterator<T>> backlog = new ArrayList<>();
@@ -72,11 +73,11 @@ public class Agent<T extends State<T>> extends PausableThread
     @SneakyThrows public boolean noMemory(){return store.getUsableSpace()>>30<memSafety;}
     protected void loop()
     {
-        if (noMemory()) {System.out.println("\033[33;3m No Memory - stalling \033[0m");memFlag=true;}
+        if (noMemory()) {Printer.PrintWarning("No Memory - stalling");memFlag=true;}
         while(noMemory()) if (pausing()) return; onSpinWait();
-        if (memFlag) {System.out.println("\033[33;3m Memory Released - running \033[0m");memFlag=false;}
+        if (memFlag) {Printer.PrintWarning("Memory Released - running");memFlag=false;}
         if (stopping()) return;
-        if (backlog.isEmpty()) {System.out.println("\033[31;1;4m Backlog Exhausted \033[0m");Stop();return;} // stop agent if all iterations have been processed
+        if (backlog.isEmpty()) {Printer.PrintError("Backlog Exhausted");Stop();return;} // stop agent if all iterations have been processed
 
         iterativeDeepening(); // process states using iterative deepening
     }
@@ -87,14 +88,19 @@ public class Agent<T extends State<T>> extends PausableThread
         if (backlog.getFirst().hasNext()) // if there are unrealized children of State being processed
         {
             T state = backlog.getFirst().next(); // get next State in layer.
-            if (state.depth() != depth) {depth = state.depth(); System.out.print("\n"+timer.peek().toMillis()+
-                                                                                 " \tdepth: " + depth + " " +
-                    "\tQueued: "+ backlog.size() + " |");timer.start();} //
-            // print
-            // current depth being processed
-            timer2.start();
-            state.minMax(alphaBeta);            // realize with children *limited by Alpha/Beta*. note: a given child may already exist and even be realized through another parent State.
-//            System.out.print(" \t"+timer2.peek().toMillis());
+            if (state.depth() != depth) // print current depth being processed
+            {
+                depth = state.depth();
+                System.out.print(
+                        "\n" + depth_timer.peek().toMillis() +
+                        " \tdepth: " + depth + " " +
+                        "\tQueued: " + backlog.size() + " |");
+                depth_timer.restart();
+            }
+
+            minMax_timer.start();
+            state.minMax(alphaBeta); // realize with children *limited by Alpha/Beta*. note: a given child may already exist and even be realized through another parent State.
+//            System.out.print(" \t"+minMax_timer.peek().toMillis());
             backlog.add(state.iterator());     // que list of children for processing. note: may be empty
 //            if(w>5) // limit amount of children processed per state (children should be ordered by fitness)
 //            {
@@ -102,10 +108,9 @@ public class Agent<T extends State<T>> extends PausableThread
 //                w = 0;
 //            }
 //            else w++;
-        }                                     // note: all iterators of States at a given depth follow immediately after each other and considers priority with regard to minMax
-        else {
-            backlog.removeFirst();
-            w=0;} // when all immediate children of State being processed has been realized, pop State from que.
+        } // note: all iterators of States at a given depth follow immediately after each other and considers priority with regard to minMax
+        else // when all immediate children of State being processed has been realized, pop State from que.
+        {backlog.removeFirst();w=0;}
     }
 
     private void depthFirst()

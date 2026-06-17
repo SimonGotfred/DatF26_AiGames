@@ -24,9 +24,10 @@ public class Timer implements TemporalAmount, Comparable<TemporalAmount>
     private LocalDateTime start,stop;
     private Duration duration = Duration.ZERO;
 
-    public LocalDateTime start(){return start=LocalDateTime.now();}
-    public Duration       peek(){return Duration.between(start,LocalDateTime.now());}
-    public Duration       stop()
+    public LocalDateTime restart(){return start();}
+    public LocalDateTime   start(){return start=LocalDateTime.now();}
+    public Duration         peek(){return Duration.between(start,LocalDateTime.now());}
+    public Duration         stop()
     {
         stop = LocalDateTime.now();
         return duration=Duration.between(start,stop);

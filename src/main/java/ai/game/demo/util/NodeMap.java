@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 @SuppressWarnings({"unchecked"})
-public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<Integer,T> // todo: testing & cleanup
+public class NodeMap<T extends NodeMap.Node<T>> extends Hashtable<Integer,T> // todo: testing & cleanup
 {
     private static final HashMap<Class<? extends Node<?>>, NodeMap<?>> clients = new HashMap<>();
 
@@ -40,15 +39,15 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
 
     public abstract static class Node<T extends Node<T>> implements Comparable<T>
     {
-        protected final LinkedHashSet<T> parents  = new LinkedHashSet<>();
-        protected final TreeSet<T> children = new TreeSet<>();
+        protected final List<T> parents  = Collections.synchronizedList(new LinkedList<T>());
+        protected final List<T> children = Collections.synchronizedList(new LinkedList<T>());
 
         public int depth() // calculate depth from highest parent
         {
             try {return parents.isEmpty() ? 0 : 1 + parents.getFirst().depth();}
             catch (StackOverflowError ignored)
             {
-                System.out.println("\033[31;1;4m StackOverflow in Depth \033[0m");
+                Printer.PrintError("StackOverflow in Depth");
                 return 0;
             }
         }
@@ -103,12 +102,12 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
                 }
                 catch (StackOverflowError ignored)
                 {
-                    System.out.println("\033[31;1;4m StackOverflow in Culling \033[0m");
+                    Printer.PrintError("StackOverflow in Culling");
                 }
             }
         }
 
-        public TreeSet<T> siblings() {return parents.isEmpty() ? new TreeSet<>() : parents.getFirst().children;}
+        public List<T> siblings() {return parents.isEmpty() ? new LinkedList<>() : parents.getFirst().children;}
 
         public T furthestAncestor() // gets the first child of root, that leads to this node.
         {
@@ -118,7 +117,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             }
             catch (StackOverflowError e)
             {
-                System.out.println("\033[31;1;4m StackOverflow in Ascending \033[0m");
+                Printer.PrintError("StackOverflow in Ascending");
                 return (T)this;
             }
         }
@@ -133,7 +132,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             }
             catch (StackOverflowError e)
             {
-                System.out.println("\033[31;1;4m StackOverflow in Legacy \033[0m");
+                Printer.PrintError("StackOverflow in Legacy");
                 return new LinkedHashSet<>(List.of((T)this));
             }
         }
@@ -159,7 +158,7 @@ public class NodeMap<T extends NodeMap.Node<T>> extends ConcurrentSkipListMap<In
             {
                 Files.write(Path.of(outputPath + this.hashCode() + ".md"), s.toString().getBytes());
             }
-            catch (IOException e) {System.out.println("\033[31;1;4moof\033[0m");}
+            catch (IOException e) {Printer.PrintError("Write to Obsidian Error");}
         }
 
         protected abstract int     hashIdentifier (); // require subclasses define when nodes are equal

@@ -40,7 +40,8 @@ public class Board extends State<Board> implements Comparable<Board>
     private static void set(Type[][] board, int[] pos, Type piece) {board[pos[1]][pos[0]]=piece;}
 
     private static int flags=0;
-    private static final String[] initialFlags= new String[]{"a1a1wpxycccccc"}; // ! yes, there is a reason for this being an array
+    private static final String[] initialFlags= new String[]{"tfwppcccccc"}; // ! yes, there is a reason for this
+    // being an array
     public  static final int TO, FROM, TURN, PROMOTION, PASSANT,
                              CASTLE_BLACK, CASTLE_BLACK_LEFT, CASTLE_BLACK_RIGHT,
                              CASTLE_WHITE, CASTLE_WHITE_LEFT, CASTLE_WHITE_RIGHT;
@@ -151,9 +152,10 @@ public class Board extends State<Board> implements Comparable<Board>
     public Piece    getPiece   (int...  pos) {return new Piece(at(pos), this, pos);}
     public boolean  whiteAt    (int...  pos) {return at(pos).isWhite(   );}
     public boolean  blackAt    (int...  pos) {return at(pos).isBlack(   );}
+    public boolean  pieceAt    (int     pos) {try{return pieceAt(map[pos & 255]);}catch (ArrayIndexOutOfBoundsException e){return false;}}
     public boolean  pieceAt    (int...  pos) {return at(pos).isPiece(   );}
     public int      valueAt    (int...  pos) {return at(pos).valueOf(pos);}
-    public Type     at         (int     pos) {try{return at(map[pos]);}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
+    public Type     at         (int     pos) {try{return at(map[pos&255]);}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
     public Type     at         (int...  pos) {try{return board[pos[1]][pos[0]];}catch (ArrayIndexOutOfBoundsException e) {return VACANT;}}
     public Type     at         (String  pos) {return at(normalize(pos.toCharArray()));}
 
@@ -303,13 +305,13 @@ public class Board extends State<Board> implements Comparable<Board>
         if(at(from).color==at(to).color) return null;
         Type piece = at(from);
         return map[movesFor(from).filter(m -> at(m).color != piece.color)
-                             .filter(m -> Arrays.equals(map[m],to))
+                             .filter(m -> Arrays.equals(map[m&255],to))
                              .findAny().orElse(-1)];
     }
 
     public Board move(String move) {return move(move.split(",")[0].trim(), move.split(",")[1].trim());}
     public Board move(String from, String to) {return move(normalize(from.toCharArray()),isLegalMove(from+','+to));}
-    public Board move(int[] from, int[] to){return move((from[1]+(from[0]<<4)),(to[1]+(to[0]<<4)));}
+    public Board move(int[] from, int[] to){return move((from[0]+(from[1]<<4)),(to[0]+(to[1]<<4)));}
     public Board move(int from, int to)
     {
         Type[][] board = Arrays.stream(this.board).map(Type[]::clone).toArray(Type[][]::new);
@@ -319,7 +321,7 @@ public class Board extends State<Board> implements Comparable<Board>
 //        int   toY =   to[1];
 
         set(board,to,get(board,from)); // put moved piece to target location
-        set(board,to,VACANT);;        //  erase moved piece from previous location
+        set(board,from,VACANT);;        //  erase moved piece from previous location
 
         char[] metadata = this.metadata.clone();
         metadata[  TO] = (char)to;  // update metadata 'moved to'

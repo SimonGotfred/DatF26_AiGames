@@ -1,6 +1,7 @@
 package ai.game.demo.agent;
 
 import ai.game.demo.util.NodeMap;
+import ai.game.demo.util.Printer;
 
 import java.awt.*;
 import java.util.*;
@@ -58,7 +59,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
 //    protected boolean alternator()          {return depth()%2 == 0;} // useful for determining whether min-/max-ing
 //    protected int     alternator(int cycles){return depth()%cycles;}
 
-    public Iterator<T> iterator() {return maximize() ? children.iterator() : children.descendingIterator();}
+    public Iterator<T> iterator() {return maximize() ? children.iterator() : children.reversed().iterator();}
 
     // evaluating fitness must be done by subclass and may be cumbersome, but should be a consistent value
     // therefore ensure it is done only once
@@ -88,7 +89,7 @@ public abstract class State<T extends State<T>> extends NodeMap.Node<T>
         }
         catch (StackOverflowError e)
         {
-            System.out.println("\033[31;1;4m StackOverflow in Diving \033[0m");
+            Printer.PrintError("StackOverflow in Diving");
             return (T)this;
         }
     }
